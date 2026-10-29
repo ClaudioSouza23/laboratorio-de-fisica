@@ -1,0 +1,697 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}.back{font-weight:700;color:var(--muted);text-decoration:none;font-size:14px}.back:hover{color:var(--ink)}</style><title>Duas Lâmpadas: U fixa ou I fixa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: roteiro no topo; bancada 3D escura + painel; comparação A×B; experimento + gráfico P×R; conclusão. */
+:root {
+  --bg: #eef1f4; --surface: #ffffff; --ink: #16202b; --muted: #576575; --line: #d3dae2; --soft: #f6f8fa;
+  --accent: #a8650a; --la: #2563b8; --lb: #8b3fb5; --ok: #1f8a4c; --bad: #b8322a; --cool: #2a73c0;
+  --stage: #0e151d; --stage-ink: #dce6ef;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", Consolas, ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0b1016; --surface: #141c25; --ink: #e5ecf2; --muted: #93a2b2; --line: #263240; --soft: #1a2430;
+  --accent: #e8a540; --la: #6ea6f0; --lb: #c48ae6; --ok: #4cc27f; --bad: #ff6b60; --cool: #5ea2ea; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0b1016; --surface: #141c25; --ink: #e5ecf2; --muted: #93a2b2; --line: #263240; --soft: #1a2430;
+  --accent: #e8a540; --la: #6ea6f0; --lb: #c48ae6; --ok: #4cc27f; --bad: #ff6b60; --cool: #5ea2ea; color-scheme: dark }
+
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.5; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-block: 20px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 20px; }
+header { display: grid; gap: 6px; }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(28px, 4vw, 44px); line-height: 1.05; margin: 0; text-wrap: balance; }
+.lede { color: var(--muted); max-width: 72ch; margin: 0; }
+h2 { font-family: var(--f-display); font-weight: 600; font-size: 20px; margin: 0; text-wrap: balance; }
+.small { font-size: 13px; color: var(--muted); margin: 0; }
+.A { color: var(--la); font-weight: 700; } .B { color: var(--lb); font-weight: 700; }
+
+.guide { background: var(--surface); border: 2px solid var(--accent); border-radius: 14px; padding: 18px; display: grid; gap: 14px; }
+.guide-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.steps { display: flex; flex-wrap: wrap; gap: 6px; }
+.steps button { font: inherit; font-family: var(--f-mono); font-weight: 700; width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid var(--line); background: var(--soft); color: var(--muted); cursor: pointer; }
+.steps button[aria-current="step"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.steps button.done { color: var(--accent); border-color: var(--accent); }
+.guide-body { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 18px; }
+@media (max-width: 800px) { .guide-body { grid-template-columns: minmax(0, 1fr); } }
+.guide h3 { font-family: var(--f-display); font-weight: 800; font-size: clamp(20px, 2.6vw, 26px); margin: 0 0 6px; line-height: 1.15; }
+.guide p { margin: 0; max-width: 65ch; }
+.ask { background: var(--soft); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; align-content: start; }
+.ask .k { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+.ask .q { font-weight: 700; font-size: 17px; }
+.ask .a { border-left: 3px solid var(--ok); padding-left: 10px; }
+.nav { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.btn { font: inherit; font-weight: 700; border: 1px solid var(--ink); background: transparent; color: var(--ink); border-radius: 10px; padding: 8px 14px; cursor: pointer; }
+.btn:hover { background: var(--ink); color: var(--bg); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary:hover { filter: brightness(1.1); }
+.btn.sm { padding: 6px 10px; font-size: 14px; }
+.btn:disabled { opacity: .4; cursor: default; background: transparent; color: var(--ink); }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--cool); outline-offset: 2px; }
+
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 20px; align-items: start; }
+@media (max-width: 900px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.stage { position: relative; background: var(--stage); border-radius: 14px; overflow: hidden; aspect-ratio: 16 / 10; max-width: 100%; min-height: 300px; }
+.stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.badge { position: absolute; top: 14px; left: 14px; font-family: var(--f-mono); font-weight: 700; font-size: clamp(13px, 1.8vw, 18px);
+  color: #fff; padding: 6px 12px; border-radius: 8px; background: #2a5d8f; }
+.badge.serie { background: #7a3a99; }
+.hint { position: absolute; top: 18px; right: 14px; font-size: 12px; color: var(--stage-ink); opacity: .6; }
+.legend { position: absolute; left: 14px; bottom: 12px; right: 14px; display: flex; flex-wrap: wrap; gap: 4px 16px;
+  font-size: 13px; color: var(--stage-ink); opacity: .9; pointer-events: none; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+.lab3d { position: absolute; left: 0; top: 0; transform: translate(-50%, -100%); pointer-events: none; white-space: nowrap;
+  font-size: 13px; font-weight: 700; color: #fff; background: rgba(14, 21, 29, .8); border: 1px solid rgba(220, 230, 239, .35);
+  padding: 2px 8px; border-radius: 6px; }
+.lab3d b { font-family: var(--f-mono); }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 16px; }
+.ctl { display: grid; gap: 8px; }
+.ctl > label, .ctl > .lab { font-weight: 700; font-size: 14px; display: flex; justify-content: space-between; gap: 8px; }
+.ctl .val { font-family: var(--f-mono); color: var(--accent); }
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 3px; }
+.seg button { font: inherit; font-weight: 700; font-size: 14px; border: 0; border-radius: 7px; padding: 8px 6px; background: transparent; color: var(--muted); cursor: pointer; line-height: 1.25; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.seg button small { display: block; font-weight: 400; font-size: 12px; }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+#ra { accent-color: var(--la); } #rb { accent-color: var(--lb); }
+.row { display: flex; flex-wrap: wrap; gap: 6px; }
+.checks { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; }
+.checks label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 900px) { .two { grid-template-columns: minmax(0, 1fr); } }
+.tbl { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th, td { padding: 8px 10px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+thead th { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+td.num { font-family: var(--f-mono); font-weight: 700; font-size: 18px; }
+tr.same td { background: color-mix(in srgb, var(--ok) 12%, transparent); }
+.tagsame { font-size: 12px; font-weight: 700; color: var(--ok); margin-left: 6px; }
+.glowbar { height: 12px; border-radius: 6px; background: var(--soft); overflow: hidden; min-width: 80px; }
+.glowbar span { display: block; height: 100%; border-radius: 6px; background: linear-gradient(90deg, #e3a531, #ffd36b); transition: width .3s; }
+
+.verdict { border-radius: 12px; padding: 14px 16px; background: var(--soft); display: grid; gap: 6px; }
+.verdict .big { font-family: var(--f-display); font-weight: 800; font-size: clamp(20px, 2.6vw, 26px); line-height: 1.15; }
+.verdict .big.inv { color: var(--cool); } .verdict .big.dir { color: var(--accent); }
+.verdict .ratios { font-family: var(--f-mono); font-size: 15px; }
+
+.exp th, .exp td { padding: 6px 8px; }
+.exp td { font-family: var(--f-mono); font-size: 14px; }
+.exp td.const { color: var(--ok); font-weight: 700; }
+.exp th.const { color: var(--ok); }
+.expmsg { font-weight: 700; }
+.expmsg.ok { color: var(--ok); } .expmsg.warn { color: var(--bad); }
+
+.graphbox { overflow-x: auto; position: relative; }
+.graphbox svg { width: 100%; min-width: 320px; height: auto; display: block; }
+.graphbox svg text { font-family: var(--f-mono); }
+.tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--bg); font-family: var(--f-mono); font-size: 12px;
+  padding: 4px 8px; border-radius: 6px; white-space: nowrap; transform: translate(-50%, -130%); }
+.glegend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); }
+.glegend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+
+.rules { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+@media (max-width: 700px) { .rules { grid-template-columns: minmax(0, 1fr); } }
+.rule { border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 6px; }
+.rule .f { font-family: var(--f-mono); font-weight: 700; font-size: 22px; }
+.rule.inv { border-color: var(--cool); } .rule.dir { border-color: var(--accent); }
+.rule .k { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; font-weight: 700; }
+.rule.inv .k { color: var(--cool); } .rule.dir .k { color: var(--accent); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html">&larr; Laboratório de Eletrodinâmica</a>
+  <header>
+    <span class="eyebrow">Eletrodinâmica · potência elétrica</span>
+    <h1>Duas lâmpadas: qual brilha mais?</h1>
+    <p class="lede">As mesmas duas lâmpadas, <span class="A">A</span> e <span class="B">B</span>, ligadas de dois jeitos. Em paralelo elas recebem a mesma tensão; em série, a mesma corrente. Veja se a potência é diretamente ou inversamente proporcional à resistência.</p>
+  </header>
+
+  <section class="guide" aria-label="Roteiro da aula">
+    <div class="guide-top">
+      <h2>Roteiro da aula</h2>
+      <div class="steps" id="steps"></div>
+    </div>
+    <div class="guide-body">
+      <div>
+        <h3 id="gTitle"></h3>
+        <p id="gText"></p>
+      </div>
+      <div class="ask">
+        <span class="k">Pergunte à turma</span>
+        <span class="q" id="gQ"></span>
+        <span class="a" id="gA" hidden></span>
+        <div class="nav">
+          <button class="btn" id="gReveal">Ver resposta</button>
+          <button class="btn" id="gPrev">Voltar</button>
+          <button class="btn primary" id="gNext">Próximo passo</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="main">
+    <div class="stage" id="stage">
+      <div class="badge" id="badge">PARALELO · mesma tensão</div>
+      <div class="hint">Arraste para girar · role para aproximar</div>
+      <div class="lab3d" id="labA"></div>
+      <div class="lab3d" id="labB"></div>
+      <div class="lab3d" id="labS"></div>
+      <div class="legend">
+        <span><i style="background:#9fd8ff"></i>Pontos azuis: corrente (mais rápidos = corrente maior)</span>
+        <span><i style="background:#ffd36b"></i>Brilho: potência dissipada</span>
+      </div>
+    </div>
+
+    <aside class="panel" aria-label="Controles">
+      <div class="ctl">
+        <span class="lab">O que fica igual nas duas?</span>
+        <div class="seg" id="mode">
+          <button data-v="U" aria-pressed="true">Tensão U<small>paralelo</small></button>
+          <button data-v="I" aria-pressed="false">Corrente I<small>série</small></button>
+        </div>
+      </div>
+      <div class="ctl" id="ctlU">
+        <label for="u">Tensão da fonte <span class="val" id="uVal">127 V</span></label>
+        <input type="range" id="u" min="20" max="240" step="1" value="127">
+      </div>
+      <div class="ctl" id="ctlI" hidden>
+        <label for="i">Corrente da fonte <span class="val" id="iVal">0,50 A</span></label>
+        <input type="range" id="i" min="0.1" max="1.2" step="0.05" value="0.5">
+      </div>
+      <div class="ctl">
+        <label for="ra"><span>Resistência de <span class="A">A</span></span> <span class="val" id="raVal">160 Ω</span></label>
+        <input type="range" id="ra" min="20" max="640" step="10" value="160">
+        <div class="row">
+          <button class="btn sm" id="dblA">Dobrar R<sub>A</sub></button>
+          <button class="btn sm" id="halfA">Metade de R<sub>A</sub></button>
+        </div>
+      </div>
+      <div class="ctl">
+        <label for="rb"><span>Resistência de <span class="B">B</span></span> <span class="val" id="rbVal">320 Ω</span></label>
+        <input type="range" id="rb" min="20" max="640" step="10" value="320">
+      </div>
+      <div class="row">
+        <button class="btn sm" id="swap">Trocar A ↔ B</button>
+        <button class="btn sm" id="reset">Restaurar valores</button>
+      </div>
+      <div class="checks">
+        <label><input type="checkbox" id="spin"> Girar sozinho</label>
+        <label><input type="checkbox" id="labels" checked> Etiquetas</label>
+      </div>
+      <p class="small">Lâmpadas ideais: a resistência não muda com a temperatura do filamento.</p>
+    </aside>
+  </section>
+
+  <section class="two">
+    <div class="card">
+      <h2>Comparando A e B</h2>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Grandeza</th><th class="A">Lâmpada A</th><th class="B">Lâmpada B</th></tr></thead>
+          <tbody>
+            <tr id="rowR"><td>Resistência R</td><td class="num" id="cRA"></td><td class="num" id="cRB"></td></tr>
+            <tr id="rowU"><td>Tensão U <span class="tagsame" id="sameU">igual nas duas</span></td><td class="num" id="cUA"></td><td class="num" id="cUB"></td></tr>
+            <tr id="rowI"><td>Corrente I <span class="tagsame" id="sameI">igual nas duas</span></td><td class="num" id="cIA"></td><td class="num" id="cIB"></td></tr>
+            <tr><td>Potência P</td><td class="num" id="cPA"></td><td class="num" id="cPB"></td></tr>
+            <tr><td>Brilho</td><td><div class="glowbar"><span id="gbA"></span></div></td><td><div class="glowbar"><span id="gbB"></span></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <h2>A relação entre P e R</h2>
+      <div class="verdict">
+        <span class="ratios" id="ratios"></span>
+        <span class="big" id="vBig"></span>
+        <span id="vText"></span>
+      </div>
+      <p class="small" id="vFormula"></p>
+    </div>
+  </section>
+
+  <section class="two">
+    <div class="card">
+      <h2>Experimento com a lâmpada A</h2>
+      <p class="small">Mude só R<sub>A</sub> e registre. Se P × R ficar constante, P é inversamente proporcional a R. Se P ÷ R ficar constante, é diretamente proporcional.</p>
+      <div class="row">
+        <button class="btn sm primary" id="rec">Registrar medida</button>
+        <button class="btn sm" id="auto">Série automática (R = 80, 160, 320, 640 Ω)</button>
+        <button class="btn sm" id="clear">Limpar tabela</button>
+      </div>
+      <div class="tbl">
+        <table class="exp">
+          <thead><tr><th>R<sub>A</sub> (Ω)</th><th id="hFix">U (V)</th><th>P<sub>A</sub> (W)</th><th id="hMul">P × R</th><th id="hDiv">P ÷ R</th></tr></thead>
+          <tbody id="expBody"></tbody>
+        </table>
+      </div>
+      <p class="expmsg" id="expMsg"></p>
+    </div>
+    <div class="card">
+      <h2>Potência em função da resistência</h2>
+      <div class="glegend">
+        <span><i style="background:var(--accent)"></i><span id="curveName">Curva P = U²/R</span></span>
+        <span><i style="background:var(--la)"></i>Lâmpada A</span>
+        <span><i style="background:var(--lb)"></i>Lâmpada B</span>
+        <span><i style="background:transparent;border:2px solid var(--muted)"></i>Medidas registradas</span>
+      </div>
+      <div class="graphbox">
+        <svg id="graph" viewBox="0 0 420 280" role="img" aria-label="Gráfico da potência em função da resistência com as lâmpadas A e B marcadas."></svg>
+        <div class="tip" id="tip" hidden></div>
+      </div>
+      <p class="small" id="graphNote"></p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Resumo: depende do que fica fixo</h2>
+    <div class="rules">
+      <div class="rule inv">
+        <span class="k">Tensão fixa · paralelo · tomada</span>
+        <span class="f">P = U² / R</span>
+        <span>P é <b>inversamente proporcional</b> a R. A lâmpada de menor resistência brilha mais. P × R = U² é constante.</span>
+      </div>
+      <div class="rule dir">
+        <span class="k">Corrente fixa · série</span>
+        <span class="f">P = R · I²</span>
+        <span>P é <b>diretamente proporcional</b> a R. A lâmpada de maior resistência brilha mais. P ÷ R = I² é constante.</span>
+      </div>
+    </div>
+    <p class="small">No secador de cabelo a tomada fixa a tensão. Por isso a posição quente é a de menor resistência.</p>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(() => {
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const DEFAULTS = { mode: 'U', U: 127, I: 0.5, RA: 160, RB: 320 };
+const state = { ...DEFAULTS, spin: false, labels: true };
+const $ = id => document.getElementById(id);
+const fmt = (x, d = 1) => x.toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
+const fmtA = x => fmt(x, x < 1 ? 3 : 2);
+
+function solveFor(mode, U, I, RA, RB) {
+  if (mode === 'U') return { UA: U, UB: U, IA: U / RA, IB: U / RB, PA: U * U / RA, PB: U * U / RB };
+  return { UA: I * RA, UB: I * RB, IA: I, IB: I, PA: I * I * RA, PB: I * I * RB };
+}
+const solve = () => solveFor(state.mode, state.U, state.I, state.RA, state.RB);
+const brightness = P => Math.pow(Math.min(P / 120, 1), 0.6);
+
+/* ---------- 3D ---------- */
+const stage = $('stage');
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+stage.prepend(renderer.domElement);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(40, 1.6, 0.1, 100);
+camera.position.set(0.6, 4.6, 7.4);
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.target.set(0.2, 0.5, 0.1);
+controls.enableDamping = true; controls.minDistance = 3; controls.maxDistance = 16;
+controls.maxPolarAngle = Math.PI * 0.49; controls.autoRotateSpeed = 0.6;
+
+scene.add(new THREE.HemisphereLight(0xcfe3ff, 0x1a1410, 0.5));
+const key = new THREE.DirectionalLight(0xffffff, 0.55); key.position.set(3, 6, 5); scene.add(key);
+
+const board = new THREE.Mesh(new THREE.BoxGeometry(8, 0.16, 4), new THREE.MeshStandardMaterial({ color: 0x2b3746, roughness: 0.85 }));
+board.position.y = -0.08; scene.add(board);
+const darkMat = new THREE.MeshStandardMaterial({ color: 0x1b222b, roughness: 0.6 });
+const metalMat = new THREE.MeshStandardMaterial({ color: 0xaab2ba, roughness: 0.35, metalness: 0.8 });
+
+const src = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.8, 1.7), new THREE.MeshStandardMaterial({ color: 0x3a4656, roughness: 0.5 }));
+src.position.set(-2.9, 0.4, 0); scene.add(src);
+const panelFace = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.4), new THREE.MeshStandardMaterial({ color: 0x0c2a1a, emissive: 0x1e7a46, emissiveIntensity: 0.6 }));
+panelFace.position.set(-2.9, 0.55, 0.851); scene.add(panelFace);
+for (const [z, c] of [[-0.5, 0xc0392b], [0.5, 0x111111]]) {
+  const t = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.2, 16), new THREE.MeshStandardMaterial({ color: c, roughness: 0.4 }));
+  t.position.set(-2.3, 0.1, z); scene.add(t);
+}
+
+const dot = document.createElement('canvas'); dot.width = dot.height = 64;
+{ const c = dot.getContext('2d'); const g = c.createRadialGradient(32, 32, 0, 32, 32, 32);
+  g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.fillRect(0, 0, 64, 64); }
+const dotTex = new THREE.CanvasTexture(dot);
+
+class Helix extends THREE.Curve {
+  constructor(x0, x1, r, turns) { super(); Object.assign(this, { x0, x1, r, turns }); }
+  getPoint(t, out = new THREE.Vector3()) {
+    const a = t * this.turns * Math.PI * 2;
+    return out.set(this.x0 + t * (this.x1 - this.x0), this.r * Math.cos(a), this.r * Math.sin(a));
+  }
+}
+const ramp = [[0, 0x000000], [0.3, 0x7a1800], [0.6, 0xff7a1a], [1, 0xfff1c0]].map(([s, c]) => [s, new THREE.Color(c)]);
+function glowColor(g, out) {
+  for (let i = 1; i < ramp.length; i++) if (g <= ramp[i][0]) {
+    const [s0, c0] = ramp[i - 1], [s1, c1] = ramp[i];
+    return out.copy(c0).lerp(c1, (g - s0) / (s1 - s0));
+  }
+  return out.copy(ramp[ramp.length - 1][1]);
+}
+function makeLamp(x, ringColor) {
+  const grp = new THREE.Group(); grp.position.x = x; scene.add(grp);
+  const socket = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.44, 0.34, 32), darkMat); socket.position.y = 0.17; grp.add(socket);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.44, 0.04, 8, 40), new THREE.MeshStandardMaterial({ color: ringColor, roughness: 0.4 }));
+  ring.rotation.x = Math.PI / 2; ring.position.y = 0.03; grp.add(ring);
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 0.32, 24), metalMat); base.position.y = 0.5; grp.add(base);
+  for (const sx of [-0.35, 0.35]) { const s = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.1, 12), metalMat); s.position.set(sx, 0.06, 0); grp.add(s); }
+  for (const sx of [-0.16, 0.16]) { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.45, 6), metalMat); w.position.set(sx, 0.86, 0); grp.add(w); }
+  const filMat = new THREE.MeshStandardMaterial({ color: 0x555555, emissive: 0x000000, roughness: 0.5 });
+  const fil = new THREE.Mesh(new THREE.TubeGeometry(new Helix(-0.16, 0.16, 0.035, 9), 200, 0.012, 6), filMat);
+  fil.position.y = 1.08; grp.add(fil);
+  const glassMat = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.22, roughness: 0.1, emissive: 0x000000, depthWrite: false });
+  const glass = new THREE.Mesh(new THREE.SphereGeometry(0.52, 32, 24), glassMat); glass.position.y = 1.1; grp.add(glass);
+  const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotTex, color: 0xffd27a, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+  halo.position.y = 1.1; grp.add(halo);
+  const light = new THREE.PointLight(0xffc870, 0, 7); light.position.y = 1.1; grp.add(light);
+  return { filMat, glassMat, halo, light, g: 0 };
+}
+const XA = 0, XB = 2.6;
+const lampA = makeLamp(XA, 0x2563b8), lampB = makeLamp(XB, 0x8b3fb5);
+
+/* fios e cargas */
+const Y = 0.06;
+const PATHS = {
+  I: [[[-2.3, -0.5], [-0.35, -0.5], [-0.35, 0], [0.35, 0], [0.35, -0.5], [2.25, -0.5], [2.25, 0], [2.95, 0], [2.95, 1.3], [-1.9, 1.3], [-1.9, 0.5], [-2.3, 0.5]]],
+  U: [[[-2.3, -0.5], [-0.35, -0.5], [-0.35, 0], [0.35, 0], [0.35, 0.9], [-1.9, 0.9], [-1.9, 0.5], [-2.3, 0.5]],
+      [[-2.3, -0.5], [-1.6, -0.5], [-1.6, -1.3], [2.25, -1.3], [2.25, 0], [2.95, 0], [2.95, 1.3], [-1.9, 1.3], [-1.9, 0.5], [-2.3, 0.5]]],
+};
+const wireMat = new THREE.MeshStandardMaterial({ color: 0xc9853f, roughness: 0.45, metalness: 0.4 });
+const circuit = new THREE.Group(); scene.add(circuit);
+let flows = [];
+function buildPath(pts) {
+  const v = pts.map(([x, z]) => new THREE.Vector3(x, Y, z));
+  const cum = [0];
+  for (let i = 1; i < v.length; i++) cum.push(cum[i - 1] + v[i].distanceTo(v[i - 1]));
+  return { v, cum, L: cum[cum.length - 1] };
+}
+function pointAt(p, s, out) {
+  s = ((s % p.L) + p.L) % p.L;
+  let i = 1; while (p.cum[i] < s) i++;
+  const t = (s - p.cum[i - 1]) / (p.cum[i] - p.cum[i - 1]);
+  return out.copy(p.v[i - 1]).lerp(p.v[i], t);
+}
+function rebuildCircuit() {
+  while (circuit.children.length) circuit.remove(circuit.children[0]);
+  flows = PATHS[state.mode].map(pts => {
+    const p = buildPath(pts);
+    for (let i = 1; i < p.v.length; i++) {
+      circuit.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.LineCurve3(p.v[i - 1], p.v[i]), 1, 0.035, 6), wireMat));
+      const joint = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 6), wireMat);
+      joint.position.copy(p.v[i]); circuit.add(joint);
+    }
+    const n = Math.floor(p.L / 0.24), arr = new Float32Array(n * 3);
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(arr, 3));
+    circuit.add(new THREE.Points(geo, new THREE.PointsMaterial({ size: 0.15, map: dotTex, color: 0x9fd8ff, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })));
+    return { p, n, arr, geo, off: 0 };
+  });
+}
+
+/* etiquetas */
+const tmpV = new THREE.Vector3();
+const labels = [
+  { el: $('labA'), at: () => tmpV.set(XA, 1.95, 0) },
+  { el: $('labB'), at: () => tmpV.set(XB, 1.95, 0) },
+  { el: $('labS'), at: () => tmpV.set(-2.9, 1.05, 0) },
+];
+function placeLabels() {
+  const w = stage.clientWidth, h = stage.clientHeight;
+  for (const l of labels) {
+    l.el.hidden = !state.labels;
+    if (!state.labels) continue;
+    const v = l.at().project(camera);
+    l.el.style.left = ((v.x + 1) / 2 * w).toFixed(1) + 'px';
+    l.el.style.top = ((1 - v.y) / 2 * h).toFixed(1) + 'px';
+    l.el.style.visibility = v.z > 1 ? 'hidden' : 'visible';
+  }
+}
+function resize() {
+  const w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stage); resize();
+
+const warmC = new THREE.Color(0xffc060);
+let t0 = performance.now();
+function frame(now) {
+  const dt = Math.min((now - t0) / 1000, 0.05); t0 = now;
+  const s = solve();
+  for (const [L, P] of [[lampA, s.PA], [lampB, s.PB]]) {
+    L.g += (brightness(P) - L.g) * Math.min(dt * 4, 1);
+    glowColor(L.g, L.filMat.emissive);
+    L.glassMat.emissive.copy(warmC).multiplyScalar(L.g * 0.7);
+    L.halo.material.opacity = L.g * 0.9; L.halo.scale.setScalar(0.5 + 3.4 * L.g);
+    L.light.intensity = L.g * 2.6;
+  }
+  const currents = state.mode === 'U' ? [s.IA, s.IB] : [s.IA];
+  flows.forEach((f, k) => {
+    f.off += Math.min(currents[k] * 1.2, 4) * dt;
+    for (let i = 0; i < f.n; i++) {
+      pointAt(f.p, f.off + i * f.p.L / f.n, tmpV);
+      f.arr[i * 3] = tmpV.x; f.arr[i * 3 + 1] = tmpV.y + 0.03; f.arr[i * 3 + 2] = tmpV.z;
+    }
+    f.geo.attributes.position.needsUpdate = true;
+  });
+  controls.autoRotate = state.spin;
+  controls.update();
+  renderer.render(scene, camera);
+  placeLabels();
+  requestAnimationFrame(frame);
+}
+
+/* ---------- experimento ---------- */
+const exp = { U: [], I: [] };
+function fixedNow() { return state.mode === 'U' ? state.U : state.I; }
+function record(R) {
+  const fixed = fixedNow();
+  const s = solveFor(state.mode, state.U, state.I, R, state.RB);
+  const list = exp[state.mode];
+  const i = list.findIndex(r => r.R === R && r.fixed === fixed);
+  if (i >= 0) list.splice(i, 1);
+  list.push({ R, P: s.PA, fixed });
+  list.sort((a, b) => a.R - b.R);
+}
+function cv(vals) {
+  const m = vals.reduce((a, b) => a + b, 0) / vals.length;
+  return Math.sqrt(vals.reduce((a, b) => a + (b - m) ** 2, 0) / vals.length) / m;
+}
+function renderExp() {
+  const list = exp[state.mode], hipU = state.mode === 'U';
+  $('hFix').textContent = hipU ? 'U (V)' : 'I (A)';
+  const mulC = list.length >= 2 && cv(list.map(r => r.P * r.R)) < 0.005;
+  const divC = list.length >= 2 && cv(list.map(r => r.P / r.R)) < 0.005;
+  $('hMul').className = mulC ? 'const' : ''; $('hDiv').className = divC ? 'const' : '';
+  $('expBody').innerHTML = list.length ? list.map(r => `<tr><td>${fmt(r.R, 0)}</td><td>${hipU ? fmt(r.fixed, 0) : fmt(r.fixed, 2)}</td><td>${fmt(r.P, 1)}</td>`
+    + `<td class="${mulC ? 'const' : ''}">${fmt(r.P * r.R, 0)}</td><td class="${divC ? 'const' : ''}">${fmt(r.P / r.R, 3)}</td></tr>`).join('')
+    : '<tr><td colspan="5" style="text-align:left;color:var(--muted)">Nenhuma medida ainda. Ajuste R<sub>A</sub> e clique em Registrar medida.</td></tr>';
+  const msg = $('expMsg');
+  const mixed = new Set(list.map(r => r.fixed)).size > 1;
+  if (list.length < 2) { msg.className = 'expmsg'; msg.textContent = 'Registre pelo menos duas medidas com valores diferentes de R.'; }
+  else if (mixed) { msg.className = 'expmsg warn'; msg.textContent = `Você mudou ${hipU ? 'a tensão' : 'a corrente'} entre as medidas. Para testar a proporção, mude só R ou limpe a tabela.`; }
+  else if (mulC) { msg.className = 'expmsg ok'; msg.textContent = `P × R ficou constante (= U² = ${fmt(list[0].fixed ** 2, 0)}). P é inversamente proporcional a R.`; }
+  else if (divC) { msg.className = 'expmsg ok'; msg.textContent = `P ÷ R ficou constante (= I² = ${fmt(list[0].fixed ** 2, 3)}). P é diretamente proporcional a R.`; }
+  else { msg.className = 'expmsg'; msg.textContent = ''; }
+}
+
+/* ---------- gráfico P × R ---------- */
+const G = { w: 420, h: 280, l: 58, r: 18, t: 18, b: 44 };
+function niceStep(raw) {
+  const p = Math.pow(10, Math.floor(Math.log10(raw)));
+  for (const m of [1, 2, 2.5, 5, 10]) if (m * p >= raw) return m * p;
+}
+let gScale = null;
+function drawGraph(s) {
+  const hipU = state.mode === 'U';
+  const pts = exp[state.mode].filter(r => r.fixed === fixedNow());
+  const rStep = niceStep(Math.max(state.RA, state.RB, ...pts.map(r => r.R)) * 1.2 / 5), Rmax = rStep * 5;
+  const Pof = R => hipU ? state.U * state.U / R : state.I * state.I * R;
+  const pTop = Math.max(s.PA, s.PB, ...pts.map(r => r.P), hipU ? 0 : Pof(Rmax));
+  const pStep = niceStep(pTop * 1.2 / 5), Pmax = pStep * 5;
+  const X = R => G.l + R / Rmax * (G.w - G.l - G.r);
+  const Yp = P => G.h - G.b - P / Pmax * (G.h - G.t - G.b);
+  gScale = { X, Y: Yp, Rmax, Pof };
+  let o = '';
+  for (let i = 0; i <= 5; i++) {
+    const y = Yp(i * pStep), x = X(i * rStep);
+    o += `<line x1="${G.l}" x2="${G.w - G.r}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-width="1"/>`;
+    o += `<text x="${G.l - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="var(--muted)">${fmt(i * pStep, pStep < 1 ? 1 : 0)}</text>`;
+    o += `<text x="${x}" y="${G.h - G.b + 18}" text-anchor="middle" font-size="11" fill="var(--muted)">${fmt(i * rStep, 0)}</text>`;
+  }
+  o += `<line x1="${G.l}" x2="${G.l}" y1="${G.t}" y2="${G.h - G.b}" stroke="var(--muted)" stroke-width="1"/>`;
+  o += `<text x="${(G.l + G.w - G.r) / 2}" y="${G.h - 6}" text-anchor="middle" font-size="12" fill="var(--ink)">Resistência R (Ω)</text>`;
+  o += `<text x="14" y="${(G.t + G.h - G.b) / 2}" text-anchor="middle" font-size="12" fill="var(--ink)" transform="rotate(-90 14 ${(G.t + G.h - G.b) / 2})">Potência P (W)</text>`;
+  const line = [];
+  const r0 = hipU ? Math.max(state.U * state.U / Pmax, Rmax / 400) : 0;
+  for (let i = 0; i <= 160; i++) {
+    const R = r0 + (Rmax - r0) * i / 160, P = Pof(R);
+    if (P <= Pmax) line.push(`${X(R).toFixed(1)},${Yp(P).toFixed(1)}`);
+  }
+  o += `<polyline points="${line.join(' ')}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>`;
+  for (const r of pts) o += `<circle cx="${X(r.R)}" cy="${Yp(r.P)}" r="5" fill="var(--surface)" stroke="var(--muted)" stroke-width="2"/>`;
+  for (const [R, P, name, color] of [[state.RA, s.PA, 'A', 'var(--la)'], [state.RB, s.PB, 'B', 'var(--lb)']]) {
+    const x = X(R), y = Yp(P);
+    o += `<line x1="${x}" x2="${x}" y1="${y}" y2="${G.h - G.b}" stroke="${color}" stroke-dasharray="3 4"/>`;
+    o += `<line x1="${G.l}" x2="${x}" y1="${y}" y2="${y}" stroke="${color}" stroke-dasharray="3 4"/>`;
+    o += `<circle cx="${x}" cy="${y}" r="7" fill="${color}" stroke="var(--surface)" stroke-width="2"/>`;
+    o += `<text x="${x + 11}" y="${y - 8}" font-size="12" font-weight="700" fill="var(--ink)">${name} · ${fmt(P, 0)} W</text>`;
+  }
+  o += `<line id="hx" y1="${G.t}" y2="${G.h - G.b}" stroke="var(--muted)" stroke-width="1" visibility="hidden"/>`;
+  o += `<circle id="hd" r="5" fill="var(--accent)" stroke="var(--surface)" stroke-width="2" visibility="hidden"/>`;
+  o += `<rect x="${G.l}" y="${G.t}" width="${G.w - G.l - G.r}" height="${G.h - G.t - G.b}" fill="transparent"/>`;
+  $('graph').innerHTML = o;
+  $('curveName').textContent = hipU ? `Curva P = U²/R (U = ${state.U} V)` : `Reta P = R·I² (I = ${fmt(state.I, 2)} A)`;
+  $('graphNote').textContent = hipU
+    ? 'Tensão fixa: a curva desce (hipérbole). Dobrar R divide P por 2. As duas lâmpadas estão sobre a mesma curva.'
+    : 'Corrente fixa: uma reta que passa pela origem. Dobrar R dobra P. As duas lâmpadas estão sobre a mesma reta.';
+}
+const graph = $('graph'), tip = $('tip');
+function hideHover() { tip.hidden = true; for (const id of ['hx', 'hd']) { const el = $(id); if (el) el.setAttribute('visibility', 'hidden'); } }
+graph.addEventListener('pointermove', e => {
+  if (!gScale) return;
+  const box = graph.getBoundingClientRect(), sx = (e.clientX - box.left) / box.width * G.w;
+  const R = (sx - G.l) / (G.w - G.l - G.r) * gScale.Rmax;
+  if (R <= 1 || R > gScale.Rmax) return hideHover();
+  const P = gScale.Pof(R), x = gScale.X(R), y = gScale.Y(P);
+  const hx = $('hx'), hd = $('hd');
+  hx.setAttribute('x1', x); hx.setAttribute('x2', x); hx.setAttribute('visibility', 'visible');
+  hd.setAttribute('cx', x); hd.setAttribute('cy', y); hd.setAttribute('visibility', y >= G.t ? 'visible' : 'hidden');
+  tip.hidden = false;
+  tip.textContent = `R = ${fmt(R, 0)} Ω → P = ${fmt(P, 1)} W · P×R = ${fmt(P * R, 0)} · P÷R = ${fmt(P / R, 3)}`;
+  tip.style.left = (x / G.w * box.width) + 'px';
+  tip.style.top = (Math.max(y, G.t) / G.h * box.height) + 'px';
+});
+graph.addEventListener('pointerleave', hideHover);
+
+/* ---------- UI ---------- */
+let builtMode = null;
+function setSeg(id, v) { for (const b of $(id).querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.v === String(v))); }
+function render() {
+  const s = solve(), hipU = state.mode === 'U';
+  if (builtMode !== state.mode) { rebuildCircuit(); builtMode = state.mode; }
+  setSeg('mode', state.mode);
+  $('ctlU').hidden = !hipU; $('ctlI').hidden = hipU;
+  $('u').value = state.U; $('i').value = state.I; $('ra').value = state.RA; $('rb').value = state.RB;
+  $('uVal').textContent = state.U + ' V'; $('iVal').textContent = fmt(state.I, 2) + ' A';
+  $('raVal').textContent = state.RA + ' Ω'; $('rbVal').textContent = state.RB + ' Ω';
+
+  $('badge').textContent = hipU ? `PARALELO · U = ${state.U} V nas duas` : `SÉRIE · I = ${fmt(state.I, 2)} A nas duas`;
+  $('badge').className = 'badge' + (hipU ? '' : ' serie');
+  $('labA').innerHTML = `A · ${state.RA} Ω · <b>${fmt(s.PA, 0)} W</b>`;
+  $('labB').innerHTML = `B · ${state.RB} Ω · <b>${fmt(s.PB, 0)} W</b>`;
+  $('labS').textContent = hipU ? `Fonte de tensão ${state.U} V` : `Fonte de corrente ${fmt(state.I, 2)} A`;
+
+  $('cRA').textContent = state.RA + ' Ω'; $('cRB').textContent = state.RB + ' Ω';
+  $('cUA').textContent = fmt(s.UA, 0) + ' V'; $('cUB').textContent = fmt(s.UB, 0) + ' V';
+  $('cIA').textContent = fmtA(s.IA) + ' A'; $('cIB').textContent = fmtA(s.IB) + ' A';
+  $('cPA').textContent = fmt(s.PA, 1) + ' W'; $('cPB').textContent = fmt(s.PB, 1) + ' W';
+  $('rowU').classList.toggle('same', hipU); $('rowI').classList.toggle('same', !hipU);
+  $('sameU').hidden = !hipU; $('sameI').hidden = hipU;
+  const pm = Math.max(s.PA, s.PB, 1);
+  $('gbA').style.width = (brightness(s.PA) * 100).toFixed(0) + '%';
+  $('gbB').style.width = (brightness(s.PB) * 100).toFixed(0) + '%';
+
+  const kR = state.RB / state.RA, kP = s.PB / s.PA;
+  $('ratios').textContent = `R_B ÷ R_A = ${fmt(kR, 2)}     P_B ÷ P_A = ${fmt(kP, 2)}`;
+  const big = $('vBig');
+  if (state.RA === state.RB) {
+    big.className = 'big'; big.textContent = 'Resistências iguais, potências iguais';
+    $('vText').textContent = 'Mude R_A ou R_B para comparar.';
+  } else {
+    big.className = 'big ' + (hipU ? 'inv' : 'dir');
+    big.textContent = hipU ? 'Inversamente proporcional' : 'Diretamente proporcional';
+    const more = kR > 1 ? 'B' : 'A', less = more === 'A' ? 'B' : 'A';
+    const k = fmt(Math.max(kR, 1 / kR), 2);
+    $('vText').textContent = hipU
+      ? `${more} tem ${k}× mais resistência e dissipa ${k}× menos potência. Brilha mais a lâmpada ${less}.`
+      : `${more} tem ${k}× mais resistência e dissipa ${k}× mais potência. Brilha mais a lâmpada ${more}.`;
+  }
+  $('vFormula').textContent = hipU
+    ? `Mesma tensão: P = U²/R. Com U = ${state.U} V, P × R = U² = ${fmt(state.U ** 2, 0)} para as duas lâmpadas.`
+    : `Mesma corrente: P = R·I². Com I = ${fmt(state.I, 2)} A, P ÷ R = I² = ${fmt(state.I ** 2, 4)} para as duas lâmpadas.`;
+  renderExp();
+  drawGraph(s);
+}
+
+/* ---------- roteiro ---------- */
+const steps = [
+  { t: 'Mesma tensão: lâmpadas em paralelo', apply: { mode: 'U', U: 127, RA: 160, RB: 320 },
+    x: 'Cada lâmpada está ligada diretamente aos terminais da fonte, então as duas recebem a mesma tensão U. A lâmpada B tem o dobro da resistência da lâmpada A.',
+    q: 'Qual lâmpada brilha mais?',
+    a: 'A lâmpada A, a de menor resistência: cerca de 101 W contra 50 W. Com U fixa, P = U²/R.' },
+  { t: 'Teste: dobre a resistência (tensão fixa)', apply: { mode: 'U', U: 127, RA: 160, RB: 320 },
+    x: 'Clique em "Dobrar R_A" e observe a potência de A. Depois use "Série automática" ou registre medidas você mesmo na tabela do experimento.',
+    q: 'Quando R dobra, o que acontece com P? Qual coluna da tabela fica constante?',
+    a: 'P cai pela metade. A coluna P × R fica constante (igual a U²). Isso caracteriza grandezas inversamente proporcionais.' },
+  { t: 'Mesma corrente: lâmpadas em série', apply: { mode: 'I', I: 0.5, RA: 160, RB: 320 },
+    x: 'Agora as lâmpadas estão uma depois da outra. Só existe um caminho, então a mesma corrente atravessa as duas. São as mesmas lâmpadas do passo 1.',
+    q: 'E agora, qual lâmpada brilha mais?',
+    a: 'A lâmpada B, a de maior resistência: 80 W contra 40 W. Com I fixa, P = R·I². O resultado se inverteu.' },
+  { t: 'Teste: dobre a resistência (corrente fixa)', apply: { mode: 'I', I: 0.5, RA: 160, RB: 320 },
+    x: 'Repita o teste: clique em "Dobrar R_A" e preencha a tabela do experimento.',
+    q: 'Quando R dobra com I fixa, o que acontece com P? Qual coluna fica constante?',
+    a: 'P dobra. A coluna P ÷ R fica constante (igual a I²). Isso caracteriza grandezas diretamente proporcionais.' },
+  { t: 'Conclusão', apply: { mode: 'U', U: 127, RA: 160, RB: 320 },
+    x: 'A frase "a potência depende da resistência" está incompleta. É preciso saber o que fica fixo. Com tensão fixa, P = U²/R (inversa). Com corrente fixa, P = R·I² (direta).',
+    q: 'Em casa, as lâmpadas e o secador ficam ligados com tensão fixa ou corrente fixa?',
+    a: 'Tensão fixa: todos os aparelhos ficam em paralelo na tomada. Por isso o aparelho de menor resistência é o de maior potência.' },
+];
+let step = 0;
+const stepsEl = $('steps');
+steps.forEach((s, i) => {
+  const b = document.createElement('button'); b.textContent = i + 1; b.setAttribute('aria-label', `Passo ${i + 1}: ${s.t}`);
+  b.addEventListener('click', () => goStep(i)); stepsEl.append(b);
+});
+function goStep(i) {
+  step = i; const s = steps[i];
+  Object.assign(state, s.apply); render();
+  $('gTitle').textContent = `${i + 1}. ${s.t}`; $('gText').textContent = s.x; $('gQ').textContent = s.q;
+  $('gA').textContent = s.a; $('gA').hidden = true; $('gReveal').hidden = false;
+  [...stepsEl.children].forEach((b, k) => { if (k === i) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current'); b.classList.toggle('done', k < i); });
+  $('gPrev').disabled = i === 0;
+  $('gNext').textContent = i === steps.length - 1 ? 'Recomeçar' : 'Próximo passo';
+}
+$('gReveal').addEventListener('click', () => { $('gA').hidden = false; $('gReveal').hidden = true; });
+$('gPrev').addEventListener('click', () => goStep(Math.max(0, step - 1)));
+$('gNext').addEventListener('click', () => goStep((step + 1) % steps.length));
+
+$('mode').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { state.mode = b.dataset.v; render(); } });
+$('u').addEventListener('input', e => { state.U = +e.target.value; render(); });
+$('i').addEventListener('input', e => { state.I = +e.target.value; render(); });
+$('ra').addEventListener('input', e => { state.RA = +e.target.value; render(); });
+$('rb').addEventListener('input', e => { state.RB = +e.target.value; render(); });
+$('dblA').addEventListener('click', () => { state.RA = Math.min(640, state.RA * 2); render(); });
+$('halfA').addEventListener('click', () => { state.RA = Math.max(20, Math.round(state.RA / 20) * 10); render(); });
+$('swap').addEventListener('click', () => { [state.RA, state.RB] = [state.RB, state.RA]; render(); });
+$('reset').addEventListener('click', () => { Object.assign(state, DEFAULTS); render(); });
+$('spin').addEventListener('change', e => { state.spin = e.target.checked; });
+$('labels').addEventListener('change', e => { state.labels = e.target.checked; });
+$('rec').addEventListener('click', () => { record(state.RA); render(); });
+$('auto').addEventListener('click', () => { exp[state.mode] = exp[state.mode].filter(r => r.fixed === fixedNow()); for (const R of [80, 160, 320, 640]) record(R); render(); });
+$('clear').addEventListener('click', () => { exp[state.mode] = []; render(); });
+
+state.spin = !reduce; $('spin').checked = state.spin;
+goStep(0);
+requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>

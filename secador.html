@@ -1,0 +1,710 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}.back{font-weight:700;color:var(--muted);text-decoration:none;font-size:14px}.back:hover{color:var(--ink)}</style><title>Secador Quente e Morno</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: roteiro guiado no topo; palco 3D escuro + painel; mudanças e medidores; circuito e gráfico P×R; alternativas. */
+:root {
+  --bg: #eef1f4; --surface: #ffffff; --ink: #16202b; --muted: #576575; --line: #d3dae2;
+  --copper: #b0581f; --hot: #c2410c; --warm: #a86f0c; --cool: #2a73c0; --ok: #1f8a4c; --bad: #b8322a;
+  --stage: #0e151d; --stage-ink: #dce6ef; --soft: #f6f8fa;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", Consolas, ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0b1016; --surface: #141c25; --ink: #e5ecf2; --muted: #93a2b2; --line: #263240; --soft: #1a2430;
+  --copper: #e08b52; --hot: #ff7a45; --warm: #e2ad3c; --cool: #5ea2ea; --ok: #4cc27f; --bad: #ff6b60; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0b1016; --surface: #141c25; --ink: #e5ecf2; --muted: #93a2b2; --line: #263240; --soft: #1a2430;
+  --copper: #e08b52; --hot: #ff7a45; --warm: #e2ad3c; --cool: #5ea2ea; --ok: #4cc27f; --bad: #ff6b60; color-scheme: dark }
+
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.5; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-block: 20px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 20px; }
+header { display: grid; gap: 6px; }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--copper); }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(28px, 4vw, 44px); line-height: 1.05; margin: 0; text-wrap: balance; }
+.lede { color: var(--muted); max-width: 70ch; margin: 0; }
+h2 { font-family: var(--f-display); font-weight: 600; font-size: 20px; margin: 0; text-wrap: balance; }
+.small { font-size: 13px; color: var(--muted); margin: 0; }
+
+/* roteiro */
+.guide { background: var(--surface); border: 2px solid var(--copper); border-radius: 14px; padding: 18px; display: grid; gap: 14px; }
+.guide-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.steps { display: flex; flex-wrap: wrap; gap: 6px; }
+.steps button { font: inherit; font-family: var(--f-mono); font-weight: 700; width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid var(--line); background: var(--soft); color: var(--muted); cursor: pointer; }
+.steps button[aria-current="step"] { background: var(--copper); border-color: var(--copper); color: #fff; }
+.steps button.done { color: var(--copper); border-color: var(--copper); }
+.guide-body { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 18px; }
+@media (max-width: 800px) { .guide-body { grid-template-columns: minmax(0, 1fr); } }
+.guide h3 { font-family: var(--f-display); font-weight: 800; font-size: clamp(20px, 2.6vw, 26px); margin: 0 0 6px; line-height: 1.15; }
+.guide p { margin: 0; max-width: 65ch; }
+.ask { background: var(--soft); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; align-content: start; }
+.ask .k { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--copper); font-weight: 700; }
+.ask .q { font-weight: 700; font-size: 17px; }
+.ask .a { border-left: 3px solid var(--ok); padding-left: 10px; }
+.nav { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.btn { font: inherit; font-weight: 700; border: 1px solid var(--ink); background: transparent; color: var(--ink); border-radius: 10px; padding: 8px 14px; cursor: pointer; }
+.btn:hover { background: var(--ink); color: var(--bg); }
+.btn.primary { background: var(--copper); border-color: var(--copper); color: #fff; }
+.btn.primary:hover { filter: brightness(1.1); }
+.btn:disabled { opacity: .4; cursor: default; background: transparent; color: var(--ink); }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--cool); outline-offset: 2px; }
+
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 20px; align-items: start; }
+@media (max-width: 900px) { .main { grid-template-columns: minmax(0, 1fr); } }
+
+.stage { position: relative; background: var(--stage); border-radius: 14px; overflow: hidden; aspect-ratio: 16 / 10; max-width: 100%; min-height: 300px; }
+.stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.badge { position: absolute; top: 14px; left: 14px; font-family: var(--f-mono); font-weight: 700; font-size: clamp(14px, 2vw, 20px);
+  color: #fff; padding: 6px 12px; border-radius: 8px; background: #c2410c; transition: background .3s; }
+.badge.morno { background: #a06a0a; }
+.badge.hipo { outline: 2px dashed #fff; outline-offset: 2px; }
+.hint { position: absolute; top: 18px; right: 14px; font-size: 12px; color: var(--stage-ink); opacity: .6; }
+.legend { position: absolute; left: 14px; bottom: 12px; right: 14px; display: flex; flex-wrap: wrap; gap: 4px 16px;
+  font-size: 13px; color: var(--stage-ink); opacity: .9; pointer-events: none; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+.lab3d { position: absolute; left: 0; top: 0; transform: translate(-50%, -100%); pointer-events: none; white-space: nowrap;
+  font-size: 13px; font-weight: 700; color: #fff; background: rgba(14, 21, 29, .78); border: 1px solid rgba(220, 230, 239, .35);
+  padding: 2px 8px; border-radius: 6px; transition: opacity .3s; }
+.lab3d.dim { opacity: .45; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 18px; }
+.ctl { display: grid; gap: 8px; }
+.ctl > label, .ctl > .lab { font-weight: 700; font-size: 14px; display: flex; justify-content: space-between; gap: 8px; }
+.ctl .val { font-family: var(--f-mono); color: var(--copper); }
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 3px; }
+.seg button { font: inherit; font-weight: 700; border: 0; border-radius: 7px; padding: 9px 6px; background: transparent; color: var(--muted); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.seg.mode button[data-v="quente"][aria-pressed="true"] { background: #c2410c; color: #fff; }
+.seg.mode button[data-v="morno"][aria-pressed="true"] { background: #a06a0a; color: #fff; }
+input[type=range] { width: 100%; accent-color: var(--copper); }
+.checks { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; }
+.checks label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+.warn { font-size: 13px; color: var(--bad); font-weight: 700; }
+
+/* mudanças quente → morno */
+.delta { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.delta .t { font-weight: 700; }
+.chip { font-family: var(--f-mono); font-weight: 700; font-size: 15px; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--soft); white-space: nowrap; }
+.chip.up { color: var(--hot); border-color: var(--hot); }
+.chip.down { color: var(--cool); border-color: var(--cool); }
+.chip.same { color: var(--ok); border-color: var(--ok); }
+
+.readouts { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 700px) { .readouts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.ro { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; gap: 2px; min-width: 0; transition: box-shadow .3s; }
+.ro.flash { box-shadow: 0 0 0 3px var(--copper); }
+.ro .k { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.ro .v { font-family: var(--f-mono); font-weight: 700; font-size: clamp(20px, 2.6vw, 30px); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ro .u { font-size: .55em; color: var(--muted); margin-left: 3px; }
+.ro .tag { font-size: 12px; font-weight: 700; }
+.ro .tag.fixo { color: var(--ok); } .ro .tag.muda { color: var(--hot); }
+.ro.big .v { color: var(--hot); }
+.eq { font-family: var(--f-mono); font-size: clamp(15px, 2vw, 19px); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; overflow-x: auto; white-space: nowrap; }
+
+.lower { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 900px) { .lower { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.schem, .graphbox { overflow-x: auto; position: relative; }
+.schem svg, .graphbox svg { width: 100%; min-width: 320px; height: auto; display: block; }
+.graphbox svg text { font-family: var(--f-mono); }
+.tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--bg); font-family: var(--f-mono); font-size: 12px;
+  padding: 4px 8px; border-radius: 6px; white-space: nowrap; transform: translate(-50%, -130%); }
+
+.alts { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.alts li { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 4px 10px; }
+.alts .L { font-family: var(--f-display); font-weight: 800; font-size: 20px; color: var(--copper); line-height: 1.2; }
+.alts .why { grid-column: 2; font-size: 14px; display: none; }
+.alts.show .why { display: block; }
+.alts.show li.right { border-color: var(--ok); border-width: 2px; }
+.alts.show li.right .L { color: var(--ok); }
+.alts.show li.wrong .why b { color: var(--bad); }
+.alts.show li.right .why b { color: var(--ok); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html">&larr; Laboratório de Eletrodinâmica</a>
+  <header>
+    <span class="eyebrow">Eletrodinâmica · UFAL 2010 (adaptada)</span>
+    <h1>Secador de cabelo: quente ou morno?</h1>
+    <p class="lede">A tomada mantém a tensão fixa. A chave do secador só muda quanto fio resistor a corrente precisa atravessar. Siga o roteiro ou explore livremente os controles.</p>
+  </header>
+
+  <section class="guide" aria-label="Roteiro da aula">
+    <div class="guide-top">
+      <h2>Roteiro da aula</h2>
+      <div class="steps" id="steps"></div>
+    </div>
+    <div class="guide-body">
+      <div>
+        <h3 id="gTitle"></h3>
+        <p id="gText"></p>
+      </div>
+      <div class="ask">
+        <span class="k">Pergunte à turma</span>
+        <span class="q" id="gQ"></span>
+        <span class="a" id="gA" hidden></span>
+        <div class="nav">
+          <button class="btn" id="gReveal">Ver resposta</button>
+          <button class="btn" id="gPrev">Voltar</button>
+          <button class="btn primary" id="gNext">Próximo passo</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="main">
+    <div class="stage" id="stage">
+      <div class="badge" id="badge">QUENTE · 1195 W</div>
+      <div class="hint">Arraste para girar · role para aproximar</div>
+      <div class="lab3d" id="labR1">R₁</div>
+      <div class="lab3d" id="labR2">R₂</div>
+      <div class="lab3d" id="labSw">Chave</div>
+      <div class="lab3d" id="labAir">Ar 73 °C</div>
+      <div class="legend">
+        <span><i style="background:#9fd8ff"></i>Pontos azuis: corrente (mais rápidos = corrente maior)</span>
+        <span><i style="background:#ff7a2a"></i>Brilho do fio: potência dissipada</span>
+      </div>
+    </div>
+
+    <aside class="panel" aria-label="Controles">
+      <div class="ctl">
+        <span class="lab">Posição da chave</span>
+        <div class="seg mode" id="mode">
+          <button data-v="quente" aria-pressed="true">Quente</button>
+          <button data-v="morno" aria-pressed="false">Morno</button>
+        </div>
+        <p class="small">Quente: só R₁. Morno: R₁ + R₂ em série.</p>
+      </div>
+      <div class="ctl">
+        <label for="v">Tensão da tomada <span class="val" id="vVal">127 V</span></label>
+        <div class="seg" id="vPreset">
+          <button data-v="127" aria-pressed="true">127 V</button>
+          <button data-v="220" aria-pressed="false">220 V</button>
+        </div>
+        <input type="range" id="v" min="100" max="240" step="1" value="127">
+      </div>
+      <div class="ctl">
+        <label for="r1">R₁ (trecho principal) <span class="val" id="r1Val">13,5 Ω</span></label>
+        <input type="range" id="r1" min="5" max="40" step="0.5" value="13.5">
+      </div>
+      <div class="ctl">
+        <label for="r2">R₂ (trecho extra) <span class="val" id="r2Val">13,5 Ω</span></label>
+        <input type="range" id="r2" min="0" max="40" step="0.5" value="13.5">
+      </div>
+      <div class="ctl">
+        <span class="lab">O que a fonte mantém fixo?</span>
+        <div class="seg" id="source">
+          <button data-v="V" aria-pressed="true">Tensão (tomada)</button>
+          <button data-v="I" aria-pressed="false">Corrente (hipótese)</button>
+        </div>
+        <span class="warn" id="hipoWarn" hidden>Hipótese das alternativas C e D: corrente fixa em 9 A. Uma tomada real não funciona assim.</span>
+      </div>
+      <div class="checks">
+        <label><input type="checkbox" id="inside" checked> Ver interior</label>
+        <label><input type="checkbox" id="spin"> Girar sozinho</label>
+        <label><input type="checkbox" id="labels" checked> Etiquetas</label>
+      </div>
+      <button class="btn" id="reset">Restaurar valores</button>
+    </aside>
+  </section>
+
+  <section class="delta" aria-live="polite">
+    <span class="t">Ao passar de Quente para Morno:</span>
+    <span class="chip" id="dU"></span><span class="chip" id="dR"></span><span class="chip" id="dI"></span><span class="chip" id="dP"></span>
+  </section>
+
+  <section class="readouts">
+    <div class="ro" id="roV"><span class="k">Tensão U</span><span class="v" id="oV"></span><span class="tag fixo" id="tV">fixa</span></div>
+    <div class="ro" id="roR"><span class="k">Resistência R</span><span class="v" id="oR"></span><span class="tag muda">muda com a chave</span></div>
+    <div class="ro" id="roI"><span class="k">Corrente I</span><span class="v" id="oI"></span><span class="tag muda" id="tI">muda</span></div>
+    <div class="ro big" id="roP"><span class="k">Potência P</span><span class="v" id="oP"></span><span class="tag muda">muda</span></div>
+    <div class="ro" id="roT"><span class="k">Ar na saída*</span><span class="v" id="oT"></span><span class="small">*estimativa, ar a 25 °C</span></div>
+  </section>
+
+  <div class="eq" id="eq"></div>
+
+  <section class="lower">
+    <div class="card">
+      <h2>Circuito do secador</h2>
+      <div class="schem">
+        <svg viewBox="0 0 360 175" role="img" aria-label="Esquema: tomada ligada a R1 e R2 em série, com uma chave que pode desviar a corrente de R2.">
+          <g fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+            <path d="M40,97 V70 H80"/>
+            <path id="zig1" d=""/>
+            <path d="M140,70 H200"/>
+            <path id="zig2" d=""/>
+            <path d="M260,70 H330 V150 H40 V133"/>
+            <path d="M180,70 V30 H215"/>
+            <path d="M265,30 H300 V70"/>
+            <line id="blade" x1="215" y1="30" x2="265" y2="30" style="transition: all .3s"/>
+          </g>
+          <circle cx="40" cy="115" r="18" fill="var(--surface)" stroke="var(--muted)" stroke-width="2.5"/>
+          <text x="40" y="121" text-anchor="middle" font-size="18" fill="var(--ink)">~</text>
+          <circle cx="215" cy="30" r="4" fill="var(--ink)"/><circle cx="265" cy="30" r="4" fill="var(--ink)"/>
+          <circle cx="180" cy="70" r="3.5" fill="var(--ink)"/><circle cx="300" cy="70" r="3.5" fill="var(--ink)"/>
+          <path id="flow" d="" fill="none" stroke="#ff8a3d" stroke-width="3" stroke-dasharray="3 11" stroke-linecap="round"/>
+          <g font-family="JetBrains Mono, monospace" font-size="13" fill="var(--ink)">
+            <text x="110" y="98" text-anchor="middle">R₁</text>
+            <text x="230" y="98" text-anchor="middle" id="r2label">R₂</text>
+            <text x="240" y="18" text-anchor="middle" font-size="11" fill="var(--muted)" id="swlabel">chave fechada</text>
+            <text x="64" y="120" font-size="11" fill="var(--muted)" id="srcLabel">127 V</text>
+            <text x="190" y="140" text-anchor="middle" id="ilabel">I = 9,4 A</text>
+          </g>
+        </svg>
+      </div>
+      <p class="small" id="schemNote"></p>
+    </div>
+
+    <div class="card">
+      <h2>Potência em função da resistência</h2>
+      <p class="small" id="graphNote"></p>
+      <div class="graphbox" id="graphbox">
+        <svg id="graph" viewBox="0 0 420 280" role="img" aria-label="Gráfico da potência em função da resistência, com as posições quente e morno marcadas."></svg>
+        <div class="tip" id="tip" hidden></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Alternativas</h2>
+    <ol class="alts" id="alts">
+      <li class="right"><span class="L">A</span><span>na posição quente, a resistência é menor, porque a diferença de potencial é constante.</span>
+        <span class="why"><b>Correta.</b> A tomada fixa U. Com P = U²/R, menor R dá maior potência e o ar sai mais quente. Veja no medidor: U não muda quando você troca a chave.</span></li>
+      <li class="wrong"><span class="L">B</span><span>na posição morno, a resistência é menor, porque a potência é diretamente proporcional à resistência.</span>
+        <span class="why"><b>Errada.</b> No morno a resistência é maior (R₁ + R₂). Com U fixa, P é inversamente proporcional a R: a curva do gráfico desce.</span></li>
+      <li class="wrong"><span class="L">C</span><span>na posição quente, a resistência é maior, porque a corrente elétrica é constante.</span>
+        <span class="why"><b>Errada.</b> A resistência é menor no quente, e a corrente muda (I = U/R). Ative a hipótese "Corrente fixa" para ver que, nesse mundo, o maior R esquentaria mais. Não é o caso da tomada.</span></li>
+      <li class="wrong"><span class="L">D</span><span>na posição morno, a resistência é maior, porque a corrente elétrica é constante.</span>
+        <span class="why"><b>Errada.</b> A primeira parte está certa, mas a justificativa não. Se a corrente fosse constante, P = R·I² e o morno seria o mais quente. Quem fica constante é a tensão.</span></li>
+      <li class="wrong"><span class="L">E</span><span>na posição quente, a resistência é menor, porque a corrente elétrica e a diferença de potencial são constantes.</span>
+        <span class="why"><b>Errada.</b> Se U e I fossem ambas fixas, R = U/I também seria fixa e a chave não mudaria nada. A corrente varia.</span></li>
+    </ol>
+    <button class="btn" id="reveal">Mostrar análise</button>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(() => {
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const I_FIX = 9;
+const DEFAULTS = { mode: 'quente', V: 127, R1: 13.5, R2: 13.5, source: 'V' };
+const state = { ...DEFAULTS, inside: true, spin: false, labels: true };
+const $ = id => document.getElementById(id);
+const fmt = (x, d = 1) => x.toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
+
+function solve(mode) {
+  const R = mode === 'quente' ? state.R1 : state.R1 + state.R2;
+  let I, V;
+  if (state.source === 'V') { V = state.V; I = V / R; } else { I = I_FIX; V = I * R; }
+  const P = V * I;
+  return { R, I, V, P, p1: I * I * state.R1, p2: mode === 'quente' ? 0 : I * I * state.R2, T: 25 + P / (0.025 * 1005) };
+}
+
+/* ---------- 3D ---------- */
+const stage = $('stage');
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+stage.prepend(renderer.domElement);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(40, 1.6, 0.1, 100);
+camera.position.set(2.2, 1.6, 7.2);
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.target.set(1.0, -0.5, 0);
+controls.enableDamping = true; controls.minDistance = 3; controls.maxDistance = 14;
+controls.autoRotateSpeed = 0.7;
+
+scene.add(new THREE.HemisphereLight(0xcfe3ff, 0x1a1410, 0.75));
+const key = new THREE.DirectionalLight(0xffffff, 0.8); key.position.set(3, 5, 6); scene.add(key);
+const grid = new THREE.GridHelper(14, 28, 0x2a3a4a, 0x1a2633); grid.position.y = -3.2; scene.add(grid);
+
+const shellMat = new THREE.MeshStandardMaterial({ color: 0xdfe6ea, roughness: 0.45, metalness: 0.05, transparent: true, side: THREE.DoubleSide });
+const darkMat = new THREE.MeshStandardMaterial({ color: 0x2b3440, roughness: 0.6 });
+const dryer = new THREE.Group(); scene.add(dryer);
+
+const body = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 2.6, 48, 1, true), shellMat);
+body.rotation.z = -Math.PI / 2; dryer.add(body);
+const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.85, 0.8, 48, 1, true), shellMat);
+nozzle.rotation.z = -Math.PI / 2; nozzle.position.x = 1.7; dryer.add(nozzle);
+const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.04, 12, 48), darkMat);
+mouth.rotation.y = Math.PI / 2; mouth.position.x = 2.1; dryer.add(mouth);
+for (const r of [0.3, 0.55, 0.8]) {
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(r, 0.03, 8, 40), darkMat);
+  ring.rotation.y = Math.PI / 2; ring.position.x = -1.3; dryer.add(ring);
+}
+const rearRim = new THREE.Mesh(new THREE.TorusGeometry(0.9, 0.05, 12, 48), darkMat);
+rearRim.rotation.y = Math.PI / 2; rearRim.position.x = -1.3; dryer.add(rearRim);
+
+const fan = new THREE.Group(); fan.position.x = -1.05; dryer.add(fan);
+for (let i = 0; i < 6; i++) {
+  const b = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.62, 0.16), darkMat);
+  b.position.y = 0.33; const g = new THREE.Group(); g.rotation.x = i * Math.PI / 3; b.rotation.y = 0.5; g.add(b); fan.add(g);
+}
+fan.add(new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 12), darkMat));
+
+const micaMat = new THREE.MeshStandardMaterial({ color: 0xd9c9a3, roughness: 0.9, transparent: true, opacity: 0.55 });
+for (const a of [0, Math.PI / 2]) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(2.1, 1.0, 0.02), micaMat);
+  m.position.x = 0.15; m.rotation.x = a; dryer.add(m);
+}
+
+class Helix extends THREE.Curve {
+  constructor(x0, x1, r, turns) { super(); Object.assign(this, { x0, x1, r, turns }); }
+  getPoint(t, out = new THREE.Vector3()) {
+    const a = t * this.turns * Math.PI * 2;
+    return out.set(this.x0 + t * (this.x1 - this.x0), this.r * Math.cos(a), this.r * Math.sin(a));
+  }
+}
+const dot = document.createElement('canvas'); dot.width = dot.height = 64;
+{ const c = dot.getContext('2d'); const g = c.createRadialGradient(32, 32, 0, 32, 32, 32);
+  g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.fillRect(0, 0, 64, 64); }
+const dotTex = new THREE.CanvasTexture(dot);
+
+const M = 70; // cargas por resistor
+function makeCoil(x0, x1) {
+  const helix = new Helix(x0, x1, 0.48, 14);
+  const mat = new THREE.MeshStandardMaterial({ color: 0x8a4b22, roughness: 0.4, metalness: 0.6, emissive: 0x000000 });
+  const mesh = new THREE.Mesh(new THREE.TubeGeometry(helix, 600, 0.035, 8), mat);
+  const light = new THREE.PointLight(0xff7a2a, 0, 3.5); light.position.x = (x0 + x1) / 2;
+  const t = Float32Array.from({ length: M }, (_, i) => i / M);
+  const p = new Float32Array(M * 3);
+  const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(p, 3));
+  const charges = new THREE.Points(geo, new THREE.PointsMaterial({ size: 0.16, map: dotTex, color: 0x9fd8ff,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+  dryer.add(mesh, light, charges);
+  return { helix, mat, light, g: 0, t, p, geo, charges };
+}
+const coil1 = makeCoil(0.2, 1.15);   // R1, perto do bocal
+const coil2 = makeCoil(-0.85, 0.1);  // R2, atrás
+const tmpV = new THREE.Vector3();
+
+const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.38, 1.9, 32), shellMat.clone());
+handle.material.transparent = false;
+handle.position.set(-0.3, -1.65, 0); handle.rotation.z = 0.15; dryer.add(handle);
+const knob = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.2, 0.12), new THREE.MeshStandardMaterial({ color: 0xc2410c, roughness: 0.4 }));
+knob.position.set(0, 0.45, 0.34); handle.add(knob);
+const slot = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.55, 0.06), darkMat);
+slot.position.set(0, 0.28, 0.33); handle.add(slot);
+const cord = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([
+  new THREE.Vector3(0, -0.95, 0), new THREE.Vector3(0, -1.3, 0), new THREE.Vector3(0.4, -1.5, 0.5), new THREE.Vector3(1.6, -1.55, 1.0)
+]), 40, 0.05, 8), darkMat);
+handle.add(cord);
+
+/* ar saindo */
+const N = 800;
+const pos = new Float32Array(N * 3), col = new Float32Array(N * 3), vel = new Float32Array(N * 3);
+function spawn(i, scatter) {
+  const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()) * 0.5;
+  pos[i * 3] = 2.1 + (scatter ? Math.random() * 4.5 : 0);
+  pos[i * 3 + 1] = r * Math.cos(a); pos[i * 3 + 2] = r * Math.sin(a);
+  vel[i * 3] = 2.6 + Math.random() * 1.2; vel[i * 3 + 1] = r * Math.cos(a) * 0.35; vel[i * 3 + 2] = r * Math.sin(a) * 0.35;
+  if (scatter) { pos[i * 3 + 1] *= 1 + (pos[i * 3] - 2.1) * 0.12; pos[i * 3 + 2] *= 1 + (pos[i * 3] - 2.1) * 0.12; }
+}
+for (let i = 0; i < N; i++) spawn(i, true);
+const pGeo = new THREE.BufferGeometry();
+pGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+pGeo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+scene.add(new THREE.Points(pGeo, new THREE.PointsMaterial({ size: 0.13, map: dotTex, vertexColors: true,
+  transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })));
+
+const cold = new THREE.Color(0x5aa2ff), warm = new THREE.Color(0xffb02e), hot = new THREE.Color(0xff4a12);
+const airColor = new THREE.Color();
+function tempColor(T) {
+  const t = Math.min(Math.max((T - 25) / 75, 0), 1);
+  return t < 0.5 ? airColor.copy(cold).lerp(warm, t * 2) : airColor.copy(warm).lerp(hot, (t - 0.5) * 2);
+}
+const ramp = [[0, 0x000000], [0.3, 0x5a0a00], [0.65, 0xd43a00], [1, 0xffb040]].map(([s, c]) => [s, new THREE.Color(c)]);
+function glowColor(g, out) {
+  for (let i = 1; i < ramp.length; i++) if (g <= ramp[i][0]) {
+    const [s0, c0] = ramp[i - 1], [s1, c1] = ramp[i];
+    return out.copy(c0).lerp(c1, (g - s0) / (s1 - s0));
+  }
+  return out.copy(ramp[ramp.length - 1][1]);
+}
+
+/* etiquetas 3D */
+const labels = [
+  { el: $('labR1'), at: () => tmpV.set(0.67, 1.0, 0) },
+  { el: $('labR2'), at: () => tmpV.set(-0.37, 1.0, 0) },
+  { el: $('labSw'), at: () => knob.getWorldPosition(tmpV).add(new THREE.Vector3(-0.6, 0, 0)) },
+  { el: $('labAir'), at: () => tmpV.set(3.6, 0.75, 0) },
+];
+function placeLabels() {
+  const w = stage.clientWidth, h = stage.clientHeight;
+  for (const l of labels) {
+    l.el.hidden = !state.labels;
+    if (!state.labels) continue;
+    const v = l.at().project(camera);
+    l.el.style.left = ((v.x + 1) / 2 * w).toFixed(1) + 'px';
+    l.el.style.top = ((1 - v.y) / 2 * h).toFixed(1) + 'px';
+    l.el.style.visibility = v.z > 1 ? 'hidden' : 'visible';
+  }
+}
+
+function resize() {
+  const w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stage); resize();
+
+let knobY = 0.45, t0 = performance.now(), dashOff = 0;
+function frame(now) {
+  const dt = Math.min((now - t0) / 1000, 0.05); t0 = now;
+  const s = solve(state.mode);
+  for (const [c, pw, on] of [[coil1, s.p1, true], [coil2, s.p2, state.mode === 'morno']]) {
+    const target = Math.pow(Math.min(pw / 1000, 1), 0.8);
+    c.g += (target - c.g) * Math.min(dt * 3, 1);
+    glowColor(c.g, c.mat.emissive); c.light.intensity = c.g * 2.2;
+    c.charges.visible = on;
+    if (on) {
+      for (let i = 0; i < M; i++) {
+        c.t[i] = (c.t[i] + dt * s.I * 0.018) % 1;
+        c.helix.getPoint(c.t[i], tmpV); c.p[i * 3] = tmpV.x; c.p[i * 3 + 1] = tmpV.y; c.p[i * 3 + 2] = tmpV.z;
+      }
+      c.geo.attributes.position.needsUpdate = true;
+    }
+  }
+  knobY += ((state.mode === 'quente' ? 0.45 : 0.1) - knobY) * Math.min(dt * 8, 1);
+  knob.position.y = knobY;
+  fan.rotation.x += dt * 22;
+  const c = tempColor(s.T);
+  for (let i = 0; i < N; i++) {
+    const k = i * 3;
+    pos[k] += vel[k] * dt; pos[k + 1] += vel[k + 1] * dt; pos[k + 2] += vel[k + 2] * dt;
+    if (pos[k] > 6.6) spawn(i, false);
+    const fade = Math.max(0, 1 - (pos[k] - 2.1) / 4.5) * 0.55;
+    col[k] = c.r * fade; col[k + 1] = c.g * fade; col[k + 2] = c.b * fade;
+  }
+  pGeo.attributes.position.needsUpdate = true; pGeo.attributes.color.needsUpdate = true;
+  controls.autoRotate = state.spin;
+  controls.update();
+  renderer.render(scene, camera);
+  placeLabels();
+
+  dashOff -= s.I * 9 * dt;
+  flow.setAttribute('stroke-dashoffset', dashOff.toFixed(1));
+  requestAnimationFrame(frame);
+}
+
+/* ---------- esquema ---------- */
+const flow = $('flow');
+function zig(x0, x1, y) {
+  let d = '', n = 6, w = (x1 - x0) / n;
+  for (let i = 0; i < n; i++) d += ` L${x0 + w * (i + 0.25)},${y - 8} L${x0 + w * (i + 0.75)},${y + 8}`;
+  return d + ` L${x1},${y}`;
+}
+$('zig1').setAttribute('d', 'M80,70' + zig(80, 140, 70));
+$('zig2').setAttribute('d', 'M200,70' + zig(200, 260, 70));
+
+/* ---------- gráfico P × R ---------- */
+const G = { w: 420, h: 280, l: 58, r: 18, t: 18, b: 44 };
+function niceStep(raw) {
+  const p = Math.pow(10, Math.floor(Math.log10(raw)));
+  for (const m of [1, 2, 2.5, 5, 10]) if (m * p >= raw) return m * p;
+}
+let gScale = null;
+function drawGraph(q, m) {
+  const hipo = state.source === 'I';
+  const rStep = niceStep(Math.max(q.R, m.R) * 1.5 / 5), Rmax = rStep * 5;
+  const pStep = niceStep(Math.max(q.P, m.P) * 1.3 / 5), Pmax = pStep * 5;
+  const X = R => G.l + R / Rmax * (G.w - G.l - G.r);
+  const Y = P => G.h - G.b - P / Pmax * (G.h - G.t - G.b);
+  const Pof = R => hipo ? I_FIX * I_FIX * R : state.V * state.V / R;
+  gScale = { X, Y, Rmax, Pof };
+  let s = '';
+  for (let i = 0; i <= 5; i++) {
+    const y = Y(i * pStep), x = X(i * rStep);
+    s += `<line x1="${G.l}" x2="${G.w - G.r}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-width="1"/>`;
+    s += `<text x="${G.l - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="var(--muted)">${fmt(i * pStep, 0)}</text>`;
+    s += `<text x="${x}" y="${G.h - G.b + 18}" text-anchor="middle" font-size="11" fill="var(--muted)">${fmt(i * rStep, 0)}</text>`;
+  }
+  s += `<line x1="${G.l}" x2="${G.l}" y1="${G.t}" y2="${G.h - G.b}" stroke="var(--muted)" stroke-width="1"/>`;
+  s += `<text x="${(G.l + G.w - G.r) / 2}" y="${G.h - 6}" text-anchor="middle" font-size="12" fill="var(--ink)">Resistência R (Ω)</text>`;
+  s += `<text x="14" y="${(G.t + G.h - G.b) / 2}" text-anchor="middle" font-size="12" fill="var(--ink)" transform="rotate(-90 14 ${(G.t + G.h - G.b) / 2})">Potência P (W)</text>`;
+  // curva
+  const pts = [];
+  const r0 = hipo ? 0 : Math.max(state.V * state.V / Pmax, Rmax / 400);
+  for (let i = 0; i <= 160; i++) {
+    const R = r0 + (Rmax - r0) * i / 160, P = Pof(R);
+    if (P <= Pmax) pts.push(`${X(R).toFixed(1)},${Y(P).toFixed(1)}`);
+  }
+  s += `<polyline points="${pts.join(' ')}" fill="none" stroke="var(--copper)" stroke-width="2" stroke-linejoin="round"/>`;
+  const lr = Rmax * 0.82, lp = Pof(lr);
+  s += `<text x="${X(lr)}" y="${Y(Math.min(lp, Pmax)) - 10}" text-anchor="middle" font-size="12" fill="var(--ink)">${hipo ? `P = R·I² (I = ${I_FIX} A fixa)` : `P = U²/R (U = ${state.V} V fixa)`}</text>`;
+  // pontos
+  for (const [r, name, color] of [[m, 'Morno', '#a06a0a'], [q, 'Quente', '#c2410c']]) {
+    const on = state.mode === name.toLowerCase(), x = X(r.R), y = Y(r.P);
+    s += `<line x1="${x}" x2="${x}" y1="${y}" y2="${G.h - G.b}" stroke="${color}" stroke-dasharray="3 4" opacity="${on ? 1 : .5}"/>`;
+    s += `<line x1="${G.l}" x2="${x}" y1="${y}" y2="${y}" stroke="${color}" stroke-dasharray="3 4" opacity="${on ? 1 : .5}"/>`;
+    s += `<circle cx="${x}" cy="${y}" r="${on ? 8 : 6}" fill="${color}" stroke="var(--surface)" stroke-width="2" opacity="${on ? 1 : .6}"/>`;
+    s += `<text x="${x + 12}" y="${y - 8}" font-size="12" font-weight="700" fill="var(--ink)" opacity="${on ? 1 : .7}">${name} · ${fmt(r.P, 0)} W</text>`;
+  }
+  s += `<line id="hx" y1="${G.t}" y2="${G.h - G.b}" stroke="var(--muted)" stroke-width="1" visibility="hidden"/>`;
+  s += `<circle id="hd" r="5" fill="var(--copper)" stroke="var(--surface)" stroke-width="2" visibility="hidden"/>`;
+  s += `<rect x="${G.l}" y="${G.t}" width="${G.w - G.l - G.r}" height="${G.h - G.t - G.b}" fill="transparent" id="hit"/>`;
+  $('graph').innerHTML = s;
+  $('graphNote').textContent = hipo
+    ? 'Com corrente fixa, P cresce junto com R: o maior R esquentaria mais. Esse não é o caso da tomada.'
+    : 'Com tensão fixa, a curva desce: quanto maior a resistência, menor a potência. Passe o mouse sobre o gráfico para ler valores.';
+}
+const graph = $('graph'), tip = $('tip');
+graph.addEventListener('pointermove', e => {
+  if (!gScale) return;
+  const box = graph.getBoundingClientRect(), sx = (e.clientX - box.left) / box.width * G.w;
+  const R = (sx - G.l) / (G.w - G.l - G.r) * gScale.Rmax;
+  const hx = $('hx'), hd = $('hd');
+  if (R <= 0.3 || R > gScale.Rmax) { tip.hidden = true; hx.setAttribute('visibility', 'hidden'); hd.setAttribute('visibility', 'hidden'); return; }
+  const P = gScale.Pof(R), x = gScale.X(R), y = gScale.Y(P);
+  hx.setAttribute('x1', x); hx.setAttribute('x2', x); hx.setAttribute('visibility', 'visible');
+  const inside = y >= G.t;
+  hd.setAttribute('cx', x); hd.setAttribute('cy', y); hd.setAttribute('visibility', inside ? 'visible' : 'hidden');
+  tip.hidden = false;
+  tip.textContent = `R = ${fmt(R)} Ω → P = ${fmt(P, 0)} W · I = ${fmt(state.source === 'I' ? I_FIX : state.V / R)} A`;
+  tip.style.left = (x / G.w * box.width) + 'px';
+  tip.style.top = (Math.max(y, G.t) / G.h * box.height) + 'px';
+});
+graph.addEventListener('pointerleave', () => { tip.hidden = true; const hx = $('hx'), hd = $('hd'); if (hx) { hx.setAttribute('visibility', 'hidden'); hd.setAttribute('visibility', 'hidden'); } });
+
+/* ---------- UI ---------- */
+function setSeg(id, v) { for (const b of $(id).querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.v === String(v))); }
+function chip(el, name, a, b) {
+  const r = b / a;
+  if (Math.abs(r - 1) < 0.005) { el.className = 'chip same'; el.textContent = `${name} = igual`; return; }
+  const up = r > 1, k = up ? r : 1 / r;
+  el.className = 'chip ' + (up ? 'up' : 'down');
+  el.textContent = `${name} ${up ? '↑ ×' : '↓ ÷'}${fmt(k, Math.abs(k - Math.round(k)) < 0.05 ? 0 : 1)}`;
+}
+let last = null;
+function render() {
+  const s = solve(state.mode), q = solve('quente'), m = solve('morno');
+  state.inside ? (shellMat.opacity = 0.2, shellMat.depthWrite = false) : (shellMat.opacity = 1, shellMat.depthWrite = true);
+  $('vVal').textContent = state.V + ' V'; $('r1Val').textContent = fmt(state.R1) + ' Ω'; $('r2Val').textContent = fmt(state.R2) + ' Ω';
+  $('v').value = state.V; $('r1').value = state.R1; $('r2').value = state.R2;
+  setSeg('mode', state.mode); setSeg('source', state.source); setSeg('vPreset', state.V);
+  $('oV').innerHTML = fmt(s.V, 0) + '<span class="u">V</span>';
+  $('oR').innerHTML = fmt(s.R) + '<span class="u">Ω</span>';
+  $('oI').innerHTML = fmt(s.I) + '<span class="u">A</span>';
+  $('oP').innerHTML = fmt(s.P, 0) + '<span class="u">W</span>';
+  $('oT').innerHTML = fmt(s.T, 0) + '<span class="u">°C</span>';
+  // destaca os medidores que mudaram
+  if (last) for (const [id, k] of [['roV', 'V'], ['roR', 'R'], ['roI', 'I'], ['roP', 'P'], ['roT', 'T']]) {
+    if (Math.abs(last[k] - s[k]) > 1e-6) { const el = $(id); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 700); }
+  }
+  last = s;
+  const hipo = state.source === 'I';
+  $('tV').textContent = hipo ? 'muda' : 'fixa (tomada)'; $('tV').className = 'tag ' + (hipo ? 'muda' : 'fixo');
+  $('tI').textContent = hipo ? 'fixa (hipótese)' : 'muda'; $('tI').className = 'tag ' + (hipo ? 'fixo' : 'muda');
+  $('hipoWarn').hidden = !hipo;
+  $('eq').textContent = hipo
+    ? `P = R · I² = ${fmt(s.R)} Ω · (${fmt(s.I, 0)} A)² ≈ ${fmt(s.P, 0)} W`
+    : `I = U / R = ${state.V} V / ${fmt(s.R)} Ω ≈ ${fmt(s.I)} A      P = U² / R = (${state.V} V)² / ${fmt(s.R)} Ω ≈ ${fmt(s.P, 0)} W`;
+  const badge = $('badge');
+  badge.textContent = `${state.mode.toUpperCase()} · ${fmt(s.P, 0)} W`;
+  badge.className = 'badge' + (state.mode === 'morno' ? ' morno' : '') + (hipo ? ' hipo' : '');
+
+  chip($('dU'), 'U', q.V, m.V); chip($('dR'), 'R', q.R, m.R); chip($('dI'), 'I', q.I, m.I); chip($('dP'), 'P', q.P, m.P);
+
+  const closed = state.mode === 'quente';
+  $('labR1').textContent = `R₁ · ${fmt(s.p1, 0)} W`;
+  $('labR2').textContent = closed ? 'R₂ · sem corrente' : `R₂ · ${fmt(s.p2, 0)} W`;
+  $('labR2').classList.toggle('dim', closed);
+  $('labSw').textContent = closed ? 'Chave: quente' : 'Chave: morno';
+  $('labAir').textContent = `Ar ≈ ${fmt(s.T, 0)} °C`;
+
+  const blade = $('blade'); blade.setAttribute('x2', closed ? 265 : 258); blade.setAttribute('y2', closed ? 30 : 5);
+  $('swlabel').textContent = closed ? 'chave fechada (atalho)' : 'chave aberta';
+  $('srcLabel').textContent = fmt(s.V, 0) + ' V';
+  $('ilabel').textContent = `I = ${fmt(s.I)} A`;
+  $('r2label').setAttribute('opacity', closed ? 0.4 : 1);
+  flow.setAttribute('d', closed
+    ? 'M40,97 V70 H80' + zig(80, 140, 70) + ' H180 V30 H300 V70 H330 V150 H40 V133'
+    : 'M40,97 V70 H80' + zig(80, 140, 70) + ' H200' + zig(200, 260, 70) + ' H330 V150 H40 V133');
+  $('schemNote').textContent = closed
+    ? 'Na posição quente a chave fecha um atalho: a corrente desvia de R₂ e só atravessa R₁. A resistência total é menor.'
+    : 'Na posição morno o atalho abre: a corrente passa por R₁ e por R₂ em série. A resistência total é maior.';
+  drawGraph(q, m);
+}
+
+/* ---------- roteiro ---------- */
+const steps = [
+  { t: 'Conheça o secador', apply: { mode: 'quente', source: 'V' },
+    x: 'Dentro do secador há dois fios resistores enrolados. A ventoinha empurra o ar através deles. Os pontos azuis representam a corrente; o brilho do fio, a energia convertida em calor.',
+    q: 'Na posição quente, qual dos dois resistores tem corrente?',
+    a: 'Só o R₁. A chave cria um atalho que desvia a corrente do R₂, que fica apagado.' },
+  { t: 'A tomada fixa a tensão', apply: { mode: 'quente', source: 'V' },
+    x: 'Uma tomada residencial fornece sempre a mesma tensão (127 V ou 220 V), não importa o aparelho. Troque entre quente e morno e observe o medidor de tensão U.',
+    q: 'A tensão U mudou quando a chave mudou?',
+    a: 'Não. U continua igual. O que muda é a resistência R do caminho.' },
+  { t: 'Mudando para morno', apply: { mode: 'morno', source: 'V' },
+    x: 'Agora a chave abriu o atalho. A corrente precisa atravessar R₁ e R₂ em série, então a resistência total aumentou. Compare os pontos azuis com o passo anterior.',
+    q: 'Com R maior e U igual, o que acontece com a corrente?',
+    a: 'Diminui. Pela Lei de Ohm, I = U/R: dobrando R, a corrente cai pela metade (veja os pontos azuis mais lentos).' },
+  { t: 'Por que esquenta menos?', apply: { mode: 'morno', source: 'V' },
+    x: 'A potência é P = U·I. Se U é fixa e I diminuiu, P diminui. Substituindo I = U/R, chegamos a P = U²/R. Veja a curva no gráfico: ela desce conforme R aumenta.',
+    q: 'Com U fixa, P é diretamente ou inversamente proporcional a R?',
+    a: 'Inversamente. Menor resistência, maior potência, ar mais quente.' },
+  { t: 'E se a corrente fosse fixa?', apply: { mode: 'morno', source: 'I' },
+    x: 'As alternativas C e D supõem corrente constante. Nesse mundo imaginário, P = R·I² e a resistência maior esquentaria mais. Alterne a chave e veja o gráfico virar uma reta subindo.',
+    q: 'Nessa hipótese, qual posição esquentaria mais? Isso combina com o secador real?',
+    a: 'O morno esquentaria mais, o que contradiz o funcionamento real. A tomada fixa a tensão, não a corrente. Por isso C e D estão erradas.' },
+  { t: 'Conclusão', apply: { mode: 'quente', source: 'V' }, reveal: true,
+    x: 'No secador ligado à tomada, a tensão é constante. A posição quente tem a menor resistência, a maior corrente e a maior potência.',
+    q: 'Qual alternativa descreve isso?',
+    a: 'Alternativa A: na posição quente a resistência é menor, porque a diferença de potencial é constante.' },
+];
+let step = 0;
+const stepsEl = $('steps');
+steps.forEach((s, i) => {
+  const b = document.createElement('button'); b.textContent = i + 1; b.setAttribute('aria-label', `Passo ${i + 1}: ${s.t}`);
+  b.addEventListener('click', () => goStep(i)); stepsEl.append(b);
+});
+function goStep(i) {
+  step = i; const s = steps[i];
+  Object.assign(state, s.apply); render();
+  $('gTitle').textContent = `${i + 1}. ${s.t}`; $('gText').textContent = s.x; $('gQ').textContent = s.q;
+  $('gA').textContent = s.a; $('gA').hidden = true; $('gReveal').hidden = false;
+  [...stepsEl.children].forEach((b, k) => { b.toggleAttribute('aria-current', k === i); if (k === i) b.setAttribute('aria-current', 'step'); b.classList.toggle('done', k < i); });
+  $('gPrev').disabled = i === 0;
+  $('gNext').textContent = i === steps.length - 1 ? 'Recomeçar' : 'Próximo passo';
+  if (s.reveal) setAlts(true);
+}
+$('gReveal').addEventListener('click', () => { $('gA').hidden = false; $('gReveal').hidden = true; });
+$('gPrev').addEventListener('click', () => goStep(Math.max(0, step - 1)));
+$('gNext').addEventListener('click', () => { if (step === steps.length - 1) setAlts(false); goStep((step + 1) % steps.length); });
+
+function setAlts(on) { $('alts').classList.toggle('show', on); $('reveal').textContent = on ? 'Esconder análise' : 'Mostrar análise'; }
+
+$('mode').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { state.mode = b.dataset.v; render(); } });
+$('source').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { state.source = b.dataset.v; render(); } });
+$('vPreset').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { state.V = +b.dataset.v; render(); } });
+$('v').addEventListener('input', e => { state.V = +e.target.value; render(); });
+$('r1').addEventListener('input', e => { state.R1 = +e.target.value; render(); });
+$('r2').addEventListener('input', e => { state.R2 = +e.target.value; render(); });
+$('inside').addEventListener('change', e => { state.inside = e.target.checked; render(); });
+$('spin').addEventListener('change', e => { state.spin = e.target.checked; });
+$('labels').addEventListener('change', e => { state.labels = e.target.checked; });
+$('reset').addEventListener('click', () => { Object.assign(state, DEFAULTS); render(); });
+$('reveal').addEventListener('click', () => setAlts(!$('alts').classList.contains('show')));
+
+state.spin = !reduce; $('spin').checked = state.spin;
+goStep(0);
+requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>

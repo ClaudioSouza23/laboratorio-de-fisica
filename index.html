@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Laboratório de Eletrodinâmica</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: cabeçalho curto e duas fichas de experimento lado a lado (empilham no celular). */
+:root {
+  --bg: #eef1f4; --surface: #ffffff; --ink: #16202b; --muted: #576575; --line: #d3dae2;
+  --copper: #b0581f; --amber: #a8650a; --cool: #2a73c0;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", Consolas, ui-monospace, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #0b1016; --surface: #141c25; --ink: #e5ecf2; --muted: #93a2b2; --line: #263240;
+  --copper: #e08b52; --amber: #e8a540; --cool: #5ea2ea; color-scheme: dark } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.5; }
+.wrap { max-width: 1000px; margin: 0 auto; padding-block: 40px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 28px; }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--copper); }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(32px, 5vw, 52px); line-height: 1.05; margin: 6px 0 10px; text-wrap: balance; }
+.lede { color: var(--muted); max-width: 65ch; margin: 0; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+@media (max-width: 720px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.exp { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px; display: grid; gap: 12px; align-content: start; }
+.exp .k { font-family: var(--f-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; font-weight: 700; }
+.exp.s .k { color: var(--copper); } .exp.l .k { color: var(--amber); }
+h2 { font-family: var(--f-display); font-weight: 800; font-size: 26px; line-height: 1.1; margin: 0; text-wrap: balance; }
+.exp p { margin: 0; }
+.exp ul { margin: 0; padding-left: 20px; color: var(--muted); }
+.f { font-family: var(--f-mono); font-weight: 700; font-size: 18px; }
+.go { justify-self: start; font-weight: 700; text-decoration: none; color: #fff; border-radius: 10px; padding: 10px 18px; margin-top: 4px; }
+.exp.s .go { background: #c2410c; } .exp.l .go { background: #8a5208; }
+.go:hover { filter: brightness(1.1); }
+.go:focus-visible { outline: 3px solid var(--cool); outline-offset: 2px; }
+footer { color: var(--muted); font-size: 14px; display: grid; gap: 4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Física · Eletrodinâmica</span>
+    <h1>Laboratório de Eletrodinâmica</h1>
+    <p class="lede">Duas simulações em 3D sobre potência elétrica. Mude a chave, a tensão, a corrente e as resistências e veja o que acontece. Cada simulação tem um roteiro com perguntas para você responder.</p>
+  </header>
+
+  <section class="grid">
+    <article class="exp s">
+      <span class="k">Experimento 1</span>
+      <h2>Secador de cabelo: quente ou morno?</h2>
+      <span class="f">P = U² / R</span>
+      <p>Por que a posição quente do secador tem a menor resistência? A tomada mantém a tensão fixa.</p>
+      <ul>
+        <li>Veja a corrente passando pelos resistores</li>
+        <li>Compare as duas posições da chave</li>
+        <li>Teste a hipótese de corrente constante</li>
+        <li>Questão UFAL 2010 com análise das alternativas</li>
+      </ul>
+      <a class="go" href="secador.html">Abrir o secador</a>
+    </article>
+    <article class="exp l">
+      <span class="k">Experimento 2</span>
+      <h2>Duas lâmpadas: qual brilha mais?</h2>
+      <span class="f">P = U²/R &nbsp;ou&nbsp; P = R·I²</span>
+      <p>As mesmas duas lâmpadas em paralelo (mesma tensão) e em série (mesma corrente).</p>
+      <ul>
+        <li>Veja qual lâmpada brilha mais em cada ligação</li>
+        <li>Registre medidas e descubra o que fica constante</li>
+        <li>Verifique se a proporção é direta ou inversa</li>
+      </ul>
+      <a class="go" href="lampadas.html">Abrir as lâmpadas</a>
+    </article>
+  </section>
+
+  <footer>
+    <span>Funciona no computador e no celular. No celular, arraste com um dedo para girar e use dois dedos para aproximar.</span>
+    <span>Você precisa de internet para carregar a parte 3D.</span>
+  </footer>
+</div>
+</body>
+</html>
