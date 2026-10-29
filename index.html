@@ -3,80 +3,151 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Laboratório de Eletrodinâmica</title>
+<title>Laboratório de Física</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <style>
-/* Layout: cabeçalho curto e duas fichas de experimento lado a lado (empilham no celular). */
+/* Layout: cabeçalho, simulações disponíveis em destaque, depois as seis áreas da física em grade. */
 :root {
-  --bg: #eef1f4; --surface: #ffffff; --ink: #16202b; --muted: #576575; --line: #d3dae2;
-  --copper: #b0581f; --amber: #a8650a; --cool: #2a73c0;
+  --bg: #eef1f4; --surface: #ffffff; --ink: #16202b; --muted: #576575; --line: #d3dae2; --soft: #f6f8fa;
+  --accent: #b0581f; --cool: #2a73c0;
+  --mec: #2f6f9f; --ter: #c2410c; --opt: #7a5bb5; --ond: #1f8a7a; --ele: #a8650a; --mod: #b8326a;
   --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
   --f-mono: "JetBrains Mono", Consolas, ui-monospace, monospace;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) { :root {
-  --bg: #0b1016; --surface: #141c25; --ink: #e5ecf2; --muted: #93a2b2; --line: #263240;
-  --copper: #e08b52; --amber: #e8a540; --cool: #5ea2ea; color-scheme: dark } }
+  --bg: #0b1016; --surface: #141c25; --ink: #e5ecf2; --muted: #93a2b2; --line: #263240; --soft: #1a2430;
+  --accent: #e08b52; --cool: #5ea2ea;
+  --mec: #6eaee0; --ter: #ff7a45; --opt: #b49bec; --ond: #4fc4b2; --ele: #e8a540; --mod: #f07aa8; color-scheme: dark } }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.5; }
-.wrap { max-width: 1000px; margin: 0 auto; padding-block: 40px 56px;
+.wrap { max-width: 1100px; margin: 0 auto; padding-block: 40px 56px;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
-  display: grid; gap: 28px; }
-.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--copper); }
-h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(32px, 5vw, 52px); line-height: 1.05; margin: 6px 0 10px; text-wrap: balance; }
+  display: grid; gap: 36px; }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(34px, 5.5vw, 58px); line-height: 1.02; margin: 6px 0 10px; text-wrap: balance; }
 .lede { color: var(--muted); max-width: 65ch; margin: 0; }
-.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
-@media (max-width: 720px) { .grid { grid-template-columns: minmax(0, 1fr); } }
-.exp { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px; display: grid; gap: 12px; align-content: start; }
-.exp .k { font-family: var(--f-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; font-weight: 700; }
-.exp.s .k { color: var(--copper); } .exp.l .k { color: var(--amber); }
-h2 { font-family: var(--f-display); font-weight: 800; font-size: 26px; line-height: 1.1; margin: 0; text-wrap: balance; }
-.exp p { margin: 0; }
-.exp ul { margin: 0; padding-left: 20px; color: var(--muted); }
-.f { font-family: var(--f-mono); font-weight: 700; font-size: 18px; }
-.go { justify-self: start; font-weight: 700; text-decoration: none; color: #fff; border-radius: 10px; padding: 10px 18px; margin-top: 4px; }
-.exp.s .go { background: #c2410c; } .exp.l .go { background: #8a5208; }
-.go:hover { filter: brightness(1.1); }
-.go:focus-visible { outline: 3px solid var(--cool); outline-offset: 2px; }
+h2 { font-family: var(--f-display); font-weight: 800; font-size: 24px; margin: 0 0 14px; }
+h3 { font-family: var(--f-display); font-weight: 800; font-size: 24px; line-height: 1.1; margin: 0; text-wrap: balance; }
+section { display: grid; }
+
+.areanav { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.areanav a { text-decoration: none; font-weight: 700; font-size: 14px; color: var(--ink); border: 1px solid var(--line); background: var(--surface);
+  padding: 6px 12px; border-radius: 999px; display: inline-flex; gap: 8px; align-items: center; }
+.areanav a:hover { border-color: var(--ink); }
+.areanav i, .area .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; }
+.areanav .n { font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
+
+.sims { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+@media (max-width: 720px) { .sims { grid-template-columns: minmax(0, 1fr); } }
+.sim { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px; display: grid; gap: 10px; align-content: start; }
+.sim .k { font-family: var(--f-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; font-weight: 700; color: var(--ele); }
+.sim p { margin: 0; }
+.sim ul { margin: 0; padding-left: 20px; color: var(--muted); }
+.f { font-family: var(--f-mono); font-weight: 700; font-size: 17px; }
+.go { justify-self: start; font-weight: 700; text-decoration: none; color: #fff; background: #8a5208; border-radius: 10px; padding: 10px 18px; margin-top: 4px; }
+.go:hover { filter: brightness(1.12); }
+a:focus-visible { outline: 3px solid var(--cool); outline-offset: 2px; }
+
+.areas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 900px) { .areas { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .areas { grid-template-columns: minmax(0, 1fr); } }
+.area { background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--c); border-radius: 12px; padding: 16px 18px; display: grid; gap: 8px; align-content: start; scroll-margin-top: 16px; }
+.area .head { display: flex; align-items: center; gap: 8px; }
+.area .dot { background: var(--c); }
+.area h4 { font-family: var(--f-display); font-weight: 800; font-size: 19px; margin: 0; }
+.area .topics { font-size: 14px; color: var(--muted); margin: 0; }
+.area ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.area li a { font-weight: 700; color: var(--ink); text-decoration-color: var(--c); text-underline-offset: 3px; }
+.area .empty { font-size: 14px; color: var(--muted); font-style: italic; margin: 0; }
 footer { color: var(--muted); font-size: 14px; display: grid; gap: 4px; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <span class="eyebrow">Física · Eletrodinâmica</span>
-    <h1>Laboratório de Eletrodinâmica</h1>
-    <p class="lede">Duas simulações em 3D sobre potência elétrica. Mude a chave, a tensão, a corrente e as resistências e veja o que acontece. Cada simulação tem um roteiro com perguntas para você responder.</p>
+    <span class="eyebrow">Física · Ensino Médio</span>
+    <h1>Laboratório de Física</h1>
+    <p class="lede">Simulações interativas em 3D para explorar os fenômenos da física. Mude os valores, observe o que acontece e responda às perguntas do roteiro de cada experimento.</p>
+    <nav class="areanav" aria-label="Áreas da física">
+      <a href="#mecanica"><i style="background:var(--mec)"></i>Mecânica <span class="n">0</span></a>
+      <a href="#termologia"><i style="background:var(--ter)"></i>Termologia <span class="n">0</span></a>
+      <a href="#optica"><i style="background:var(--opt)"></i>Óptica <span class="n">0</span></a>
+      <a href="#ondulatoria"><i style="background:var(--ond)"></i>Ondulatória <span class="n">0</span></a>
+      <a href="#eletricidade"><i style="background:var(--ele)"></i>Eletricidade <span class="n">2</span></a>
+      <a href="#moderna"><i style="background:var(--mod)"></i>Física Moderna <span class="n">0</span></a>
+    </nav>
   </header>
 
-  <section class="grid">
-    <article class="exp s">
-      <span class="k">Experimento 1</span>
-      <h2>Secador de cabelo: quente ou morno?</h2>
-      <span class="f">P = U² / R</span>
-      <p>Por que a posição quente do secador tem a menor resistência? A tomada mantém a tensão fixa.</p>
-      <ul>
-        <li>Veja a corrente passando pelos resistores</li>
-        <li>Compare as duas posições da chave</li>
-        <li>Teste a hipótese de corrente constante</li>
-        <li>Questão UFAL 2010 com análise das alternativas</li>
-      </ul>
-      <a class="go" href="secador.html">Abrir o secador</a>
-    </article>
-    <article class="exp l">
-      <span class="k">Experimento 2</span>
-      <h2>Duas lâmpadas: qual brilha mais?</h2>
-      <span class="f">P = U²/R &nbsp;ou&nbsp; P = R·I²</span>
-      <p>As mesmas duas lâmpadas em paralelo (mesma tensão) e em série (mesma corrente).</p>
-      <ul>
-        <li>Veja qual lâmpada brilha mais em cada ligação</li>
-        <li>Registre medidas e descubra o que fica constante</li>
-        <li>Verifique se a proporção é direta ou inversa</li>
-      </ul>
-      <a class="go" href="lampadas.html">Abrir as lâmpadas</a>
-    </article>
+  <section>
+    <h2>Simulações disponíveis</h2>
+    <div class="sims">
+      <article class="sim">
+        <span class="k">Eletricidade · Potência elétrica</span>
+        <h3>Secador de cabelo: quente ou morno?</h3>
+        <span class="f">P = U² / R</span>
+        <p>Por que a posição quente do secador tem a menor resistência? A tomada mantém a tensão fixa.</p>
+        <ul>
+          <li>Veja a corrente passando pelos resistores</li>
+          <li>Compare as duas posições da chave</li>
+          <li>Questão UFAL 2010 com análise das alternativas</li>
+        </ul>
+        <a class="go" href="secador.html">Abrir o secador</a>
+      </article>
+      <article class="sim">
+        <span class="k">Eletricidade · Circuitos</span>
+        <h3>Duas lâmpadas: qual brilha mais?</h3>
+        <span class="f">P = U²/R &nbsp;ou&nbsp; P = R·I²</span>
+        <p>As mesmas duas lâmpadas em paralelo (mesma tensão) e em série (mesma corrente).</p>
+        <ul>
+          <li>Veja qual lâmpada brilha mais em cada ligação</li>
+          <li>Registre medidas e descubra o que fica constante</li>
+          <li>Verifique se a proporção é direta ou inversa</li>
+        </ul>
+        <a class="go" href="lampadas.html">Abrir as lâmpadas</a>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <h2>Áreas da física</h2>
+    <div class="areas">
+      <div class="area" id="mecanica" style="--c:var(--mec)">
+        <div class="head"><span class="dot"></span><h4>Mecânica</h4></div>
+        <p class="topics">Cinemática, leis de Newton, energia, quantidade de movimento, gravitação, hidrostática.</p>
+        <p class="empty">Simulações em preparação.</p>
+      </div>
+      <div class="area" id="termologia" style="--c:var(--ter)">
+        <div class="head"><span class="dot"></span><h4>Termologia</h4></div>
+        <p class="topics">Temperatura, calor, dilatação, mudanças de estado, gases, termodinâmica.</p>
+        <p class="empty">Simulações em preparação.</p>
+      </div>
+      <div class="area" id="optica" style="--c:var(--opt)">
+        <div class="head"><span class="dot"></span><h4>Óptica</h4></div>
+        <p class="topics">Reflexão, espelhos, refração, lentes, visão.</p>
+        <p class="empty">Simulações em preparação.</p>
+      </div>
+      <div class="area" id="ondulatoria" style="--c:var(--ond)">
+        <div class="head"><span class="dot"></span><h4>Ondulatória</h4></div>
+        <p class="topics">MHS, ondas, som, interferência, ressonância.</p>
+        <p class="empty">Simulações em preparação.</p>
+      </div>
+      <div class="area" id="eletricidade" style="--c:var(--ele)">
+        <div class="head"><span class="dot"></span><h4>Eletricidade e Magnetismo</h4></div>
+        <p class="topics">Cargas, campo elétrico, corrente, resistores, potência, circuitos, magnetismo, indução.</p>
+        <ul>
+          <li><a href="secador.html">Secador de cabelo: quente ou morno?</a></li>
+          <li><a href="lampadas.html">Duas lâmpadas: qual brilha mais?</a></li>
+        </ul>
+      </div>
+      <div class="area" id="moderna" style="--c:var(--mod)">
+        <div class="head"><span class="dot"></span><h4>Física Moderna</h4></div>
+        <p class="topics">Efeito fotoelétrico, modelos atômicos, relatividade, radioatividade.</p>
+        <p class="empty">Simulações em preparação.</p>
+      </div>
+    </div>
   </section>
 
   <footer>
