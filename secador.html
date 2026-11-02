@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <style>
-/* Layout: roteiro guiado no topo; palco 3D escuro + painel; mudanças e medidores; circuito e gráfico P×R; alternativas. */
+/* Layout: roteiro guiado no topo; palco 3D escuro + painel; mudanças e medidores; circuito e gráfico P×R; links de estudo. */
 :root {
   --bg: #eef1f4; --surface: #ffffff; --ink: #16202b; --muted: #576575; --line: #d3dae2;
   --copper: #b0581f; --hot: #c2410c; --warm: #a86f0c; --cool: #2a73c0; --ok: #1f8a4c; --bad: #b8322a;
@@ -137,7 +137,7 @@ input[type=range] { width: 100%; accent-color: var(--copper); }
 <div class="wrap">
   <a class="back" href="index.html#eletricidade">&larr; Laboratório de Física</a>
   <header>
-    <span class="eyebrow">Eletrodinâmica · UFAL 2010 (adaptada)</span>
+    <span class="eyebrow">Eletricidade · Potência elétrica</span>
     <h1>Secador de cabelo: quente ou morno?</h1>
     <p class="lede">A tomada mantém a tensão fixa. A chave do secador só muda quanto fio resistor a corrente precisa atravessar. Siga o roteiro ou explore livremente os controles.</p>
   </header>
@@ -210,7 +210,7 @@ input[type=range] { width: 100%; accent-color: var(--copper); }
           <button data-v="V" aria-pressed="true">Tensão (tomada)</button>
           <button data-v="I" aria-pressed="false">Corrente (hipótese)</button>
         </div>
-        <span class="warn" id="hipoWarn" hidden>Hipótese das alternativas C e D: corrente fixa em 9 A. Uma tomada real não funciona assim.</span>
+        <span class="warn" id="hipoWarn" hidden>Hipótese: corrente fixa em 9 A. Uma tomada real não funciona assim.</span>
       </div>
       <div class="checks">
         <label><input type="checkbox" id="inside" checked> Ver interior</label>
@@ -279,20 +279,12 @@ input[type=range] { width: 100%; accent-color: var(--copper); }
   </section>
 
   <section class="card">
-    <h2>Alternativas</h2>
-    <ol class="alts" id="alts">
-      <li class="right"><span class="L">A</span><span>na posição quente, a resistência é menor, porque a diferença de potencial é constante.</span>
-        <span class="why"><b>Correta.</b> A tomada fixa U. Com P = U²/R, menor R dá maior potência e o ar sai mais quente. Veja no medidor: U não muda quando você troca a chave.</span></li>
-      <li class="wrong"><span class="L">B</span><span>na posição morno, a resistência é menor, porque a potência é diretamente proporcional à resistência.</span>
-        <span class="why"><b>Errada.</b> No morno a resistência é maior (R₁ + R₂). Com U fixa, P é inversamente proporcional a R: a curva do gráfico desce.</span></li>
-      <li class="wrong"><span class="L">C</span><span>na posição quente, a resistência é maior, porque a corrente elétrica é constante.</span>
-        <span class="why"><b>Errada.</b> A resistência é menor no quente, e a corrente muda (I = U/R). Ative a hipótese "Corrente fixa" para ver que, nesse mundo, o maior R esquentaria mais. Não é o caso da tomada.</span></li>
-      <li class="wrong"><span class="L">D</span><span>na posição morno, a resistência é maior, porque a corrente elétrica é constante.</span>
-        <span class="why"><b>Errada.</b> A primeira parte está certa, mas a justificativa não. Se a corrente fosse constante, P = R·I² e o morno seria o mais quente. Quem fica constante é a tensão.</span></li>
-      <li class="wrong"><span class="L">E</span><span>na posição quente, a resistência é menor, porque a corrente elétrica e a diferença de potencial são constantes.</span>
-        <span class="why"><b>Errada.</b> Se U e I fossem ambas fixas, R = U/I também seria fixa e a chave não mudaria nada. A corrente varia.</span></li>
-    </ol>
-    <button class="btn" id="reveal">Mostrar análise</button>
+    <h2>Continue estudando</h2>
+    <p class="small" style="font-size:15px">Revise corrente, tensão, resistência, associações e potência no resumo, e teste o que aprendeu nas questões de revisão.</p>
+    <div class="nav">
+      <a class="btn" href="eletrodinamica.html#potencia" style="text-decoration:none">Resumo de eletrodinâmica</a>
+      <a class="btn" href="questoes.html" style="text-decoration:none">Questões de revisão</a>
+    </div>
   </section>
 </div>
 
@@ -658,13 +650,13 @@ const steps = [
     q: 'Com U fixa, P é diretamente ou inversamente proporcional a R?',
     a: 'Inversamente. Menor resistência, maior potência, ar mais quente.' },
   { t: 'E se a corrente fosse fixa?', apply: { mode: 'morno', source: 'I' },
-    x: 'As alternativas C e D supõem corrente constante. Nesse mundo imaginário, P = R·I² e a resistência maior esquentaria mais. Alterne a chave e veja o gráfico virar uma reta subindo.',
+    x: 'Imagine uma fonte que mantivesse a corrente constante. Nesse mundo imaginário, P = R·I² e a resistência maior esquentaria mais. Alterne a chave e veja o gráfico virar uma reta subindo.',
     q: 'Nessa hipótese, qual posição esquentaria mais? Isso combina com o secador real?',
-    a: 'O morno esquentaria mais, o que contradiz o funcionamento real. A tomada fixa a tensão, não a corrente. Por isso C e D estão erradas.' },
-  { t: 'Conclusão', apply: { mode: 'quente', source: 'V' }, reveal: true,
+    a: 'O morno esquentaria mais, o que contradiz o funcionamento real. A tomada fixa a tensão, não a corrente. Dizer que a resistência muda porque a corrente é constante está errado.' },
+  { t: 'Conclusão', apply: { mode: 'quente', source: 'V' },
     x: 'No secador ligado à tomada, a tensão é constante. A posição quente tem a menor resistência, a maior corrente e a maior potência.',
-    q: 'Qual alternativa descreve isso?',
-    a: 'Alternativa A: na posição quente a resistência é menor, porque a diferença de potencial é constante.' },
+    q: 'Complete: na posição quente, a resistência é ____, porque ____ é constante.',
+    a: 'Na posição quente a resistência é menor, porque a diferença de potencial (tensão da tomada) é constante. Com P = U²/R, menor R significa maior potência.' },
 ];
 let step = 0;
 const stepsEl = $('steps');
@@ -680,13 +672,11 @@ function goStep(i) {
   [...stepsEl.children].forEach((b, k) => { b.toggleAttribute('aria-current', k === i); if (k === i) b.setAttribute('aria-current', 'step'); b.classList.toggle('done', k < i); });
   $('gPrev').disabled = i === 0;
   $('gNext').textContent = i === steps.length - 1 ? 'Recomeçar' : 'Próximo passo';
-  if (s.reveal) setAlts(true);
 }
 $('gReveal').addEventListener('click', () => { $('gA').hidden = false; $('gReveal').hidden = true; });
 $('gPrev').addEventListener('click', () => goStep(Math.max(0, step - 1)));
-$('gNext').addEventListener('click', () => { if (step === steps.length - 1) setAlts(false); goStep((step + 1) % steps.length); });
+$('gNext').addEventListener('click', () => goStep((step + 1) % steps.length));
 
-function setAlts(on) { $('alts').classList.toggle('show', on); $('reveal').textContent = on ? 'Esconder análise' : 'Mostrar análise'; }
 
 $('mode').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { state.mode = b.dataset.v; render(); } });
 $('source').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { state.source = b.dataset.v; render(); } });
@@ -698,7 +688,6 @@ $('inside').addEventListener('change', e => { state.inside = e.target.checked; r
 $('spin').addEventListener('change', e => { state.spin = e.target.checked; });
 $('labels').addEventListener('change', e => { state.labels = e.target.checked; });
 $('reset').addEventListener('click', () => { Object.assign(state, DEFAULTS); render(); });
-$('reveal').addEventListener('click', () => setAlts(!$('alts').classList.contains('show')));
 
 state.spin = !reduce; $('spin').checked = state.spin;
 goStep(0);

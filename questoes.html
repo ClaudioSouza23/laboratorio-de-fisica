@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Questões de Eletrodinâmica</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: placar e filtros por tema no topo; lista de questões em cartões, cada um com alternativas, correção e resolução. */
+:root {
+  --bg: #eef1f4; --surface: #ffffff; --ink: #16202b; --muted: #576575; --line: #d3dae2; --soft: #f6f8fa;
+  --accent: #a8650a; --cool: #2a73c0; --ok: #1f8a4c; --bad: #b8322a;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", Consolas, ui-monospace, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #0b1016; --surface: #141c25; --ink: #e5ecf2; --muted: #93a2b2; --line: #263240; --soft: #1a2430;
+  --accent: #e8a540; --cool: #5ea2ea; --ok: #4cc27f; --bad: #ff6b60; color-scheme: dark } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 17px; line-height: 1.55; }
+.wrap { max-width: 860px; margin: 0 auto; padding-block: 28px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 22px; }
+.back { font-weight: 700; color: var(--muted); text-decoration: none; font-size: 14px; }
+.back:hover { color: var(--ink); }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(32px, 5vw, 50px); line-height: 1.05; margin: 6px 0 10px; text-wrap: balance; }
+.lede { color: var(--muted); margin: 0; max-width: 65ch; }
+.lede a { color: inherit; font-weight: 700; }
+a:focus-visible, button:focus-visible { outline: 3px solid var(--cool); outline-offset: 2px; }
+
+.score { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 20px; display: grid; gap: 12px; }
+.score .top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 10px; }
+.score .big { font-family: var(--f-mono); font-weight: 700; font-size: clamp(22px, 3vw, 28px); font-variant-numeric: tabular-nums; }
+.score .big small { font-size: 14px; color: var(--muted); font-weight: 500; }
+.bar { height: 10px; border-radius: 6px; background: var(--soft); overflow: hidden; display: flex; }
+.bar span { display: block; height: 100%; transition: width .3s; }
+.bar .ok { background: var(--ok); } .bar .bad { background: var(--bad); }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; }
+.filters button { font: inherit; font-size: 14px; font-weight: 700; border: 1px solid var(--line); background: var(--soft); color: var(--ink); border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+.filters button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.filters .n { font-family: var(--f-mono); font-size: 12px; opacity: .7; margin-left: 4px; }
+.btn { font: inherit; font-weight: 700; font-size: 14px; border: 1px solid var(--ink); background: transparent; color: var(--ink); border-radius: 10px; padding: 7px 14px; cursor: pointer; }
+.btn:hover { background: var(--ink); color: var(--bg); }
+
+.q { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px 22px; display: grid; gap: 12px; }
+.q.right { border-color: var(--ok); } .q.wrong { border-color: var(--bad); }
+.q .head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.q .no { font-family: var(--f-display); font-weight: 800; font-size: 20px; }
+.tag { font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--accent); border: 1px solid currentColor; border-radius: 999px; padding: 2px 9px; }
+.stmt { margin: 0; max-width: 68ch; }
+.opts { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.opts button { font: inherit; text-align: left; width: 100%; display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 10px; align-items: start;
+  border: 1px solid var(--line); background: var(--soft); color: var(--ink); border-radius: 10px; padding: 10px 12px; cursor: pointer; }
+.opts button:hover:not(:disabled) { border-color: var(--ink); }
+.opts button:disabled { cursor: default; }
+.opts .L { font-family: var(--f-display); font-weight: 800; color: var(--accent); }
+.opts .mark { font-weight: 700; font-size: 14px; }
+.opts button.is-right { border-color: var(--ok); border-width: 2px; }
+.opts button.is-right .mark { color: var(--ok); }
+.opts button.is-wrong { border-color: var(--bad); border-width: 2px; }
+.opts button.is-wrong .mark { color: var(--bad); }
+.opts button.dim { opacity: .55; }
+.fb { font-weight: 700; }
+.fb.ok { color: var(--ok); } .fb.bad { color: var(--bad); }
+.res { border-left: 4px solid var(--cool); background: var(--soft); border-radius: 0 10px 10px 0; padding: 12px 16px; display: grid; gap: 6px; }
+.res .k { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; color: var(--cool); }
+.res p { margin: 0; }
+.res .calc { font-family: var(--f-mono); font-size: 15px; overflow-x: auto; }
+.res a { font-weight: 700; color: var(--cool); font-size: 14px; }
+.done { background: var(--surface); border: 2px solid var(--accent); border-radius: 14px; padding: 18px 22px; display: grid; gap: 6px; }
+.done h2 { font-family: var(--f-display); font-weight: 800; font-size: 24px; margin: 0; }
+.done p { margin: 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html#eletricidade">&larr; Laboratório de Física</a>
+  <header>
+    <span class="eyebrow">Eletricidade · Revisão</span>
+    <h1>Questões de eletrodinâmica</h1>
+    <p class="lede">Escolha uma alternativa para ver na hora se acertou e ler a resolução. Seu progresso fica salvo neste navegador. Precisa revisar? Consulte o <a href="eletrodinamica.html">resumo de eletrodinâmica</a>.</p>
+  </header>
+
+  <section class="score" aria-live="polite">
+    <div class="top">
+      <span class="big" id="scoreTxt"></span>
+      <button class="btn" id="reset">Recomeçar</button>
+    </div>
+    <div class="bar"><span class="ok" id="barOk"></span><span class="bad" id="barBad"></span></div>
+    <div class="filters" id="filters"></div>
+  </section>
+
+  <div class="done" id="done" hidden>
+    <h2 id="doneTitle"></h2>
+    <p id="doneText"></p>
+  </div>
+
+  <main id="list" style="display:grid;gap:16px"></main>
+</div>
+<script>
+(() => {
+const TOPICS = {
+  corrente: { name: 'Corrente', sec: 'corrente' },
+  tensao: { name: 'Potencial e tensão', sec: 'tensao' },
+  resistencia: { name: 'Resistência', sec: 'resistencia' },
+  associacoes: { name: 'Associações', sec: 'associacoes' },
+  potencia: { name: 'Potência e consumo', sec: 'potencia' },
+};
+const Q = [
+  { t: 'corrente', s: 'Um fio condutor é percorrido por uma corrente constante de 4 A durante 1 minuto. Qual a quantidade de carga que atravessa uma seção do fio nesse tempo?',
+    o: ['4 C', '60 C', '15 C', '240 C', '0,067 C'], c: 3,
+    r: ['O tempo precisa estar em segundos: 1 min = 60 s.', 'ΔQ = i · Δt = 4 × 60 = 240 C'] },
+  { t: 'corrente', s: 'Por uma seção de um fio passa uma corrente de 1,6 A. Quantos elétrons atravessam essa seção a cada segundo? (e = 1,6 × 10⁻¹⁹ C)',
+    o: ['1,6 × 10¹⁹', '1,0 × 10¹⁹', '6,25 × 10¹⁸', '1,0 × 10¹⁸', '2,56 × 10⁻¹⁹'], c: 1,
+    r: ['Em 1 s passa a carga ΔQ = 1,6 × 1 = 1,6 C. Cada elétron carrega 1,6 × 10⁻¹⁹ C.', 'n = ΔQ / e = 1,6 / 1,6×10⁻¹⁹ = 1,0 × 10¹⁹ elétrons'] },
+  { t: 'corrente', s: 'Em um fio metálico ligado aos polos de uma pilha, o sentido convencional da corrente elétrica é:',
+    o: ['o mesmo do movimento dos elétrons livres.', 'oposto ao movimento dos elétrons: pelo circuito externo, do polo positivo para o negativo.', 'do polo negativo para o positivo, pelo circuito externo.', 'alternado, invertendo 60 vezes por segundo.', 'indefinido, pois os elétrons se movem ao acaso.'], c: 1,
+    r: ['Por convenção histórica, a corrente tem o sentido em que se moveriam cargas positivas. No fio, quem se move são os elétrons, no sentido contrário. A pilha fornece corrente contínua, sem inversão de sentido.'] },
+  { t: 'tensao', s: 'Dois pontos A e B têm potenciais elétricos V_A = 30 V e V_B = 10 V. Qual o trabalho da força elétrica para levar uma carga q = 2 μC de A até B?',
+    o: ['6 × 10⁻⁵ J', '2 × 10⁻⁵ J', '4 × 10⁻⁶ J', '4 × 10⁻⁵ J', '8 × 10⁻⁵ J'], c: 3,
+    r: ['A ddp entre A e B é U = V_A − V_B = 30 − 10 = 20 V. Lembre que 1 μC = 10⁻⁶ C.', 'τ = q · U = 2×10⁻⁶ × 20 = 4 × 10⁻⁵ J'] },
+  { t: 'tensao', s: 'Dizer que a tensão de uma tomada é 127 V significa que:',
+    o: ['a corrente na tomada é sempre de 127 A.', 'a tomada fornece 127 J de energia por segundo a qualquer aparelho.', 'cada coulomb de carga que atravessa o aparelho transforma 127 J de energia elétrica em outras formas.', 'qualquer aparelho ligado nela terá potência de 127 W.', 'a resistência da instalação é de 127 Ω.'], c: 2,
+    r: ['1 V = 1 J/C. A tensão é a energia transformada por unidade de carga. A corrente e a potência dependem do aparelho ligado (da sua resistência), não só da tomada.'] },
+  { t: 'resistencia', s: 'Um resistor ôhmico é percorrido por 0,2 A quando submetido a 6 V. Qual será a corrente se a tensão aumentar para 15 V?',
+    o: ['0,5 A', '0,08 A', '2,5 A', '0,3 A', '0,4 A'], c: 0,
+    r: ['No resistor ôhmico, R não muda. Primeiro calcule R, depois a nova corrente.', 'R = U / i = 6 / 0,2 = 30 Ω  →  i = 15 / 30 = 0,5 A'] },
+  { t: 'resistencia', s: 'Um fio tem resistência R. Outro fio, do mesmo material, tem o dobro do comprimento e o dobro do diâmetro. Qual a resistência do segundo fio?',
+    o: ['R/4', 'R', '2R', '4R', 'R/2'], c: 4,
+    r: ['Pela 2ª lei de Ohm, R = ρ·L/A. Dobrar o diâmetro multiplica a área por 4 (a área é proporcional ao quadrado do diâmetro).', "R' = ρ · 2L / 4A = (1/2) · ρL/A = R/2"] },
+  { t: 'associacoes', s: 'Três resistores de 2 Ω, 4 Ω e 6 Ω são ligados em série a uma fonte de 24 V. Qual a corrente no circuito e a tensão no resistor de 6 Ω?',
+    o: ['2 A e 6 V', '4 A e 24 V', '2 A e 12 V', '12 A e 72 V', '1 A e 6 V'], c: 2,
+    r: ['Em série, R_eq é a soma e a corrente é a mesma em todos.', 'R_eq = 2 + 4 + 6 = 12 Ω  →  i = 24 / 12 = 2 A  →  U₆ = 6 × 2 = 12 V'] },
+  { t: 'associacoes', s: 'Dois resistores, de 3 Ω e de 6 Ω, são ligados em paralelo a uma fonte de 12 V. Qual a corrente total fornecida pela fonte?',
+    o: ['1,33 A', '2 A', '3 A', '6 A', '4 A'], c: 3,
+    r: ['Em paralelo, cada resistor recebe os 12 V da fonte.', 'i₃ = 12/3 = 4 A  ·  i₆ = 12/6 = 2 A  →  i = 4 + 2 = 6 A', 'Ou: R_eq = (3·6)/(3+6) = 2 Ω  →  i = 12/2 = 6 A'] },
+  { t: 'associacoes', s: 'Um resistor de 4 Ω está em série com dois resistores de 8 Ω ligados em paralelo entre si. O conjunto é ligado a 16 V. Qual a corrente em cada resistor de 8 Ω?',
+    o: ['1 A', '2 A', '0,5 A', '4 A', '1,5 A'], c: 0,
+    r: ['Resolva por partes: primeiro o paralelo, depois a série.', 'Paralelo: 8/2 = 4 Ω  →  R_eq = 4 + 4 = 8 Ω  →  i = 16/8 = 2 A', 'Os dois resistores de 8 Ω são iguais, então a corrente se divide igualmente: 1 A em cada.'] },
+  { t: 'associacoes', s: 'Por que as tomadas e lâmpadas de uma casa são ligadas em paralelo?',
+    o: ['Para que a corrente seja a mesma em todos os aparelhos.', 'Para diminuir o consumo de energia da casa.', 'Para que a resistência equivalente aumente a cada aparelho ligado.', 'Para que todos recebam a mesma tensão e funcionem de forma independente.', 'Porque em série os aparelhos gastariam mais energia.'], c: 3,
+    r: ['Em paralelo, cada aparelho fica ligado diretamente à tensão da rede (127 V ou 220 V) e pode ser ligado ou desligado sem afetar os outros. Cada aparelho a mais diminui a resistência equivalente e aumenta a corrente total.'] },
+  { t: 'potencia', s: 'Um chuveiro elétrico tem as especificações 4400 W – 220 V. Funcionando corretamente, qual a corrente que o atravessa e qual a sua resistência?',
+    o: ['20 A e 0,05 Ω', '10 A e 22 Ω', '20 A e 11 Ω', '0,05 A e 4400 Ω', '4400 A e 220 Ω'], c: 2,
+    r: ['Use P = U·i para a corrente e U = R·i (ou P = U²/R) para a resistência.', 'i = P / U = 4400 / 220 = 20 A  →  R = U / i = 220 / 20 = 11 Ω'] },
+  { t: 'potencia', s: 'Um chuveiro ligado sempre à mesma tomada deve esquentar mais a água. Para isso, sua resistência deve:',
+    o: ['aumentar, pois P = R·i².', 'diminuir, pois com a tensão constante P = U²/R.', 'aumentar, pois a corrente é constante.', 'permanecer igual; só a tensão da tomada pode mudar a potência.', 'diminuir, pois assim a corrente também diminui.'], c: 1,
+    r: ['A tomada mantém a tensão fixa. Com U constante, P = U²/R: menor resistência, maior potência. A corrente não é constante: ela aumenta quando R diminui (i = U/R).'],
+    sim: ['secador.html', 'Ver na simulação do secador'] },
+  { t: 'potencia', s: 'Duas lâmpadas com especificações 60 W – 127 V e 100 W – 127 V são ligadas em série a uma tomada de 127 V. Qual delas brilha mais?',
+    o: ['A de 100 W, por ter maior potência nominal.', 'As duas brilham igualmente, pois a corrente é a mesma.', 'A de 100 W, por ter menor resistência.', 'Nenhuma acende, pois a tensão se divide.', 'A de 60 W, por ter maior resistência.'], c: 4,
+    r: ['Calcule as resistências: R = U²/P.', 'R(60 W) = 127²/60 ≈ 269 Ω  ·  R(100 W) = 127²/100 ≈ 161 Ω', 'Em série, a corrente é a mesma nas duas, então P = R·i²: brilha mais a de maior resistência, a de 60 W. As duas acendem, porém mais fracas que o normal.'],
+    sim: ['lampadas.html', 'Ver na simulação das lâmpadas'] },
+  { t: 'potencia', s: 'Uma lâmpada de 60 W fica acesa 5 horas por dia durante 30 dias. Com tarifa de R$ 0,80 por kWh, quanto ela custa no mês?',
+    o: ['R$ 9,00', 'R$ 7,20', 'R$ 72,00', 'R$ 2,40', 'R$ 0,24'], c: 1,
+    r: ['Use a potência em kW e o tempo em horas.', 'Δt = 5 × 30 = 150 h  →  E = 0,06 kW × 150 h = 9 kWh  →  custo = 9 × 0,80 = R$ 7,20'] },
+  { t: 'potencia', s: 'Uma lâmpada incandescente de 60 W é trocada por uma LED de 9 W, com o mesmo uso: 5 horas por dia durante 30 dias. Quanta energia se economiza no mês?',
+    o: ['1,35 kWh', '9 kWh', '51 kWh', '7,65 kWh', '0,051 kWh'], c: 3,
+    r: ['A diferença de potência é 60 − 9 = 51 W = 0,051 kW, durante 150 h.', 'E = 0,051 kW × 150 h = 7,65 kWh'] },
+  { t: 'potencia', s: 'Na conta de luz, o consumo aparece em kWh (quilowatt-hora). Essa unidade mede:',
+    o: ['potência.', 'energia.', 'corrente elétrica.', 'tensão elétrica.', 'carga elétrica.'], c: 1,
+    r: ['kWh é potência × tempo, ou seja, energia.', '1 kWh = 1000 W × 3600 s = 3,6 × 10⁶ J'] },
+];
+const LET = 'ABCDE';
+const KEY = 'lab-fisica-questoes-eletrodinamica-v1';
+let answers = {};
+try { answers = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { answers = {}; }
+let filter = 'todas';
+const $ = id => document.getElementById(id);
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(answers)); } catch (e) {} };
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+function renderFilters() {
+  const counts = {}; Q.forEach(q => counts[q.t] = (counts[q.t] || 0) + 1);
+  const items = [['todas', 'Todas', Q.length], ...Object.entries(TOPICS).map(([k, v]) => [k, v.name, counts[k]])];
+  $('filters').innerHTML = items.map(([k, n, c]) => `<button data-f="${k}" aria-pressed="${filter === k}">${n}<span class="n">${c}</span></button>`).join('');
+}
+function renderScore() {
+  const done = Object.keys(answers).length, ok = Object.entries(answers).filter(([i, a]) => Q[i] && Q[i].c === a).length;
+  $('scoreTxt').innerHTML = `${ok} acerto${ok === 1 ? '' : 's'} <small>· ${done} de ${Q.length} respondidas</small>`;
+  $('barOk').style.width = (ok / Q.length * 100) + '%';
+  $('barBad').style.width = ((done - ok) / Q.length * 100) + '%';
+  const d = $('done');
+  d.hidden = done < Q.length;
+  if (done === Q.length) {
+    const pct = Math.round(ok / Q.length * 100);
+    $('doneTitle').textContent = `Você acertou ${ok} de ${Q.length} (${pct}%)`;
+    $('doneText').textContent = pct >= 80 ? 'Ótimo resultado! Revise as questões que errou e leia as resoluções.'
+      : pct >= 50 ? 'Bom caminho. Releia o resumo dos temas em que errou e clique em Recomeçar para tentar de novo.'
+      : 'Vale revisar o resumo com calma e tentar de novo. Use as simulações para ver os conceitos funcionando.';
+  }
+}
+function card(q, i) {
+  const a = answers[i], answered = a !== undefined, right = answered && a === q.c;
+  const opts = q.o.map((o, k) => {
+    let cls = '', mark = '';
+    if (answered) {
+      if (k === q.c) { cls = 'is-right'; mark = 'correta'; }
+      else if (k === a) { cls = 'is-wrong'; mark = 'sua resposta'; }
+      else cls = 'dim';
+    }
+    return `<li><button data-q="${i}" data-o="${k}" class="${cls}" ${answered ? 'disabled' : ''}><span class="L">${LET[k]}</span><span>${esc(o)}</span><span class="mark">${mark}</span></button></li>`;
+  }).join('');
+  const res = answered ? `
+    <p class="fb ${right ? 'ok' : 'bad'}">${right ? 'Correto!' : `Não foi dessa vez. A resposta é a alternativa ${LET[q.c]}.`}</p>
+    <div class="res"><span class="k">Resolução</span>${q.r.map((l, k) => `<p class="${k > 0 || /[=→]/.test(l) ? 'calc' : ''}">${esc(l)}</p>`).join('')}
+      <a href="eletrodinamica.html#${TOPICS[q.t].sec}">Rever ${TOPICS[q.t].name.toLowerCase()} no resumo</a>
+      ${q.sim ? `<a href="${q.sim[0]}">${q.sim[1]}</a>` : ''}</div>` : '';
+  return `<article class="q ${answered ? (right ? 'right' : 'wrong') : ''}" id="q${i + 1}">
+    <div class="head"><span class="no">Questão ${i + 1}</span><span class="tag">${TOPICS[q.t].name}</span></div>
+    <p class="stmt">${esc(q.s)}</p>
+    <ol class="opts" aria-label="Alternativas">${opts}</ol>${res}</article>`;
+}
+function renderList() {
+  $('list').innerHTML = Q.map((q, i) => (filter === 'todas' || q.t === filter) ? card(q, i) : '').join('');
+}
+function renderAll() { renderFilters(); renderScore(); renderList(); }
+
+$('list').addEventListener('click', e => {
+  const b = e.target.closest('button[data-q]'); if (!b || b.disabled) return;
+  const i = +b.dataset.q; answers[i] = +b.dataset.o; save();
+  const el = $('q' + (i + 1)); el.outerHTML = card(Q[i], i); renderScore();
+});
+$('filters').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { filter = b.dataset.f; renderFilters(); renderList(); } });
+$('reset').addEventListener('click', () => { answers = {}; save(); renderAll(); window.scrollTo({ top: 0 }); });
+renderAll();
+})();
+</script>
+</body>
+</html>

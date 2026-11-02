@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Resumo de Eletrodinâmica</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;400i;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: coluna de leitura (~70ch) com sumário em pílulas; cada tópico tem texto, fórmulas em destaque, exemplo resolvido e alerta. */
+:root {
+  --bg: #eef1f4; --surface: #ffffff; --ink: #16202b; --muted: #576575; --line: #d3dae2; --soft: #f6f8fa;
+  --accent: #a8650a; --cool: #2a73c0; --ok: #1f8a4c; --warn: #b8322a;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", Consolas, ui-monospace, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #0b1016; --surface: #141c25; --ink: #e5ecf2; --muted: #93a2b2; --line: #263240; --soft: #1a2430;
+  --accent: #e8a540; --cool: #5ea2ea; --ok: #4cc27f; --warn: #ff6b60; color-scheme: dark } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 17px; line-height: 1.6; }
+.wrap { max-width: 860px; margin: 0 auto; padding-block: 28px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 28px; }
+.back { font-weight: 700; color: var(--muted); text-decoration: none; font-size: 14px; }
+.back:hover { color: var(--ink); }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(32px, 5vw, 50px); line-height: 1.05; margin: 6px 0 10px; text-wrap: balance; }
+.lede { color: var(--muted); margin: 0; max-width: 65ch; }
+.toc { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.toc a { text-decoration: none; font-weight: 700; font-size: 14px; color: var(--ink); border: 1px solid var(--line); background: var(--surface); padding: 6px 12px; border-radius: 999px; }
+.toc a:hover { border-color: var(--ink); }
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid var(--cool); outline-offset: 2px; }
+
+section.topic { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 24px; display: grid; gap: 14px; scroll-margin-top: 16px; }
+.topic > * { margin: 0; }
+.num { font-family: var(--f-mono); font-size: 13px; color: var(--accent); font-weight: 700; letter-spacing: .06em; }
+h2 { font-family: var(--f-display); font-weight: 800; font-size: clamp(24px, 3.2vw, 30px); line-height: 1.1; text-wrap: balance; }
+h3 { font-family: var(--f-display); font-weight: 600; font-size: 19px; margin: 6px 0 0; }
+p { max-width: 68ch; }
+ul.pts { margin: 0; padding-left: 22px; display: grid; gap: 4px; }
+
+.formulas { display: flex; flex-wrap: wrap; gap: 10px; }
+.fx { background: var(--soft); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; display: grid; gap: 2px; min-width: 0; }
+.fx b { font-family: var(--f-mono); font-size: 21px; font-weight: 700; white-space: nowrap; }
+.fx span { font-size: 13px; color: var(--muted); }
+
+.ex { border-left: 4px solid var(--cool); background: var(--soft); border-radius: 0 10px 10px 0; padding: 12px 16px; display: grid; gap: 6px; }
+.ex .k, .alert .k { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; color: var(--cool); }
+.ex p { margin: 0; }
+.ex .calc { font-family: var(--f-mono); font-size: 15px; overflow-x: auto; white-space: nowrap; }
+.alert { border-left: 4px solid var(--warn); background: var(--soft); border-radius: 0 10px 10px 0; padding: 12px 16px; display: grid; gap: 4px; }
+.alert .k { color: var(--warn); }
+.alert p { margin: 0; }
+.sim { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 15px; color: var(--muted); }
+.sim a { font-weight: 700; color: #fff; background: #8a5208; text-decoration: none; padding: 7px 14px; border-radius: 9px; }
+.sim a:hover { filter: brightness(1.12); }
+
+.cmp { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 640px) { .cmp { grid-template-columns: minmax(0, 1fr); } }
+.cmp > div { border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.cmp h3 { margin: 0; }
+.cmp svg { width: 100%; max-width: 320px; height: auto; display: block; }
+.cmp ul { margin: 0; padding-left: 20px; font-size: 15px; }
+
+.tbl { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+thead th { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+td.m { font-family: var(--f-mono); font-weight: 700; white-space: nowrap; }
+
+.calcbox { border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 12px; }
+.calcbox .row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 640px) { .calcbox .row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.calcbox label { display: grid; gap: 4px; font-size: 13px; font-weight: 700; color: var(--muted); }
+.calcbox input { font: inherit; font-family: var(--f-mono); font-size: 16px; width: 100%; padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--soft); color: var(--ink); }
+.presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.presets button { font: inherit; font-size: 13px; font-weight: 700; border: 1px solid var(--line); background: var(--soft); color: var(--ink); border-radius: 999px; padding: 4px 10px; cursor: pointer; }
+.presets button:hover { border-color: var(--ink); }
+.result { font-family: var(--f-mono); font-size: 15px; background: var(--soft); border-radius: 8px; padding: 10px 12px; overflow-x: auto; }
+.result b { font-size: 20px; color: var(--accent); }
+
+.cta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; background: var(--surface); border: 2px solid var(--accent); border-radius: 14px; padding: 18px 22px; }
+.cta p { margin: 0; font-weight: 700; }
+.cta a { font-weight: 700; color: #fff; background: #8a5208; text-decoration: none; padding: 10px 18px; border-radius: 10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html#eletricidade">&larr; Laboratório de Física</a>
+  <header>
+    <span class="eyebrow">Eletricidade · Material de estudo</span>
+    <h1>Eletrodinâmica: resumo</h1>
+    <p class="lede">Os conceitos essenciais sobre cargas em movimento: o que é corrente, o que a tensão faz, como a resistência limita a corrente, como combinar resistores e quanto custa a energia que gastamos em casa.</p>
+    <nav class="toc" aria-label="Sumário">
+      <a href="#corrente">1. Corrente</a>
+      <a href="#tensao">2. Potencial e tensão</a>
+      <a href="#resistencia">3. Resistência</a>
+      <a href="#associacoes">4. Associações</a>
+      <a href="#potencia">5. Potência e consumo</a>
+      <a href="#formulas">Quadro de fórmulas</a>
+    </nav>
+  </header>
+
+  <section class="topic" id="corrente">
+    <span class="num">1</span>
+    <h2>Corrente elétrica</h2>
+    <p>Corrente elétrica é o <b>movimento ordenado de cargas</b>. Nos fios metálicos, quem se move são os elétrons livres. A intensidade da corrente mede quanta carga atravessa uma seção do condutor por unidade de tempo.</p>
+    <div class="formulas">
+      <div class="fx"><b>i = ΔQ / Δt</b><span>corrente média</span></div>
+      <div class="fx"><b>ΔQ = n · e</b><span>e = 1,6 × 10⁻¹⁹ C</span></div>
+    </div>
+    <ul class="pts">
+      <li>Unidade: <b>ampère (A)</b>, que é 1 coulomb por segundo (1 A = 1 C/s).</li>
+      <li><b>Sentido convencional:</b> o da corrente que sai do polo positivo e vai para o negativo. Os elétrons andam no sentido oposto.</li>
+      <li><b>Corrente contínua (CC):</b> sentido constante, como em pilhas e baterias. <b>Corrente alternada (CA):</b> o sentido se inverte periodicamente, como nas tomadas (60 Hz no Brasil).</li>
+      <li>Num gráfico i × t, a <b>área sob a curva</b> é numericamente igual à carga que passou.</li>
+    </ul>
+    <div class="ex">
+      <span class="k">Exemplo</span>
+      <p>Um fio conduz 2 A durante 10 s. Quantos elétrons atravessam uma seção do fio?</p>
+      <p class="calc">ΔQ = i · Δt = 2 · 10 = 20 C &nbsp;→&nbsp; n = ΔQ / e = 20 / 1,6×10⁻¹⁹ = 1,25 × 10²⁰ elétrons</p>
+    </div>
+  </section>
+
+  <section class="topic" id="tensao">
+    <span class="num">2</span>
+    <h2>Potencial elétrico e tensão (ddp)</h2>
+    <p>O <b>potencial elétrico</b> de um ponto indica quanta energia potencial elétrica cada unidade de carga tem ali. Cargas só se movem de forma ordenada quando existe uma <b>diferença de potencial (ddp)</b> entre dois pontos. Essa diferença é a <b>tensão elétrica U</b>.</p>
+    <div class="formulas">
+      <div class="fx"><b>V = E<sub>p</sub> / q</b><span>potencial em um ponto</span></div>
+      <div class="fx"><b>U = V<sub>A</sub> − V<sub>B</sub></b><span>diferença de potencial</span></div>
+      <div class="fx"><b>τ = q · U</b><span>trabalho da força elétrica</span></div>
+    </div>
+    <ul class="pts">
+      <li>Unidade: <b>volt (V)</b>, que é 1 joule por coulomb (1 V = 1 J/C).</li>
+      <li>Uma tensão de 127 V significa que <b>cada coulomb</b> que atravessa o aparelho transforma <b>127 J</b> de energia elétrica em outras formas (calor, luz, movimento).</li>
+      <li><b>Analogia:</b> a ddp é como o desnível entre duas caixas d'água. Sem desnível, a água não corre; sem ddp, não há corrente.</li>
+      <li>A <b>fonte</b> (pilha, bateria, tomada) é quem mantém a ddp. Em casa, a tomada mantém a tensão fixa em 127 V ou 220 V.</li>
+    </ul>
+    <div class="ex">
+      <span class="k">Exemplo</span>
+      <p>Uma carga de 2 C passa por uma bateria de 12 V. Quanta energia ela recebe?</p>
+      <p class="calc">τ = q · U = 2 · 12 = 24 J</p>
+    </div>
+    <div class="alert">
+      <span class="k">Atenção</span>
+      <p>Tensão e corrente são grandezas diferentes. A tensão é a "causa" (a diferença de potencial entre dois pontos); a corrente é o "efeito" (as cargas passando). Um aparelho desligado da tomada ainda tem tensão disponível nela, mas não há corrente.</p>
+    </div>
+  </section>
+
+  <section class="topic" id="resistencia">
+    <span class="num">3</span>
+    <h2>Resistência elétrica e leis de Ohm</h2>
+    <p>Resistência elétrica é a <b>dificuldade</b> que um material oferece à passagem da corrente. Quando a corrente atravessa um resistor, parte da energia elétrica vira calor: é o <b>efeito Joule</b>, usado em chuveiros, secadores, ferros de passar e lâmpadas incandescentes.</p>
+    <h3>1ª lei de Ohm</h3>
+    <div class="formulas">
+      <div class="fx"><b>U = R · i</b><span>R constante: resistor ôhmico</span></div>
+    </div>
+    <p>Num resistor ôhmico, a tensão e a corrente são diretamente proporcionais: o gráfico U × i é uma reta que passa pela origem, e a inclinação dessa reta é R.</p>
+    <h3>2ª lei de Ohm</h3>
+    <div class="formulas">
+      <div class="fx"><b>R = ρ · L / A</b><span>ρ: resistividade do material</span></div>
+    </div>
+    <ul class="pts">
+      <li>Unidade de resistência: <b>ohm (Ω)</b>, que é 1 volt por ampère (1 Ω = 1 V/A).</li>
+      <li>Quanto <b>mais comprido</b> o fio (L), maior a resistência.</li>
+      <li>Quanto <b>mais grosso</b> o fio (área A), menor a resistência. Atenção: dobrar o diâmetro multiplica a área por 4.</li>
+      <li>Bons condutores (cobre, alumínio) têm resistividade baixa; isolantes (borracha, vidro), muito alta.</li>
+    </ul>
+    <div class="ex">
+      <span class="k">Exemplo</span>
+      <p>Um chuveiro de resistência 11 Ω é ligado em 220 V. Qual a corrente?</p>
+      <p class="calc">i = U / R = 220 / 11 = 20 A</p>
+    </div>
+  </section>
+
+  <section class="topic" id="associacoes">
+    <span class="num">4</span>
+    <h2>Associações de resistores</h2>
+    <p>Vários resistores podem ser substituídos por um único <b>resistor equivalente (R<sub>eq</sub>)</b>, que, ligado à mesma fonte, produz a mesma corrente total.</p>
+    <div class="cmp">
+      <div>
+        <h3>Em série</h3>
+        <svg viewBox="0 0 300 110" role="img" aria-label="Três resistores ligados um depois do outro em um único caminho.">
+          <g fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+            <path d="M20,40 H45 l5,-8 l10,16 l10,-16 l10,16 l5,-8 H115 l5,-8 l10,16 l10,-16 l10,16 l5,-8 H185 l5,-8 l10,16 l10,-16 l10,16 l5,-8 H280 V90 H20 Z"/>
+          </g>
+          <g font-family="JetBrains Mono, monospace" font-size="13" fill="currentColor" text-anchor="middle">
+            <text x="65" y="22">R₁</text><text x="135" y="22">R₂</text><text x="205" y="22">R₃</text><text x="150" y="106">U (fonte)</text>
+          </g>
+        </svg>
+        <ul>
+          <li>Um único caminho: <b>a mesma corrente</b> passa por todos.</li>
+          <li>A tensão da fonte se divide: U = U₁ + U₂ + U₃.</li>
+          <li><b>R<sub>eq</sub> = R₁ + R₂ + R₃</b> (sempre maior que o maior resistor).</li>
+          <li>Se um resistor queimar, o circuito todo para.</li>
+          <li>O resistor de <b>maior R</b> recebe a maior tensão e dissipa a maior potência (P = R·i²).</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Em paralelo</h3>
+        <svg viewBox="0 0 300 130" role="img" aria-label="Três resistores ligados lado a lado entre os mesmos dois pontos.">
+          <g fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+            <path d="M20,110 V20 H280 V110 Z"/>
+            <path d="M80,20 V30 l-8,5 l16,10 l-16,10 l16,10 l-8,5 V110"/>
+            <path d="M150,20 V30 l-8,5 l16,10 l-16,10 l16,10 l-8,5 V110"/>
+            <path d="M220,20 V30 l-8,5 l16,10 l-16,10 l16,10 l-8,5 V110"/>
+          </g>
+          <g font-family="JetBrains Mono, monospace" font-size="13" fill="currentColor">
+            <text x="96" y="70">R₁</text><text x="166" y="70">R₂</text><text x="236" y="70">R₃</text><text x="24" y="126">U (fonte)</text>
+          </g>
+        </svg>
+        <ul>
+          <li>Todos ligados aos mesmos dois pontos: <b>a mesma tensão</b> em todos.</li>
+          <li>A corrente total se divide: i = i₁ + i₂ + i₃.</li>
+          <li><b>1/R<sub>eq</sub> = 1/R₁ + 1/R₂ + 1/R₃</b> (sempre menor que o menor resistor).</li>
+          <li>Dois resistores: R<sub>eq</sub> = (R₁·R₂)/(R₁+R₂). <i>n</i> resistores iguais: R<sub>eq</sub> = R/<i>n</i>.</li>
+          <li>O resistor de <b>menor R</b> recebe a maior corrente e dissipa a maior potência (P = U²/R).</li>
+        </ul>
+      </div>
+    </div>
+    <p>Na <b>associação mista</b>, resolva por partes: calcule primeiro os trechos em paralelo, substitua cada um pelo seu equivalente e depois some os que ficaram em série.</p>
+    <div class="ex">
+      <span class="k">Exemplo de associação mista</span>
+      <p>Um resistor de 4 Ω está em série com um par em paralelo de 6 Ω e 3 Ω. A fonte é de 12 V.</p>
+      <p class="calc">Paralelo: (6·3)/(6+3) = 2 Ω &nbsp;→&nbsp; R<sub>eq</sub> = 4 + 2 = 6 Ω &nbsp;→&nbsp; i = 12 / 6 = 2 A</p>
+      <p class="calc">Tensão no 4 Ω: 4 · 2 = 8 V &nbsp;·&nbsp; no paralelo: 2 · 2 = 4 V &nbsp;(8 + 4 = 12 V ✓)</p>
+      <p class="calc">i(6 Ω) = 4/6 ≈ 0,67 A &nbsp;·&nbsp; i(3 Ω) = 4/3 ≈ 1,33 A &nbsp;(soma = 2 A ✓)</p>
+    </div>
+    <div class="alert">
+      <span class="k">Na sua casa</span>
+      <p>Tomadas e lâmpadas são ligadas <b>em paralelo</b>: todos os aparelhos recebem a mesma tensão e funcionam de forma independente. Cada aparelho a mais ligado aumenta a corrente total no disjuntor.</p>
+    </div>
+    <div class="sim"><span>Veja na prática: as mesmas lâmpadas em série e em paralelo.</span><a href="lampadas.html">Abrir a simulação das lâmpadas</a></div>
+  </section>
+
+  <section class="topic" id="potencia">
+    <span class="num">5</span>
+    <h2>Potência elétrica e consumo de energia</h2>
+    <p>Potência é a <b>rapidez</b> com que um aparelho transforma energia elétrica em outras formas. Um chuveiro de 5500 W transforma 5500 joules de energia elétrica em calor a cada segundo.</p>
+    <div class="formulas">
+      <div class="fx"><b>P = U · i</b><span>vale sempre</span></div>
+      <div class="fx"><b>P = R · i²</b><span>útil quando i é o mesmo (série)</span></div>
+      <div class="fx"><b>P = U² / R</b><span>útil quando U é a mesma (paralelo, tomada)</span></div>
+    </div>
+    <ul class="pts">
+      <li>Unidade: <b>watt (W)</b>, que é 1 joule por segundo (1 W = 1 J/s).</li>
+      <li>Com a <b>tensão fixa</b> (aparelhos na tomada), quanto <b>menor</b> a resistência, <b>maior</b> a potência. É por isso que a posição "quente" de um chuveiro ou secador tem a menor resistência.</li>
+      <li>O valor nominal de um aparelho (por exemplo, "60 W – 127 V") só vale se ele for ligado na tensão indicada.</li>
+    </ul>
+    <h3>Consumo de energia</h3>
+    <div class="formulas">
+      <div class="fx"><b>E = P · Δt</b><span>energia consumida</span></div>
+      <div class="fx"><b>1 kWh = 3,6 × 10⁶ J</b><span>unidade da conta de luz</span></div>
+    </div>
+    <p>A conta de luz cobra a <b>energia</b> consumida no mês, em <b>quilowatt-hora (kWh)</b>: a energia de um aparelho de 1000 W funcionando por 1 hora. Para calcular em kWh, use a potência em kW e o tempo em horas.</p>
+    <div class="ex">
+      <span class="k">Exemplo: o banho do mês</span>
+      <p>Um chuveiro de 5500 W é usado 20 minutos por dia durante 30 dias. Tarifa: R$ 0,80 por kWh.</p>
+      <p class="calc">Δt = 20 min × 30 = 600 min = 10 h &nbsp;→&nbsp; E = 5,5 kW × 10 h = 55 kWh</p>
+      <p class="calc">Custo = 55 × 0,80 = R$ 44,00</p>
+    </div>
+    <div class="calcbox">
+      <h3 style="margin:0">Calculadora de consumo</h3>
+      <div class="presets" id="presets">
+        <button data-p="5500" data-h="0.33">Chuveiro</button>
+        <button data-p="1900" data-h="0.25">Secador</button>
+        <button data-p="150" data-h="24">Geladeira</button>
+        <button data-p="1000" data-h="1">Ferro de passar</button>
+        <button data-p="9" data-h="5">Lâmpada LED</button>
+        <button data-p="60" data-h="5">Lâmpada incandescente</button>
+      </div>
+      <div class="row">
+        <label for="cp">Potência (W)<input id="cp" type="number" min="0" step="1" value="5500"></label>
+        <label for="ch">Horas por dia<input id="ch" type="number" min="0" max="24" step="0.05" value="0.33"></label>
+        <label for="cd">Dias<input id="cd" type="number" min="0" step="1" value="30"></label>
+        <label for="ct">Tarifa (R$/kWh)<input id="ct" type="number" min="0" step="0.01" value="0.80"></label>
+      </div>
+      <div class="result" id="cres"></div>
+      <p style="margin:0;font-size:13px;color:var(--muted)">A geladeira tem potência nominal maior que a média de uso, porque o motor liga e desliga. Os valores são aproximados.</p>
+    </div>
+    <div class="alert">
+      <span class="k">Atenção</span>
+      <p>Potência (W) e energia (kWh) são grandezas diferentes. Um aparelho potente usado por pouco tempo pode gastar menos energia que um aparelho fraco ligado o dia inteiro.</p>
+    </div>
+    <div class="sim"><span>Veja por que menor resistência significa mais calor.</span><a href="secador.html">Abrir a simulação do secador</a></div>
+  </section>
+
+  <section class="topic" id="formulas">
+    <h2>Quadro de fórmulas</h2>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Grandeza</th><th>Fórmula</th><th>Unidade (SI)</th></tr></thead>
+        <tbody>
+          <tr><td>Corrente elétrica</td><td class="m">i = ΔQ / Δt</td><td>ampère (A) = C/s</td></tr>
+          <tr><td>Carga</td><td class="m">ΔQ = n · e</td><td>coulomb (C)</td></tr>
+          <tr><td>Potencial elétrico</td><td class="m">V = E<sub>p</sub> / q</td><td>volt (V) = J/C</td></tr>
+          <tr><td>Tensão (ddp)</td><td class="m">U = V<sub>A</sub> − V<sub>B</sub> = τ / q</td><td>volt (V)</td></tr>
+          <tr><td>1ª lei de Ohm</td><td class="m">U = R · i</td><td>ohm (Ω) = V/A</td></tr>
+          <tr><td>2ª lei de Ohm</td><td class="m">R = ρ · L / A</td><td>ρ em Ω·m</td></tr>
+          <tr><td>Série</td><td class="m">R<sub>eq</sub> = R₁ + R₂ + …</td><td>mesma corrente</td></tr>
+          <tr><td>Paralelo</td><td class="m">1/R<sub>eq</sub> = 1/R₁ + 1/R₂ + …</td><td>mesma tensão</td></tr>
+          <tr><td>Potência</td><td class="m">P = U·i = R·i² = U²/R</td><td>watt (W) = J/s</td></tr>
+          <tr><td>Energia consumida</td><td class="m">E = P · Δt</td><td>J ou kWh (1 kWh = 3,6×10⁶ J)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="cta">
+    <p>Pronto para testar o que aprendeu?</p>
+    <a href="questoes.html">Fazer as questões de revisão</a>
+  </div>
+</div>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const fmt = (x, d = 2) => x.toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
+  function calc() {
+    const P = +$('cp').value || 0, h = +$('ch').value || 0, d = +$('cd').value || 0, t = +$('ct').value || 0;
+    const kWh = P / 1000 * h * d;
+    $('cres').innerHTML = `E = ${fmt(P / 1000, 3)} kW × ${fmt(h * d, 1)} h = <b>${fmt(kWh, 1)} kWh</b> &nbsp;→&nbsp; custo ≈ <b>R$ ${fmt(kWh * t)}</b>`;
+  }
+  for (const id of ['cp', 'ch', 'cd', 'ct']) $(id).addEventListener('input', calc);
+  $('presets').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    $('cp').value = b.dataset.p; $('ch').value = b.dataset.h; calc();
+  });
+  calc();
+})();
+</script>
+</body>
+</html>
