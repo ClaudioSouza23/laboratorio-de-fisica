@@ -62,6 +62,13 @@ a:focus-visible { outline: 3px solid var(--cool); outline-offset: 2px; }
 .area ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
 .area li a { font-weight: 700; color: var(--ink); text-decoration-color: var(--c); text-underline-offset: 3px; }
 .area .empty { font-size: 14px; color: var(--muted); font-style: italic; margin: 0; }
+.trail { gap: 22px; }
+.trail h2 { margin: 4px 0 6px; font-size: clamp(26px, 3.4vw, 32px); }
+.step { display: grid; gap: 12px; border-left: 3px solid var(--line); padding-left: 18px; margin-left: 14px; }
+.stephead { display: flex; align-items: center; gap: 12px; margin-left: -35px; }
+.stepn { width: 32px; height: 32px; border-radius: 50%; background: #8a5208; color: #fff; font-family: var(--f-mono); font-weight: 700;
+  display: grid; place-items: center; flex: none; box-shadow: 0 0 0 4px var(--bg); }
+.stephead h3 { font-size: 20px; }
 footer { color: var(--muted); font-size: 14px; display: grid; gap: 4px; }
 </style>
 </head>
@@ -81,8 +88,25 @@ footer { color: var(--muted); font-size: 14px; display: grid; gap: 4px; }
     </nav>
   </header>
 
-  <section>
-    <h2>Simulações disponíveis</h2>
+  <section class="trail">
+    <div>
+      <span class="eyebrow">Eletricidade</span>
+      <h2>Trilha de eletrodinâmica</h2>
+      <p class="lede">Siga na ordem: entenda os conceitos, veja-os funcionando nas simulações e teste o que aprendeu.</p>
+    </div>
+
+    <div class="step">
+      <div class="stephead"><span class="stepn">1</span><h3>Estude o resumo</h3></div>
+      <article class="sim">
+        <span class="k">Material de estudo</span>
+        <h3>Eletrodinâmica: resumo</h3>
+        <p>Corrente, potencial elétrico e tensão, resistência e leis de Ohm, associações de resistores, potência e consumo de energia. Com exemplos resolvidos, quadro de fórmulas e calculadora da conta de luz.</p>
+        <a class="go" href="eletrodinamica.html">Ler o resumo</a>
+      </article>
+    </div>
+
+    <div class="step">
+      <div class="stephead"><span class="stepn">2</span><h3>Explore as simulações</h3></div>
     <div class="sims">
       <article class="sim">
         <span class="k">Eletricidade · Potência elétrica</span>
@@ -109,19 +133,12 @@ footer { color: var(--muted); font-size: 14px; display: grid; gap: 4px; }
         <a class="go" href="lampadas.html">Abrir as lâmpadas</a>
       </article>
     </div>
-  </section>
+    </div>
 
-  <section>
-    <h2>Material de estudo</h2>
-    <div class="sims">
+    <div class="step">
+      <div class="stephead"><span class="stepn">3</span><h3>Teste o que aprendeu</h3></div>
       <article class="sim">
-        <span class="k">Eletricidade · Resumo</span>
-        <h3>Eletrodinâmica: resumo</h3>
-        <p>Corrente, potencial elétrico e tensão, resistência e leis de Ohm, associações de resistores, potência e consumo de energia. Com exemplos resolvidos, quadro de fórmulas e calculadora da conta de luz.</p>
-        <a class="go" href="eletrodinamica.html">Ler o resumo</a>
-      </article>
-      <article class="sim">
-        <span class="k">Eletricidade · Revisão</span>
+        <span class="k">Revisão</span>
         <h3>Questões de eletrodinâmica</h3>
         <p>17 questões com correção na hora e resolução comentada, separadas por tema. O seu progresso fica salvo no navegador.</p>
         <a class="go" href="questoes.html">Fazer as questões</a>
@@ -156,10 +173,10 @@ footer { color: var(--muted); font-size: 14px; display: grid; gap: 4px; }
         <div class="head"><span class="dot"></span><h4>Eletricidade e Magnetismo</h4></div>
         <p class="topics">Cargas, campo elétrico, corrente, resistores, potência, circuitos, magnetismo, indução.</p>
         <ul>
-          <li><a href="secador.html">Secador de cabelo: quente ou morno?</a></li>
-          <li><a href="lampadas.html">Duas lâmpadas: qual brilha mais?</a></li>
-          <li><a href="eletrodinamica.html">Resumo de eletrodinâmica</a></li>
-          <li><a href="questoes.html">Questões de revisão</a></li>
+          <li><a href="eletrodinamica.html">1. Resumo de eletrodinâmica</a></li>
+          <li><a href="secador.html">2. Simulação: secador de cabelo</a></li>
+          <li><a href="lampadas.html">2. Simulação: duas lâmpadas</a></li>
+          <li><a href="questoes.html">3. Questões de revisão</a></li>
         </ul>
       </div>
       <div class="area" id="moderna" style="--c:var(--mod)">
