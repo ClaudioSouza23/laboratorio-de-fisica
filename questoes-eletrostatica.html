@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Questões de Eletrostática</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: placar e filtros por tema no topo; lista de questões em cartões, cada um com alternativas, correção e resolução. */
+:root {
+  --bg: #eef1f4; --surface: #ffffff; --ink: #16202b; --muted: #576575; --line: #d3dae2; --soft: #f6f8fa;
+  --accent: #a8650a; --cool: #2a73c0; --ok: #1f8a4c; --bad: #b8322a;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", Consolas, ui-monospace, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #0b1016; --surface: #141c25; --ink: #e5ecf2; --muted: #93a2b2; --line: #263240; --soft: #1a2430;
+  --accent: #e8a540; --cool: #5ea2ea; --ok: #4cc27f; --bad: #ff6b60; color-scheme: dark } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 17px; line-height: 1.55; }
+.wrap { max-width: 860px; margin: 0 auto; padding-block: 28px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 22px; }
+.back { font-weight: 700; color: var(--muted); text-decoration: none; font-size: 14px; }
+.back:hover { color: var(--ink); }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(32px, 5vw, 50px); line-height: 1.05; margin: 6px 0 10px; text-wrap: balance; }
+.lede { color: var(--muted); margin: 0; max-width: 65ch; }
+.lede a { color: inherit; font-weight: 700; }
+a:focus-visible, button:focus-visible { outline: 3px solid var(--cool); outline-offset: 2px; }
+
+.score { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 20px; display: grid; gap: 12px; }
+.score .top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 10px; }
+.score .big { font-family: var(--f-mono); font-weight: 700; font-size: clamp(22px, 3vw, 28px); font-variant-numeric: tabular-nums; }
+.score .big small { font-size: 14px; color: var(--muted); font-weight: 500; }
+.bar { height: 10px; border-radius: 6px; background: var(--soft); overflow: hidden; display: flex; }
+.bar span { display: block; height: 100%; transition: width .3s; }
+.bar .ok { background: var(--ok); } .bar .bad { background: var(--bad); }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; }
+.filters button { font: inherit; font-size: 14px; font-weight: 700; border: 1px solid var(--line); background: var(--soft); color: var(--ink); border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+.filters button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.filters .n { font-family: var(--f-mono); font-size: 12px; opacity: .7; margin-left: 4px; }
+.btn { font: inherit; font-weight: 700; font-size: 14px; border: 1px solid var(--ink); background: transparent; color: var(--ink); border-radius: 10px; padding: 7px 14px; cursor: pointer; }
+.btn:hover { background: var(--ink); color: var(--bg); }
+
+.q { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px 22px; display: grid; gap: 12px; }
+.q.right { border-color: var(--ok); } .q.wrong { border-color: var(--bad); }
+.q .head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.q .no { font-family: var(--f-display); font-weight: 800; font-size: 20px; }
+.tag { font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--accent); border: 1px solid currentColor; border-radius: 999px; padding: 2px 9px; }
+.stmt { margin: 0; max-width: 68ch; }
+.opts { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.opts button { font: inherit; text-align: left; width: 100%; display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 10px; align-items: start;
+  border: 1px solid var(--line); background: var(--soft); color: var(--ink); border-radius: 10px; padding: 10px 12px; cursor: pointer; }
+.opts button:hover:not(:disabled) { border-color: var(--ink); }
+.opts button:disabled { cursor: default; }
+.opts .L { font-family: var(--f-display); font-weight: 800; color: var(--accent); }
+.opts .mark { font-weight: 700; font-size: 14px; }
+.opts button.is-right { border-color: var(--ok); border-width: 2px; }
+.opts button.is-right .mark { color: var(--ok); }
+.opts button.is-wrong { border-color: var(--bad); border-width: 2px; }
+.opts button.is-wrong .mark { color: var(--bad); }
+.opts button.dim { opacity: .55; }
+.fb { font-weight: 700; }
+.fb.ok { color: var(--ok); } .fb.bad { color: var(--bad); }
+.res { border-left: 4px solid var(--cool); background: var(--soft); border-radius: 0 10px 10px 0; padding: 12px 16px; display: grid; gap: 6px; }
+.res .k { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; color: var(--cool); }
+.res p { margin: 0; }
+.res .calc { font-family: var(--f-mono); font-size: 15px; overflow-x: auto; }
+.res a { font-weight: 700; color: var(--cool); font-size: 14px; }
+.done { background: var(--surface); border: 2px solid var(--accent); border-radius: 14px; padding: 18px 22px; display: grid; gap: 6px; }
+.done h2 { font-family: var(--f-display); font-weight: 800; font-size: 24px; margin: 0; }
+.done p { margin: 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html#eletrostatica">&larr; Laboratório de Física</a>
+  <header>
+    <span class="eyebrow">Eletrostática · Revisão</span>
+    <h1>Questões de eletrostática</h1>
+    <p class="lede">Escolha uma alternativa para ver na hora se acertou e ler a resolução. Seu progresso fica salvo neste navegador. Precisa revisar? Consulte o <a href="eletrostatica.html">resumo de eletrostática</a>.</p>
+  </header>
+
+  <section class="score" aria-live="polite">
+    <div class="top">
+      <span class="big" id="scoreTxt"></span>
+      <button class="btn" id="reset">Recomeçar</button>
+    </div>
+    <div class="bar"><span class="ok" id="barOk"></span><span class="bad" id="barBad"></span></div>
+    <div class="filters" id="filters"></div>
+  </section>
+
+  <div class="done" id="done" hidden>
+    <h2 id="doneTitle"></h2>
+    <p id="doneText"></p>
+  </div>
+
+  <main id="list" style="display:grid;gap:16px"></main>
+</div>
+<script>
+(() => {
+const TOPICS = {
+  carga: { name: 'Carga elétrica', sec: 'carga' },
+  eletrizacao: { name: 'Eletrização', sec: 'eletrizacao' },
+  coulomb: { name: 'Lei de Coulomb', sec: 'coulomb' },
+  campo: { name: 'Campo elétrico', sec: 'campo' },
+  potencial: { name: 'Potencial elétrico', sec: 'potencial' },
+  condutores: { name: 'Condutores', sec: 'condutores' },
+};
+const Q = [
+  { t: 'carga', s: 'Um corpo tem 5 × 10¹² elétrons a mais do que prótons. Qual é a sua carga elétrica? (e = 1,6 × 10⁻¹⁹ C)',
+    o: ['+8 × 10⁻⁷ C', '−8 × 10⁻⁷ C', '−3,2 × 10⁻⁷ C', '−8 × 10⁻³¹ C', '+3,1 × 10³¹ C'], c: 1,
+    r: ['Elétrons em excesso: a carga é negativa.', 'Q = n · e = 5×10¹² × 1,6×10⁻¹⁹ = 8 × 10⁻⁷ C  →  Q = −8 × 10⁻⁷ C'] },
+  { t: 'carga', s: 'Um corpo inicialmente neutro perde 2 × 10¹³ elétrons. Com que carga ele fica?',
+    o: ['−3,2 μC', '+2 μC', '+3,2 μC', '−2 μC', 'Continua neutro, pois perder elétrons não altera a carga.'], c: 2,
+    r: ['Perdeu elétrons: fica positivo.', 'Q = n · e = 2×10¹³ × 1,6×10⁻¹⁹ = 3,2 × 10⁻⁶ C = +3,2 μC'] },
+  { t: 'carga', s: 'Qual dos valores abaixo NÃO pode ser a carga elétrica de um corpo? (e = 1,6 × 10⁻¹⁹ C)',
+    o: ['3,2 × 10⁻¹⁹ C', '4,8 × 10⁻¹⁹ C', '1,6 × 10⁻¹⁸ C', '2,4 × 10⁻¹⁹ C', '−8,0 × 10⁻¹⁹ C'], c: 3,
+    r: ['A carga é quantizada: Q = n · e, com n inteiro.', '2,4 × 10⁻¹⁹ / 1,6 × 10⁻¹⁹ = 1,5, que não é inteiro. Os outros valores dão n = 2, 3, 10 e −5.'] },
+  { t: 'eletrizacao', s: 'Um bastão de vidro é atritado com um pano de seda e fica eletrizado positivamente. O pano de seda:',
+    o: ['fica positivo também.', 'continua neutro.', 'perde prótons para o vidro.', 'fica negativo, com carga de mesmo módulo que a do vidro.', 'fica negativo, com carga maior que a do vidro.'], c: 3,
+    r: ['No atrito, um corpo perde elétrons e o outro recebe exatamente esses elétrons. Pela conservação da carga, os dois ficam com cargas de sinais opostos e mesmo módulo. Prótons não se transferem.'] },
+  { t: 'eletrizacao', s: 'Duas esferas metálicas idênticas têm cargas de +8 μC e −2 μC. Elas são colocadas em contato e depois separadas. Qual a carga final de cada uma?',
+    o: ['+5 μC', '+6 μC', '−3 μC', '+10 μC', '+3 μC'], c: 4,
+    r: ['Esferas idênticas dividem a carga total igualmente.', "Q' = (+8 + (−2)) / 2 = +6 / 2 = +3 μC em cada"],
+    sim: ['contato.html', 'Testar na simulação de contato'] },
+  { t: 'eletrizacao', s: 'Três esferas metálicas idênticas: A tem +12 μC; B e C estão neutras. Encosta-se A em B e separa-se. Depois, encosta-se A em C e separa-se. Quais as cargas finais de A, B e C?',
+    o: ['+4, +4 e +4 μC', '+3, +6 e +3 μC', '+6, +6 e 0 μC', '+6, +3 e +3 μC', '+3, +3 e +6 μC'], c: 1,
+    r: ['Faça um contato de cada vez.', 'A–B: (12 + 0)/2 = +6 μC em cada  →  A = +6, B = +6', 'A–C: (6 + 0)/2 = +3 μC em cada  →  A = +3, C = +3', 'Final: A = +3, B = +6, C = +3 μC. Total: +12 μC, conservado.'],
+    sim: ['contato.html', 'Testar na simulação de contato'] },
+  { t: 'eletrizacao', s: 'Um bastão negativo é aproximado, sem tocar, de uma esfera metálica neutra ligada à terra. Com o bastão ainda próximo, desliga-se o fio terra; depois, afasta-se o bastão. A esfera fica:',
+    o: ['positiva.', 'negativa.', 'neutra.', 'positiva apenas enquanto o bastão estiver perto.', 'com metade da carga do bastão.'], c: 0,
+    r: ['O bastão negativo repele elétrons da esfera, que escoam para a terra. Ao desligar o fio terra com o bastão ainda perto, esses elétrons não voltam. A esfera fica com falta de elétrons: positiva. Na indução, o induzido fica com sinal oposto ao do indutor.'] },
+  { t: 'coulomb', s: 'Duas cargas puntiformes de 2 μC e 3 μC estão no vácuo, a 0,3 m uma da outra. Qual a intensidade da força elétrica entre elas? (k = 9 × 10⁹ N·m²/C²)',
+    o: ['0,06 N', '0,2 N', '0,6 N', '6 N', '1,8 N'], c: 2,
+    r: ['F = k · |Q₁| · |Q₂| / d²', 'F = 9×10⁹ · 2×10⁻⁶ · 3×10⁻⁶ / (0,3)² = 0,054 / 0,09 = 0,6 N'],
+    sim: ['coulomb.html', 'Ver na simulação de Coulomb'] },
+  { t: 'coulomb', s: 'Duas cargas se atraem com uma força F. Se a distância entre elas dobrar, a nova força será:',
+    o: ['4F', 'F/2', 'F', '2F', 'F/4'], c: 4,
+    r: ['A força é inversamente proporcional ao quadrado da distância.', "F' = k·Q₁·Q₂ / (2d)² = (1/4) · k·Q₁·Q₂ / d² = F/4"],
+    sim: ['coulomb.html', 'Ver na simulação de Coulomb'] },
+  { t: 'coulomb', s: 'Duas cargas se repelem com uma força F. As duas cargas são dobradas e a distância entre elas também é dobrada. A nova força será:',
+    o: ['F', '2F', '4F', 'F/2', 'F/4'], c: 0,
+    r: ['Dobrar as duas cargas multiplica o numerador por 2 × 2 = 4. Dobrar a distância multiplica o denominador por 2² = 4.', "F' = k · 2Q₁ · 2Q₂ / (2d)² = 4/4 · F = F"] },
+  { t: 'coulomb', s: 'Uma carga Q₁ = +8 μC e uma carga Q₂ = +2 μC estão a certa distância. Comparando a força que Q₁ exerce em Q₂ com a força que Q₂ exerce em Q₁:',
+    o: ['Q₂ sofre uma força 4 vezes maior.', 'Q₁ sofre uma força 4 vezes maior.', 'as forças têm o mesmo módulo e sentidos opostos.', 'as forças têm o mesmo módulo e o mesmo sentido.', 'só Q₂ sofre força, pois tem carga menor.'], c: 2,
+    r: ['As duas forças formam um par ação e reação (3ª lei de Newton). Na lei de Coulomb, o produto Q₁·Q₂ é o mesmo para as duas cargas, então os módulos são iguais. Como as cargas são positivas, elas se repelem: sentidos opostos.'],
+    sim: ['coulomb.html', 'Ver na simulação de Coulomb'] },
+  { t: 'campo', s: 'Qual a intensidade do campo elétrico criado por uma carga puntiforme de 4 μC, no vácuo, em um ponto a 0,2 m dela?',
+    o: ['1,8 × 10⁵ N/C', '9 × 10⁵ N/C', '3,6 × 10⁴ N/C', '9 × 10⁴ N/C', '1,8 × 10⁶ N/C'], c: 1,
+    r: ['E = k · |Q| / d²', 'E = 9×10⁹ · 4×10⁻⁶ / (0,2)² = 3,6×10⁴ / 0,04 = 9 × 10⁵ N/C'] },
+  { t: 'campo', s: 'Uma carga q = −2 μC é colocada em um ponto onde o campo elétrico vale 5 × 10⁴ N/C, apontando para a direita. A força elétrica sobre ela é:',
+    o: ['0,1 N para a direita.', '10 N para a esquerda.', '0,01 N para a esquerda.', '0,1 N para a esquerda.', '2,5 × 10¹⁰ N para a direita.'], c: 3,
+    r: ['F = |q| · E = 2×10⁻⁶ · 5×10⁴ = 0,1 N', 'Como a carga é negativa, a força tem sentido oposto ao do campo: para a esquerda.'] },
+  { t: 'campo', s: 'Sobre as linhas de campo elétrico, é correto afirmar que:',
+    o: ['saem das cargas negativas e chegam às positivas.', 'não dão nenhuma informação sobre a intensidade do campo.', 'podem se cruzar em regiões de campo intenso.', 'saem das cargas positivas, chegam às negativas, e onde estão mais próximas o campo é mais intenso.', 'sempre coincidem com a trajetória de qualquer carga solta no campo.'], c: 3,
+    r: ['As linhas saem das positivas e chegam às negativas. A densidade de linhas indica a intensidade. Elas nunca se cruzam, pois o campo tem uma única direção em cada ponto. Uma carga com velocidade não segue necessariamente a linha de campo.'],
+    sim: ['coulomb.html', 'Ver as linhas de campo na simulação'] },
+  { t: 'potencial', s: 'Qual o potencial elétrico em um ponto a 0,3 m de uma carga puntiforme de +2 μC, no vácuo?',
+    o: ['6 × 10⁴ V', '2 × 10⁵ V', '1,8 × 10⁴ V', '6 × 10³ V', '2 × 10⁴ V'], c: 0,
+    r: ['V = k · Q / d (o potencial não leva o quadrado da distância).', 'V = 9×10⁹ · 2×10⁻⁶ / 0,3 = 1,8×10⁴ / 0,3 = 6 × 10⁴ V'] },
+  { t: 'potencial', s: 'Duas cargas de mesmo módulo e sinais opostos (+Q e −Q) estão separadas por uma distância. No ponto médio entre elas:',
+    o: ['o potencial e o campo são nulos.', 'o potencial é nulo e o campo não é nulo, apontando para a carga negativa.', 'o potencial não é nulo e o campo é nulo.', 'o potencial é nulo e o campo aponta para a carga positiva.', 'o potencial e o campo valem o dobro dos de uma só carga.'], c: 1,
+    r: ['Potencial é escalar: kQ/d + k(−Q)/d = 0.', 'Campo é vetor: o campo de +Q aponta para longe dela, e o de −Q aponta para ela. No ponto médio, os dois apontam para o lado de −Q e se somam.'],
+    sim: ['coulomb.html', 'Ver o dipolo na simulação'] },
+  { t: 'potencial', s: 'Uma carga de 3 μC é levada do ponto A (V_A = 500 V) até o ponto B (V_B = 100 V). Qual o trabalho realizado pela força elétrica?',
+    o: ['1,8 × 10⁻³ J', '−1,2 × 10⁻³ J', '1,2 × 10⁻³ J', '3 × 10⁻⁴ J', '1,2 × 10⁻⁶ J'], c: 2,
+    r: ['τ = q · (V_A − V_B)', 'τ = 3×10⁻⁶ · (500 − 100) = 3×10⁻⁶ · 400 = 1,2 × 10⁻³ J (positivo: a carga positiva foi para um potencial menor, movimento espontâneo).'] },
+  { t: 'condutores', s: 'Por que é seguro permanecer dentro de um carro fechado durante uma tempestade com raios?',
+    o: ['Porque os pneus de borracha isolam o carro do chão.', 'Porque a carcaça metálica funciona como blindagem: as cargas ficam na superfície externa e o campo no interior é nulo.', 'Porque o vidro repele os raios.', 'Porque o metal do carro tem resistência infinita.', 'Porque o motor descarrega as cargas para o chão.'], c: 1,
+    r: ['O carro funciona como uma gaiola de Faraday. Num condutor em equilíbrio, as cargas se distribuem na superfície externa e o campo elétrico no interior é nulo. Os pneus não protegem: um raio atravessa facilmente alguns centímetros de borracha.'] },
+  { t: 'condutores', s: 'Em um condutor eletrizado e em equilíbrio eletrostático, as cargas em excesso se concentram mais:',
+    o: ['no centro do condutor.', 'nas regiões mais planas da superfície.', 'nas regiões pontiagudas da superfície.', 'distribuídas igualmente por todo o volume.', 'apenas no ponto em que o condutor toca o chão.'], c: 2,
+    r: ['As cargas ficam na superfície e se acumulam mais nas pontas, onde o campo elétrico fica mais intenso. É o poder das pontas, princípio de funcionamento do para-raios.'] },
+];
+const LET = 'ABCDE';
+const KEY = 'lab-fisica-questoes-eletrostatica-v1';
+let answers = {};
+try { answers = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { answers = {}; }
+let filter = 'todas';
+const $ = id => document.getElementById(id);
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(answers)); } catch (e) {} };
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+function renderFilters() {
+  const counts = {}; Q.forEach(q => counts[q.t] = (counts[q.t] || 0) + 1);
+  const items = [['todas', 'Todas', Q.length], ...Object.entries(TOPICS).map(([k, v]) => [k, v.name, counts[k]])];
+  $('filters').innerHTML = items.map(([k, n, c]) => `<button data-f="${k}" aria-pressed="${filter === k}">${n}<span class="n">${c}</span></button>`).join('');
+}
+function renderScore() {
+  const done = Object.keys(answers).length, ok = Object.entries(answers).filter(([i, a]) => Q[i] && Q[i].c === a).length;
+  $('scoreTxt').innerHTML = `${ok} acerto${ok === 1 ? '' : 's'} <small>· ${done} de ${Q.length} respondidas</small>`;
+  $('barOk').style.width = (ok / Q.length * 100) + '%';
+  $('barBad').style.width = ((done - ok) / Q.length * 100) + '%';
+  const d = $('done');
+  d.hidden = done < Q.length;
+  if (done === Q.length) {
+    const pct = Math.round(ok / Q.length * 100);
+    $('doneTitle').textContent = `Você acertou ${ok} de ${Q.length} (${pct}%)`;
+    $('doneText').textContent = pct >= 80 ? 'Ótimo resultado! Revise as questões que errou e leia as resoluções.'
+      : pct >= 50 ? 'Bom caminho. Releia o resumo dos temas em que errou e clique em Recomeçar para tentar de novo.'
+      : 'Vale revisar o resumo com calma e tentar de novo. Use as simulações para ver os conceitos funcionando.';
+  }
+}
+function card(q, i) {
+  const a = answers[i], answered = a !== undefined, right = answered && a === q.c;
+  const opts = q.o.map((o, k) => {
+    let cls = '', mark = '';
+    if (answered) {
+      if (k === q.c) { cls = 'is-right'; mark = 'correta'; }
+      else if (k === a) { cls = 'is-wrong'; mark = 'sua resposta'; }
+      else cls = 'dim';
+    }
+    return `<li><button data-q="${i}" data-o="${k}" class="${cls}" ${answered ? 'disabled' : ''}><span class="L">${LET[k]}</span><span>${esc(o)}</span><span class="mark">${mark}</span></button></li>`;
+  }).join('');
+  const res = answered ? `
+    <p class="fb ${right ? 'ok' : 'bad'}">${right ? 'Correto!' : `Não foi dessa vez. A resposta é a alternativa ${LET[q.c]}.`}</p>
+    <div class="res"><span class="k">Resolução</span>${q.r.map((l, k) => `<p class="${k > 0 || /[=→]/.test(l) ? 'calc' : ''}">${esc(l)}</p>`).join('')}
+      <a href="eletrostatica.html#${TOPICS[q.t].sec}">Rever ${TOPICS[q.t].name.toLowerCase()} no resumo</a>
+      ${q.sim ? `<a href="${q.sim[0]}">${q.sim[1]}</a>` : ''}</div>` : '';
+  return `<article class="q ${answered ? (right ? 'right' : 'wrong') : ''}" id="q${i + 1}">
+    <div class="head"><span class="no">Questão ${i + 1}</span><span class="tag">${TOPICS[q.t].name}</span></div>
+    <p class="stmt">${esc(q.s)}</p>
+    <ol class="opts" aria-label="Alternativas">${opts}</ol>${res}</article>`;
+}
+function renderList() {
+  $('list').innerHTML = Q.map((q, i) => (filter === 'todas' || q.t === filter) ? card(q, i) : '').join('');
+}
+function renderAll() { renderFilters(); renderScore(); renderList(); }
+
+$('list').addEventListener('click', e => {
+  const b = e.target.closest('button[data-q]'); if (!b || b.disabled) return;
+  const i = +b.dataset.q; answers[i] = +b.dataset.o; save();
+  const el = $('q' + (i + 1)); el.outerHTML = card(Q[i], i); renderScore();
+});
+$('filters').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { filter = b.dataset.f; renderFilters(); renderList(); } });
+$('reset').addEventListener('click', () => { answers = {}; save(); renderAll(); window.scrollTo({ top: 0 }); });
+renderAll();
+})();
+</script>
+</body>
+</html>

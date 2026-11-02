@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Eletrização por Contato</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: roteiro no topo; bancada 3D com três esferas + painel de ações; carga total e histórico de contatos. */
+:root {
+  --bg: #eef1f4; --surface: #ffffff; --ink: #16202b; --muted: #576575; --line: #d3dae2; --soft: #f6f8fa;
+  --accent: #a8650a; --cool: #2a73c0; --ok: #1f8a4c; --bad: #b8322a; --pos: #c8372d; --neg: #2a63c0;
+  --stage: #0e151d; --stage-ink: #dce6ef;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", Consolas, ui-monospace, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #0b1016; --surface: #141c25; --ink: #e5ecf2; --muted: #93a2b2; --line: #263240; --soft: #1a2430;
+  --accent: #e8a540; --cool: #5ea2ea; --ok: #4cc27f; --bad: #ff6b60; --pos: #ff6b5e; --neg: #6ea6f0; color-scheme: dark } }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.5; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-block: 20px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 20px; }
+.back { font-weight: 700; color: var(--muted); text-decoration: none; font-size: 14px; }
+.back:hover { color: var(--ink); }
+header { display: grid; gap: 6px; }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(28px, 4vw, 44px); line-height: 1.05; margin: 0; text-wrap: balance; }
+.lede { color: var(--muted); max-width: 72ch; margin: 0; }
+h2 { font-family: var(--f-display); font-weight: 600; font-size: 20px; margin: 0; text-wrap: balance; }
+.small { font-size: 13px; color: var(--muted); margin: 0; }
+
+.guide { background: var(--surface); border: 2px solid var(--accent); border-radius: 14px; padding: 18px; display: grid; gap: 14px; }
+.guide-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.steps { display: flex; flex-wrap: wrap; gap: 6px; }
+.steps button { font: inherit; font-family: var(--f-mono); font-weight: 700; width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid var(--line); background: var(--soft); color: var(--muted); cursor: pointer; }
+.steps button[aria-current="step"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.steps button.done { color: var(--accent); border-color: var(--accent); }
+.guide-body { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 18px; }
+@media (max-width: 800px) { .guide-body { grid-template-columns: minmax(0, 1fr); } }
+.guide h3 { font-family: var(--f-display); font-weight: 800; font-size: clamp(20px, 2.6vw, 26px); margin: 0 0 6px; line-height: 1.15; }
+.guide p { margin: 0; max-width: 65ch; }
+.ask { background: var(--soft); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; align-content: start; }
+.ask .k { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+.ask .q { font-weight: 700; font-size: 17px; }
+.ask .a { border-left: 3px solid var(--ok); padding-left: 10px; }
+.nav { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.btn { font: inherit; font-weight: 700; border: 1px solid var(--ink); background: transparent; color: var(--ink); border-radius: 10px; padding: 8px 14px; cursor: pointer; text-decoration: none; display: inline-block; }
+.btn:hover:not(:disabled) { background: var(--ink); color: var(--bg); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary:hover:not(:disabled) { filter: brightness(1.1); background: var(--accent); color: #fff; }
+.btn.sm { padding: 6px 10px; font-size: 14px; }
+.btn:disabled { opacity: .4; cursor: default; }
+button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid var(--cool); outline-offset: 2px; }
+
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 20px; align-items: start; }
+@media (max-width: 900px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.stage { position: relative; background: var(--stage); border-radius: 14px; overflow: hidden; aspect-ratio: 16 / 10; max-width: 100%; min-height: 300px; }
+.stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.badge { position: absolute; top: 14px; left: 14px; font-family: var(--f-mono); font-weight: 700; font-size: clamp(13px, 1.8vw, 18px);
+  color: #fff; padding: 6px 12px; border-radius: 8px; background: #1d6b45; }
+.hint { position: absolute; top: 18px; right: 14px; font-size: 12px; color: var(--stage-ink); opacity: .65; }
+.legend { position: absolute; left: 14px; bottom: 12px; right: 14px; display: flex; flex-wrap: wrap; gap: 4px 16px;
+  font-size: 13px; color: var(--stage-ink); opacity: .9; pointer-events: none; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+.lab3d { position: absolute; left: 0; top: 0; transform: translate(-50%, -100%); pointer-events: none; white-space: nowrap;
+  font-size: 15px; font-weight: 700; color: #fff; background: rgba(14, 21, 29, .82); border: 1px solid rgba(220, 230, 239, .35);
+  padding: 3px 10px; border-radius: 6px; font-family: var(--f-mono); }
+.msg { position: absolute; left: 50%; top: 56px; transform: translateX(-50%); max-width: 90%; text-align: center; font-weight: 700; color: #fff;
+  background: rgba(30, 107, 69, .9); padding: 6px 14px; border-radius: 8px; font-size: 14px; pointer-events: none; transition: opacity .4s; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 16px; }
+.ctl { display: grid; gap: 8px; }
+.ctl > label, .ctl > .lab { font-weight: 700; font-size: 14px; display: flex; justify-content: space-between; gap: 8px; }
+.ctl .val { font-family: var(--f-mono); color: var(--accent); }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+.acts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.acts .btn { text-align: center; }
+.checks { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; }
+.checks label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+
+.readouts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 700px) { .readouts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.ro { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; gap: 2px; min-width: 0; }
+.ro .k { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.ro .v { font-family: var(--f-mono); font-weight: 700; font-size: clamp(20px, 2.6vw, 30px); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ro .u { font-size: .55em; color: var(--muted); margin-left: 3px; }
+.ro .tag { font-size: 12px; font-weight: 700; color: var(--muted); }
+.ro.total { border: 2px solid var(--ok); }
+.ro.total .tag { color: var(--ok); }
+.vpos { color: var(--pos); } .vneg { color: var(--neg); }
+
+.two { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 900px) { .two { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.hist { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; counter-reset: h; }
+.hist li { background: var(--soft); border-radius: 10px; padding: 10px 12px; display: grid; gap: 2px; counter-increment: h; }
+.hist li .t { font-weight: 700; }
+.hist li .t::before { content: counter(h) ". "; color: var(--accent); font-family: var(--f-mono); }
+.hist li .c { font-family: var(--f-mono); font-size: 14px; overflow-x: auto; white-space: nowrap; }
+.hist li .e { font-size: 14px; color: var(--muted); }
+.empty { color: var(--muted); font-style: italic; }
+.rules { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.f { font-family: var(--f-mono); font-weight: 700; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html#eletrostatica">&larr; Laboratório de Física</a>
+  <header>
+    <span class="eyebrow">Eletrostática · Processos de eletrização</span>
+    <h1>Eletrização por contato</h1>
+    <p class="lede">Três esferas metálicas idênticas, presas em suportes isolantes. Escolha as cargas iniciais, encoste as esferas e acompanhe para onde vão os elétrons. A carga total nunca muda.</p>
+  </header>
+
+  <section class="guide" aria-label="Roteiro da aula">
+    <div class="guide-top">
+      <h2>Roteiro da aula</h2>
+      <div class="steps" id="steps"></div>
+    </div>
+    <div class="guide-body">
+      <div><h3 id="gTitle"></h3><p id="gText"></p></div>
+      <div class="ask">
+        <span class="k">Pergunte à turma</span>
+        <span class="q" id="gQ"></span>
+        <span class="a" id="gA" hidden></span>
+        <div class="nav">
+          <button class="btn" id="gReveal">Ver resposta</button>
+          <button class="btn" id="gPrev">Voltar</button>
+          <button class="btn primary" id="gNext">Próximo passo</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="main">
+    <div class="stage" id="stage">
+      <div class="badge" id="badge">Carga total: +4 μC</div>
+      <div class="hint">Arraste para girar · role para aproximar</div>
+      <div class="msg" id="msg" style="opacity:0"></div>
+      <div class="lab3d" id="labA"></div>
+      <div class="lab3d" id="labB"></div>
+      <div class="lab3d" id="labC"></div>
+      <div class="legend">
+        <span><i style="background:#ff5a4a"></i>cada ponto vermelho: 0,5 μC positivo (falta de elétrons)</span>
+        <span><i style="background:#4a8cff"></i>cada ponto azul: 0,5 μC negativo (excesso de elétrons)</span>
+      </div>
+    </div>
+
+    <aside class="panel" aria-label="Controles">
+      <div class="ctl">
+        <span class="lab">Encostar as esferas</span>
+        <div class="acts">
+          <button class="btn sm" data-act="AB">A e B</button>
+          <button class="btn sm" data-act="BC">B e C</button>
+          <button class="btn sm" data-act="AC">A e C</button>
+          <button class="btn sm" data-act="ABC">As três juntas</button>
+        </div>
+      </div>
+      <div class="ctl">
+        <span class="lab">Aterrar (ligar à Terra)</span>
+        <div class="acts" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+          <button class="btn sm" data-act="gA">A</button>
+          <button class="btn sm" data-act="gB">B</button>
+          <button class="btn sm" data-act="gC">C</button>
+        </div>
+      </div>
+      <div class="ctl">
+        <label for="qa">Carga inicial de A <span class="val" id="qaVal"></span></label>
+        <input type="range" id="qa" min="-12" max="12" step="1" value="6">
+      </div>
+      <div class="ctl">
+        <label for="qb">Carga inicial de B <span class="val" id="qbVal"></span></label>
+        <input type="range" id="qb" min="-12" max="12" step="1" value="-2">
+      </div>
+      <div class="ctl">
+        <label for="qc">Carga inicial de C <span class="val" id="qcVal"></span></label>
+        <input type="range" id="qc" min="-12" max="12" step="1" value="0">
+      </div>
+      <button class="btn" id="restart">Voltar às cargas iniciais</button>
+      <div class="checks">
+        <label><input type="checkbox" id="spin"> Girar sozinho</label>
+        <label><input type="checkbox" id="labels" checked> Etiquetas</label>
+      </div>
+      <p class="small">Mudar uma carga inicial recomeça o experimento.</p>
+    </aside>
+  </section>
+
+  <section class="readouts">
+    <div class="ro"><span class="k">Esfera A</span><span class="v" id="oA"></span><span class="tag" id="nA"></span></div>
+    <div class="ro"><span class="k">Esfera B</span><span class="v" id="oB"></span><span class="tag" id="nB"></span></div>
+    <div class="ro"><span class="k">Esfera C</span><span class="v" id="oC"></span><span class="tag" id="nC"></span></div>
+    <div class="ro total"><span class="k">Carga total</span><span class="v" id="oT"></span><span class="tag" id="tT"></span></div>
+  </section>
+
+  <section class="two">
+    <div class="card">
+      <h2>O que aconteceu</h2>
+      <ol class="hist" id="hist"></ol>
+    </div>
+    <div class="card">
+      <h2>Regras do contato</h2>
+      <ul class="rules">
+        <li>Os elétrons passam de uma esfera para a outra até que <b>não haja mais diferença de potencial</b> entre elas.</li>
+        <li>Esferas <b>idênticas</b> terminam com cargas iguais: <span class="f">Q' = (Q₁ + Q₂) / 2</span>. Com três: <span class="f">(Q₁ + Q₂ + Q₃) / 3</span>.</li>
+        <li>Depois do contato, as esferas ficam com cargas de <b>mesmo sinal</b> (ou neutras).</li>
+        <li>A <b>carga total se conserva</b>. Só os elétrons se movem; os prótons ficam nos núcleos.</li>
+        <li>No <b>aterramento</b>, a Terra funciona como uma esfera enorme: a esfera ligada a ela fica praticamente neutra.</li>
+        <li>Se as esferas tivessem tamanhos diferentes, a carga se dividiria em proporção aos raios: a maior ficaria com mais carga.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Continue a trilha</h2>
+    <p class="small" style="font-size:15px">Veja a outra simulação ou siga para as questões de revisão. Se tiver dúvida, volte ao resumo.</p>
+    <div class="nav">
+      <a class="btn" href="coulomb.html">Simulação: Coulomb e campo elétrico</a>
+      <a class="btn primary" href="questoes-eletrostatica.html">Questões de revisão</a>
+      <a class="btn" href="eletrostatica.html#eletrizacao">Rever o resumo</a>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(() => {
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const NAMES = ['A', 'B', 'C'], HOME = [-2.4, 0, 2.4], RAD = 0.6;
+const state = { init: [6, -2, 0], q: [6, -2, 0], hist: [], spin: false, labels: true, busy: false };
+const $ = id => document.getElementById(id);
+const fmt = (x, d = 2) => x.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: d });
+const qtxt = q => { const r = Math.round(q * 100) / 100; return (r > 0 ? '+' : r < 0 ? '−' : '') + fmt(Math.abs(r)) + ' μC'; };
+const SUP = { '-': '⁻', 0: '⁰', 1: '¹', 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶', 7: '⁷', 8: '⁸', 9: '⁹' };
+function sci(x) {
+  if (!x) return '0';
+  const e = Math.floor(Math.log10(Math.abs(x))), m = x / Math.pow(10, e);
+  return `${fmt(m, 2)} × 10${String(e).split('').map(c => SUP[c]).join('')}`;
+}
+const electrons = dq => Math.abs(dq) * 1e-6 / 1.6e-19;
+
+/* ---------- 3D ---------- */
+const stage = $('stage');
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+stage.prepend(renderer.domElement);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(40, 1.6, 0.1, 100);
+camera.position.set(0, 3.6, 8);
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 1.0, 0.4);
+controls.enableDamping = true; controls.minDistance = 4; controls.maxDistance = 16;
+controls.maxPolarAngle = Math.PI * 0.49; controls.autoRotateSpeed = 0.5;
+scene.add(new THREE.HemisphereLight(0xcfe3ff, 0x1a1410, 0.75));
+const key = new THREE.DirectionalLight(0xffffff, 0.9); key.position.set(3, 6, 5); scene.add(key);
+const table = new THREE.Mesh(new THREE.BoxGeometry(9, 0.16, 5), new THREE.MeshStandardMaterial({ color: 0x2b3746, roughness: 0.85 }));
+table.position.y = -0.08; scene.add(table);
+
+// fio terra (aparece no aterramento)
+const groundMat = new THREE.MeshStandardMaterial({ color: 0x3fbf6f, emissive: 0x1f6f3f });
+const groundSym = new THREE.Group(); scene.add(groundSym); groundSym.visible = false;
+for (let i = 0; i < 3; i++) { const b = new THREE.Mesh(new THREE.BoxGeometry(0.6 - i * 0.18, 0.04, 0.06), groundMat); b.position.y = -i * 0.1; groundSym.add(b); }
+const groundWire = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1, 8), groundMat); scene.add(groundWire); groundWire.visible = false;
+
+const dot = document.createElement('canvas'); dot.width = dot.height = 64;
+{ const c = dot.getContext('2d'); const g = c.createRadialGradient(32, 32, 0, 32, 32, 32);
+  g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.5, 'rgba(255,255,255,.9)'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.fillRect(0, 0, 64, 64); }
+const dotTex = new THREE.CanvasTexture(dot);
+
+const spheres = HOME.map((x, i) => {
+  const grp = new THREE.Group(); grp.position.x = x; scene.add(grp);
+  const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.1, 12), new THREE.MeshStandardMaterial({ color: 0xe8dcc0, roughness: 0.4, transparent: true, opacity: 0.85 }));
+  stand.position.y = 0.55; grp.add(stand);
+  const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 0.08, 24), new THREE.MeshStandardMaterial({ color: 0x1b222b })); foot.position.y = 0.04; grp.add(foot);
+  const mat = new THREE.MeshStandardMaterial({ color: 0xb8c2cc, roughness: 0.25, metalness: 0.85, emissive: 0x000000 });
+  const ball = new THREE.Mesh(new THREE.SphereGeometry(RAD, 40, 28), mat); ball.position.y = 1.1 + RAD; grp.add(ball);
+  const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(0), 3));
+  const pts = new THREE.Points(geo, new THREE.PointsMaterial({ size: 0.2, map: dotTex, color: 0xff5a4a, transparent: true, depthWrite: false }));
+  pts.position.copy(ball.position); grp.add(pts);
+  return { grp, mat, ball, pts, geo, i };
+});
+function setDots(s, q) {
+  const n = Math.min(40, Math.round(Math.abs(q) * 2)), arr = new Float32Array(n * 3), g = Math.PI * (3 - Math.sqrt(5));
+  for (let k = 0; k < n; k++) {
+    const y = 1 - (k + 0.5) / n * 2, r = Math.sqrt(1 - y * y), a = k * g;
+    arr[k * 3] = Math.cos(a) * r * RAD * 1.03; arr[k * 3 + 1] = y * RAD * 1.03; arr[k * 3 + 2] = Math.sin(a) * r * RAD * 1.03;
+  }
+  s.geo.setAttribute('position', new THREE.BufferAttribute(arr, 3));
+  s.pts.material.color.setHex(q > 0 ? 0xff5a4a : 0x4a8cff);
+  const t = Math.min(Math.abs(q) / 12, 1);
+  s.mat.emissive.setHex(q > 0 ? 0x5a1008 : q < 0 ? 0x08245a : 0x000000).multiplyScalar(t);
+}
+const flash = new THREE.PointLight(0xfff2b0, 0, 4); scene.add(flash);
+const spark = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotTex, color: 0xfff2b0, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 }));
+spark.scale.setScalar(1.2); scene.add(spark);
+
+/* animação */
+let anim = null;
+function animate(moves, onTouch, done, contactPoint) {
+  // moves: [[sphereIndex, targetX, targetZ]]
+  if (reduce) { onTouch(); done(); return; }
+  anim = { t: 0, moves: moves.map(([i, x, z]) => ({ i, x0: HOME[i], z0: 0, x, z })), onTouch, done, touched: false, cp: contactPoint };
+}
+function stepAnim(dt) {
+  if (!anim) return;
+  anim.t += dt;
+  const T1 = 0.7, T2 = 1.3, T3 = 2.0, t = anim.t;
+  const ease = u => u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+  const k = t < T1 ? ease(t / T1) : t < T2 ? 1 : t < T3 ? 1 - ease((t - T2) / (T3 - T2)) : 0;
+  for (const m of anim.moves) { const g = spheres[m.i].grp; g.position.x = m.x0 + (m.x - m.x0) * k; g.position.z = m.z0 + (m.z - m.z0) * k; }
+  if (!anim.touched && t >= T1) { anim.touched = true; anim.onTouch(); if (anim.cp) { spark.position.copy(anim.cp); } }
+  const fl = t >= T1 && t < T2 ? 1 - (t - T1) / (T2 - T1) : 0;
+  flash.intensity = fl * 3; spark.material.opacity = fl; if (anim.cp) flash.position.copy(anim.cp);
+  if (t >= T3) { for (const m of anim.moves) { spheres[m.i].grp.position.set(m.x0, 0, 0); } const d = anim.done; anim = null; d(); }
+}
+
+/* etiquetas */
+const tmpV = new THREE.Vector3();
+function place(el, s) {
+  if (!state.labels) { el.style.visibility = 'hidden'; return; }
+  s.ball.getWorldPosition(tmpV); tmpV.y += RAD + 0.25;
+  const p = tmpV.project(camera);
+  el.style.left = ((p.x + 1) / 2 * stage.clientWidth).toFixed(1) + 'px';
+  el.style.top = ((1 - p.y) / 2 * stage.clientHeight).toFixed(1) + 'px';
+  el.style.visibility = p.z > 1 ? 'hidden' : 'visible';
+}
+function resize() { const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+new ResizeObserver(resize).observe(stage); resize();
+let t0 = performance.now();
+function frame(now) {
+  const dt = Math.min((now - t0) / 1000, 0.05); t0 = now;
+  stepAnim(dt);
+  controls.autoRotate = state.spin; controls.update();
+  renderer.render(scene, camera);
+  ['labA', 'labB', 'labC'].forEach((id, i) => place($(id), spheres[i]));
+  requestAnimationFrame(frame);
+}
+
+/* ---------- lógica ---------- */
+let msgTimer;
+function showMsg(t) { const m = $('msg'); m.textContent = t; m.style.opacity = 1; clearTimeout(msgTimer); msgTimer = setTimeout(() => m.style.opacity = 0, 3500); }
+function flowText(before, after, idx) {
+  // elétrons vão para quem fica mais negativo
+  const gain = idx.filter(i => after[i] < before[i] - 1e-9), lose = idx.filter(i => after[i] > before[i] + 1e-9);
+  if (!gain.length) return 'Nenhum elétron se moveu: as cargas já eram iguais.';
+  const dq = gain.reduce((s, i) => s + (before[i] - after[i]), 0);
+  return `${sci(electrons(dq))} elétrons passaram de ${lose.map(i => NAMES[i]).join(' e ')} para ${gain.map(i => NAMES[i]).join(' e ')}.`;
+}
+function contact(idx) {
+  if (state.busy) return;
+  const before = state.q.slice(), sum = idx.reduce((s, i) => s + before[i], 0), each = sum / idx.length;
+  const after = before.slice(); idx.forEach(i => after[i] = each);
+  let moves, cp;
+  if (idx.length === 3) { moves = [[0, -2 * RAD, 0], [2, 2 * RAD, 0]]; cp = new THREE.Vector3(0, 1.1 + RAD, 0); }
+  else {
+    const [a, b] = idx, adj = Math.abs(a - b) === 1, mx = adj ? (HOME[a] + HOME[b]) / 2 : 0, z = adj ? 0 : 1.6;
+    moves = [[a, mx - RAD, z], [b, mx + RAD, z]]; cp = new THREE.Vector3(mx, 1.1 + RAD, z);
+  }
+  state.busy = true; setButtons();
+  animate(moves, () => { state.q = after; idx.forEach(i => setDots(spheres[i], after[i])); renderNumbers(); }, () => {
+    const names = idx.map(i => NAMES[i]);
+    state.hist.push({
+      t: `Contato entre ${names.join(', ').replace(/, ([^,]*)$/, ' e $1')}`,
+      c: `(${idx.map(i => qtxt(before[i]).replace(' μC', '')).join(' + ')}) / ${idx.length} = ${qtxt(each)} em cada`,
+      e: flowText(before, after, idx),
+    });
+    showMsg(`${names.join(' + ')}: ${qtxt(each)} em cada`);
+    state.busy = false; render();
+  }, cp);
+}
+function ground(i) {
+  if (state.busy) return;
+  const before = state.q[i];
+  state.busy = true; setButtons();
+  const s = spheres[i];
+  groundWire.position.set(HOME[i] + RAD * 0.9, 0.85, 0.5); groundWire.scale.y = 1.7; groundWire.visible = true;
+  groundSym.position.set(HOME[i] + RAD * 0.9, 0.05, 0.5); groundSym.visible = true;
+  const end = () => {
+    groundWire.visible = groundSym.visible = false;
+    const txt = !before ? 'Ela já estava neutra: nenhum elétron se moveu.'
+      : before > 0 ? `${sci(electrons(before))} elétrons subiram da Terra para ${NAMES[i]}.`
+      : `${sci(electrons(before))} elétrons escoaram de ${NAMES[i]} para a Terra.`;
+    state.hist.push({ t: `Esfera ${NAMES[i]} ligada à Terra`, c: `${qtxt(before)} → 0 μC`, e: txt });
+    showMsg(`${NAMES[i]} aterrada: ficou neutra`);
+    state.busy = false; render();
+  };
+  if (reduce) { state.q[i] = 0; setDots(s, 0); end(); return; }
+  let t = 0; const timer = setInterval(() => {
+    t += 0.05;
+    if (t >= 0.6 && state.q[i] !== 0) { state.q[i] = 0; setDots(s, 0); renderNumbers(); flash.position.set(HOME[i], 1.1, 0.5); flash.intensity = 2; setTimeout(() => flash.intensity = 0, 300); }
+    if (t >= 1.4) { clearInterval(timer); end(); }
+  }, 50);
+}
+function restart() { if (state.busy) return; state.q = state.init.slice(); state.hist = []; spheres.forEach((s, i) => setDots(s, state.q[i])); render(); }
+
+function setButtons() { document.querySelectorAll('[data-act], #restart, #qa, #qb, #qc').forEach(b => b.disabled = state.busy); }
+function renderNumbers() {
+  const tot = state.q.reduce((a, b) => a + b, 0), totInit = state.init.reduce((a, b) => a + b, 0);
+  const grounded = state.hist.some(h => h.t.includes('Terra'));
+  ['A', 'B', 'C'].forEach((n, i) => {
+    const q = state.q[i];
+    $('o' + n).innerHTML = `<span class="${q > 0 ? 'vpos' : q < 0 ? 'vneg' : ''}">${qtxt(q).replace(' μC', '')}</span><span class="u">μC</span>`;
+    $('n' + n).textContent = Math.abs(q) < 1e-9 ? 'neutra' : `${q > 0 ? 'faltam' : 'sobram'} ${sci(electrons(q))} elétrons`;
+    $('lab' + n).textContent = `${n}: ${qtxt(q)}`;
+  });
+  $('oT').innerHTML = `${qtxt(tot).replace(' μC', '')}<span class="u">μC</span>`;
+  $('tT').textContent = Math.abs(tot - totInit) < 1e-9 ? 'conservada' : `a Terra levou ${qtxt(totInit - tot)}`;
+  $('badge').textContent = `Carga total: ${qtxt(tot)}`;
+}
+function render() {
+  $('qaVal').textContent = qtxt(state.init[0]); $('qbVal').textContent = qtxt(state.init[1]); $('qcVal').textContent = qtxt(state.init[2]);
+  $('qa').value = state.init[0]; $('qb').value = state.init[1]; $('qc').value = state.init[2];
+  renderNumbers(); setButtons();
+  $('hist').innerHTML = state.hist.length
+    ? state.hist.map(h => `<li><span class="t">${h.t}</span><span class="c">${h.c}</span><span class="e">${h.e}</span></li>`).join('')
+    : `<li class="empty" style="background:none;padding:0">Nenhum contato ainda. Cargas iniciais: A ${qtxt(state.init[0])}, B ${qtxt(state.init[1])}, C ${qtxt(state.init[2])}. Use os botões "Encostar".</li>`;
+}
+
+/* ---------- roteiro ---------- */
+const steps = [
+  { t: 'Contato entre duas esferas', init: [6, -2, 0],
+    x: 'As esferas são metálicas e idênticas. A tem +6 μC e B tem −2 μC. Clique em "A e B" para encostá-las.',
+    q: 'Com que carga cada esfera fica? E a carga total do sistema?',
+    a: '+2 μC em cada: (6 + (−2)) / 2 = +2. A carga total era +4 μC antes e continua +4 μC depois. Elétrons passaram de B para A.' },
+  { t: 'Sequência de contatos', init: [12, 0, 0],
+    x: 'Agora A tem +12 μC e as outras estão neutras. Encoste A em B. Depois encoste A em C.',
+    q: 'Qual é a carga final de cada esfera?',
+    a: 'Contato A–B: +6 μC em cada. Contato A–C: +3 μC em cada. Final: A = +3 μC, B = +6 μC, C = +3 μC. Total: +12 μC, como no início.' },
+  { t: 'As três ao mesmo tempo', init: [12, 0, 0],
+    x: 'Com as mesmas cargas iniciais, clique em "As três juntas".',
+    q: 'Com quanto cada esfera fica? Por que é diferente do passo anterior?',
+    a: '+4 μC em cada: 12 / 3. No contato simultâneo a carga total se divide igualmente entre as três. Em contatos sucessivos, cada contato divide só entre duas esferas.' },
+  { t: 'Cargas que se anulam', init: [5, -5, 0],
+    x: 'A tem +5 μC e B tem −5 μC.',
+    q: 'O que acontece ao encostar A e B?',
+    a: 'As duas ficam neutras: (5 + (−5)) / 2 = 0. A carga total era zero e continua zero. Os 5 μC de elétrons em excesso em B passaram para A.' },
+  { t: 'Aterramento', init: [-8, 0, 0],
+    x: 'A tem −8 μC. Clique em "A" na linha "Aterrar".',
+    q: 'Para onde vão os elétrons? A carga se conservou?',
+    a: 'Os elétrons em excesso de A escoam para a Terra e A fica neutra. A carga se conserva quando incluímos a Terra no sistema: ela recebeu os −8 μC.' },
+];
+let step = 0;
+const stepsEl = $('steps');
+steps.forEach((s, i) => { const b = document.createElement('button'); b.textContent = i + 1; b.setAttribute('aria-label', `Passo ${i + 1}: ${s.t}`); b.addEventListener('click', () => goStep(i)); stepsEl.append(b); });
+function goStep(i) {
+  if (state.busy) return;
+  step = i; const s = steps[i];
+  state.init = s.init.slice(); restart();
+  $('gTitle').textContent = `${i + 1}. ${s.t}`; $('gText').textContent = s.x; $('gQ').textContent = s.q;
+  $('gA').textContent = s.a; $('gA').hidden = true; $('gReveal').hidden = false;
+  [...stepsEl.children].forEach((b, k) => { if (k === i) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current'); b.classList.toggle('done', k < i); });
+  $('gPrev').disabled = i === 0;
+  $('gNext').textContent = i === steps.length - 1 ? 'Recomeçar' : 'Próximo passo';
+}
+$('gReveal').addEventListener('click', () => { $('gA').hidden = false; $('gReveal').hidden = true; });
+$('gPrev').addEventListener('click', () => goStep(Math.max(0, step - 1)));
+$('gNext').addEventListener('click', () => goStep((step + 1) % steps.length));
+
+document.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', () => {
+  const a = b.dataset.act;
+  if (a[0] === 'g') ground(NAMES.indexOf(a[1]));
+  else contact(a.split('').map(n => NAMES.indexOf(n)));
+}));
+[['qa', 0], ['qb', 1], ['qc', 2]].forEach(([id, i]) => $(id).addEventListener('input', e => { state.init[i] = +e.target.value; restart(); }));
+$('restart').addEventListener('click', restart);
+$('spin').addEventListener('change', e => { state.spin = e.target.checked; });
+$('labels').addEventListener('change', e => { state.labels = e.target.checked; });
+
+goStep(0);
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

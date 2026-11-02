@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Resumo de Eletrostática</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;400i;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: coluna de leitura (~70ch) com sumário em pílulas; cada tópico tem texto, fórmulas em destaque, exemplo resolvido e alerta. */
+:root {
+  --bg: #eef1f4; --surface: #ffffff; --ink: #16202b; --muted: #576575; --line: #d3dae2; --soft: #f6f8fa;
+  --accent: #a8650a; --cool: #2a73c0; --ok: #1f8a4c; --warn: #b8322a; --pos: #c8372d; --neg: #2a63c0;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", Consolas, ui-monospace, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #0b1016; --surface: #141c25; --ink: #e5ecf2; --muted: #93a2b2; --line: #263240; --soft: #1a2430;
+  --accent: #e8a540; --cool: #5ea2ea; --ok: #4cc27f; --warn: #ff6b60; --pos: #ff6b5e; --neg: #6ea6f0; color-scheme: dark } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 17px; line-height: 1.6; }
+.wrap { max-width: 860px; margin: 0 auto; padding-block: 28px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 28px; }
+.back { font-weight: 700; color: var(--muted); text-decoration: none; font-size: 14px; }
+.back:hover { color: var(--ink); }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(32px, 5vw, 50px); line-height: 1.05; margin: 6px 0 10px; text-wrap: balance; }
+.lede { color: var(--muted); margin: 0; max-width: 65ch; }
+.toc { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.toc a { text-decoration: none; font-weight: 700; font-size: 14px; color: var(--ink); border: 1px solid var(--line); background: var(--surface); padding: 6px 12px; border-radius: 999px; }
+.toc a:hover { border-color: var(--ink); }
+a:focus-visible { outline: 3px solid var(--cool); outline-offset: 2px; }
+
+section.topic { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 24px; display: grid; gap: 14px; scroll-margin-top: 16px; }
+.topic > * { margin: 0; }
+.num { font-family: var(--f-mono); font-size: 13px; color: var(--accent); font-weight: 700; letter-spacing: .06em; }
+h2 { font-family: var(--f-display); font-weight: 800; font-size: clamp(24px, 3.2vw, 30px); line-height: 1.1; text-wrap: balance; }
+h3 { font-family: var(--f-display); font-weight: 600; font-size: 19px; margin: 6px 0 0; }
+p { max-width: 68ch; }
+ul.pts { margin: 0; padding-left: 22px; display: grid; gap: 4px; }
+.pos { color: var(--pos); font-weight: 700; } .neg { color: var(--neg); font-weight: 700; }
+
+.formulas { display: flex; flex-wrap: wrap; gap: 10px; }
+.fx { background: var(--soft); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; display: grid; gap: 2px; min-width: 0; }
+.fx b { font-family: var(--f-mono); font-size: 21px; font-weight: 700; white-space: nowrap; }
+.fx span { font-size: 13px; color: var(--muted); }
+
+.ex { border-left: 4px solid var(--cool); background: var(--soft); border-radius: 0 10px 10px 0; padding: 12px 16px; display: grid; gap: 6px; }
+.ex .k, .alert .k { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; color: var(--cool); }
+.ex p { margin: 0; }
+.ex .calc { font-family: var(--f-mono); font-size: 15px; overflow-x: auto; white-space: nowrap; }
+.alert { border-left: 4px solid var(--warn); background: var(--soft); border-radius: 0 10px 10px 0; padding: 12px 16px; display: grid; gap: 4px; }
+.alert .k { color: var(--warn); }
+.alert p { margin: 0; }
+.sim { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 15px; color: var(--muted); }
+.sim a { font-weight: 700; color: #fff; background: #8a5208; text-decoration: none; padding: 7px 14px; border-radius: 9px; }
+.sim a:hover { filter: brightness(1.12); }
+
+.cmp { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.cmp.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 640px) { .cmp, .cmp.two { grid-template-columns: minmax(0, 1fr); } }
+.cmp > div { border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.cmp h3 { margin: 0; }
+.cmp p { margin: 0; font-size: 15px; }
+.cmp .res { font-family: var(--f-mono); font-size: 14px; font-weight: 700; }
+.cmp svg { width: 100%; max-width: 200px; height: auto; display: block; margin: 0 auto; }
+
+.tbl { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+thead th { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+td.m { font-family: var(--f-mono); font-weight: 700; white-space: nowrap; }
+
+.cta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; background: var(--surface); border: 2px solid var(--accent); border-radius: 14px; padding: 18px 22px; }
+.cta p { margin: 0; font-weight: 700; }
+.cta a { font-weight: 700; color: #fff; background: #8a5208; text-decoration: none; padding: 10px 18px; border-radius: 10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html#eletrostatica">&larr; Laboratório de Física</a>
+  <header>
+    <span class="eyebrow">Eletricidade e Magnetismo · Eletrostática</span>
+    <h1>Eletrostática: resumo</h1>
+    <p class="lede">O estudo das cargas elétricas em repouso: o que é carga, como os corpos se eletrizam, a força entre cargas, o campo e o potencial elétrico, e como os condutores se comportam.</p>
+    <nav class="toc" aria-label="Sumário">
+      <a href="#carga">1. Carga elétrica</a>
+      <a href="#eletrizacao">2. Eletrização</a>
+      <a href="#coulomb">3. Lei de Coulomb</a>
+      <a href="#campo">4. Campo elétrico</a>
+      <a href="#potencial">5. Potencial elétrico</a>
+      <a href="#condutores">6. Condutores</a>
+      <a href="#formulas">Quadro de fórmulas</a>
+    </nav>
+  </header>
+
+  <section class="topic" id="carga">
+    <span class="num">1</span>
+    <h2>Carga elétrica</h2>
+    <p>A matéria é feita de átomos, que têm <b>prótons</b> (carga <span class="pos">positiva</span>) no núcleo e <b>elétrons</b> (carga <span class="neg">negativa</span>) em volta. Um corpo é <b>neutro</b> quando tem tantos prótons quanto elétrons. Ele fica eletrizado quando <b>ganha ou perde elétrons</b>: os prótons não saem do núcleo.</p>
+    <div class="formulas">
+      <div class="fx"><b>Q = n · e</b><span>n: elétrons em falta ou em excesso</span></div>
+      <div class="fx"><b>e = 1,6 × 10⁻¹⁹ C</b><span>carga elementar</span></div>
+    </div>
+    <ul class="pts">
+      <li>Unidade: <b>coulomb (C)</b>. Na prática usamos μC (10⁻⁶ C) e nC (10⁻⁹ C).</li>
+      <li>Perdeu elétrons: fica <span class="pos">positivo</span>. Ganhou elétrons: fica <span class="neg">negativo</span>.</li>
+      <li><b>Cargas de mesmo sinal se repelem; de sinais opostos se atraem.</b></li>
+      <li><b>Conservação:</b> num sistema isolado, a soma das cargas não muda. A carga só passa de um corpo para outro.</li>
+      <li><b>Quantização:</b> toda carga é um múltiplo inteiro de e. Não existe carga de 1,5 e.</li>
+      <li><b>Condutores</b> (metais) têm elétrons livres que se movem com facilidade. <b>Isolantes</b> (vidro, borracha, plástico) seguram seus elétrons.</li>
+    </ul>
+    <div class="ex">
+      <span class="k">Exemplo</span>
+      <p>Um corpo neutro perde 5 × 10¹² elétrons. Qual a sua carga?</p>
+      <p class="calc">Q = n · e = 5×10¹² × 1,6×10⁻¹⁹ = 8 × 10⁻⁷ C = +0,8 μC (positivo, pois perdeu elétrons)</p>
+    </div>
+  </section>
+
+  <section class="topic" id="eletrizacao">
+    <span class="num">2</span>
+    <h2>Processos de eletrização</h2>
+    <div class="cmp">
+      <div>
+        <h3>Por atrito</h3>
+        <p>Dois materiais diferentes são esfregados. Um deles arranca elétrons do outro.</p>
+        <p class="res">Resultado: cargas de sinais opostos e mesmo módulo.</p>
+        <p>Ex.: vidro atritado com seda fica positivo; a seda fica negativa.</p>
+      </div>
+      <div>
+        <h3>Por contato</h3>
+        <p>Um condutor eletrizado toca outro condutor. Elétrons passam de um para o outro até o equilíbrio.</p>
+        <p class="res">Resultado: cargas de mesmo sinal.</p>
+        <p>Esferas idênticas ficam com cargas iguais: a média das cargas iniciais.</p>
+      </div>
+      <div>
+        <h3>Por indução</h3>
+        <p>Um corpo eletrizado (indutor) é aproximado, sem tocar, de um condutor neutro (induzido) ligado à terra.</p>
+        <p class="res">Resultado: induzido com sinal oposto ao do indutor.</p>
+        <p>Desliga-se o fio terra antes de afastar o indutor.</p>
+      </div>
+    </div>
+    <div class="formulas">
+      <div class="fx"><b>Q' = (Q<sub>A</sub> + Q<sub>B</sub>) / 2</b><span>contato entre esferas idênticas</span></div>
+    </div>
+    <div class="ex">
+      <span class="k">Exemplo de contato</span>
+      <p>Esferas metálicas idênticas: A com +6 μC e B com −2 μC. Elas se tocam e são separadas.</p>
+      <p class="calc">Q' = (+6 + (−2)) / 2 = +2 μC em cada &nbsp;·&nbsp; total antes: +4 μC, depois: +2 + 2 = +4 μC ✓</p>
+    </div>
+    <div class="alert">
+      <span class="k">Atenção</span>
+      <p>Na indução, o induzido só fica eletrizado de forma permanente se houver <b>aterramento</b>. Sem ele, as cargas apenas se separam (polarização) e voltam ao normal quando o indutor se afasta. Um corpo neutro também é atraído por um corpo eletrizado por causa dessa polarização.</p>
+    </div>
+    <div class="sim"><span>Faça contatos entre esferas e veja a carga se conservar.</span><a href="contato.html">Abrir a simulação de eletrização</a></div>
+  </section>
+
+  <section class="topic" id="coulomb">
+    <span class="num">3</span>
+    <h2>Lei de Coulomb</h2>
+    <p>Duas cargas puntiformes trocam forças de <b>atração ou repulsão</b> ao longo da reta que as une. A intensidade é proporcional ao produto das cargas e <b>inversamente proporcional ao quadrado da distância</b>.</p>
+    <div class="formulas">
+      <div class="fx"><b>F = k · |Q₁| · |Q₂| / d²</b><span>força elétrica</span></div>
+      <div class="fx"><b>k = 9 × 10⁹ N·m²/C²</b><span>constante eletrostática no vácuo</span></div>
+    </div>
+    <ul class="pts">
+      <li>As forças nas duas cargas têm <b>o mesmo módulo e sentidos opostos</b> (ação e reação), mesmo que as cargas sejam diferentes.</li>
+      <li>Dobrar a distância divide a força por <b>4</b>. Triplicar divide por <b>9</b>.</li>
+      <li>Dobrar uma das cargas dobra a força.</li>
+    </ul>
+    <div class="ex">
+      <span class="k">Exemplo</span>
+      <p>Cargas de 2 μC e 3 μC estão a 0,3 m de distância, no vácuo. Qual a força entre elas?</p>
+      <p class="calc">F = 9×10⁹ · 2×10⁻⁶ · 3×10⁻⁶ / (0,3)² = 0,054 / 0,09 = 0,6 N</p>
+    </div>
+    <div class="sim"><span>Mude as cargas e a distância e veja as forças.</span><a href="coulomb.html">Abrir a simulação de Coulomb e campo</a></div>
+  </section>
+
+  <section class="topic" id="campo">
+    <span class="num">4</span>
+    <h2>Campo elétrico</h2>
+    <p>Uma carga modifica o espaço ao seu redor criando um <b>campo elétrico</b>. Qualquer outra carga colocada ali sente uma força. O campo é um <b>vetor</b>: tem intensidade, direção e sentido.</p>
+    <div class="formulas">
+      <div class="fx"><b>E = F / q</b><span>definição (q: carga de prova)</span></div>
+      <div class="fx"><b>E = k · |Q| / d²</b><span>campo de uma carga puntiforme</span></div>
+      <div class="fx"><b>F = q · E</b><span>força sobre uma carga no campo</span></div>
+    </div>
+    <div class="cmp two">
+      <div>
+        <h3><span class="pos">Carga positiva</span></h3>
+        <svg id="figPos" viewBox="0 0 160 160" role="img" aria-label="Linhas de campo saindo de uma carga positiva."></svg>
+        <p>As linhas de campo <b>saem</b> da carga (campo de afastamento).</p>
+      </div>
+      <div>
+        <h3><span class="neg">Carga negativa</span></h3>
+        <svg id="figNeg" viewBox="0 0 160 160" role="img" aria-label="Linhas de campo chegando a uma carga negativa."></svg>
+        <p>As linhas de campo <b>chegam</b> à carga (campo de aproximação).</p>
+      </div>
+    </div>
+    <ul class="pts">
+      <li>Unidade: <b>N/C</b> (que é o mesmo que V/m).</li>
+      <li>Carga de prova <b>positiva</b>: a força tem o mesmo sentido do campo. <b>Negativa</b>: sentido oposto.</li>
+      <li>As linhas de campo nunca se cruzam. Onde estão <b>mais próximas</b>, o campo é <b>mais intenso</b>.</li>
+      <li>Com várias cargas, o campo em um ponto é a <b>soma vetorial</b> dos campos de cada uma.</li>
+      <li>Entre duas placas paralelas com cargas opostas, o campo é <b>uniforme</b>: mesma intensidade, direção e sentido em todos os pontos.</li>
+    </ul>
+    <div class="ex">
+      <span class="k">Exemplo</span>
+      <p>Qual o campo elétrico a 0,2 m de uma carga de 4 μC, no vácuo?</p>
+      <p class="calc">E = 9×10⁹ · 4×10⁻⁶ / (0,2)² = 3,6×10⁴ / 0,04 = 9 × 10⁵ N/C</p>
+    </div>
+  </section>
+
+  <section class="topic" id="potencial">
+    <span class="num">5</span>
+    <h2>Potencial elétrico</h2>
+    <p>O <b>potencial elétrico</b> mede a energia potencial elétrica por unidade de carga em um ponto. Diferente do campo, ele é uma grandeza <b>escalar</b>: tem valor e sinal, mas não tem direção.</p>
+    <div class="formulas">
+      <div class="fx"><b>V = k · Q / d</b><span>com o sinal de Q</span></div>
+      <div class="fx"><b>E<sub>p</sub> = q · V</b><span>energia potencial</span></div>
+      <div class="fx"><b>τ<sub>AB</sub> = q · (V<sub>A</sub> − V<sub>B</sub>)</b><span>trabalho da força elétrica</span></div>
+      <div class="fx"><b>U = E · d</b><span>ddp em campo uniforme</span></div>
+    </div>
+    <ul class="pts">
+      <li>Unidade: <b>volt (V)</b>, que é 1 J/C.</li>
+      <li>Perto de carga <span class="pos">positiva</span>, o potencial é positivo; perto de <span class="neg">negativa</span>, negativo. Longe de tudo, o potencial tende a zero.</li>
+      <li>Com várias cargas, o potencial é a <b>soma algébrica</b> (com sinais) dos potenciais de cada uma.</li>
+      <li><b>Superfícies equipotenciais</b> reúnem pontos de mesmo potencial. Elas são sempre perpendiculares às linhas de campo, e o campo aponta no sentido dos potenciais <b>decrescentes</b>.</li>
+      <li>Cargas positivas, soltas, vão espontaneamente para potenciais menores; negativas, para potenciais maiores.</li>
+    </ul>
+    <div class="ex">
+      <span class="k">Exemplo</span>
+      <p>Qual o potencial a 0,3 m de uma carga de +2 μC? E o trabalho para levar uma carga de 3 μC de um ponto de 500 V até outro de 100 V?</p>
+      <p class="calc">V = 9×10⁹ · 2×10⁻⁶ / 0,3 = 6 × 10⁴ V</p>
+      <p class="calc">τ = q · (V<sub>A</sub> − V<sub>B</sub>) = 3×10⁻⁶ · (500 − 100) = 1,2 × 10⁻³ J</p>
+    </div>
+    <div class="alert">
+      <span class="k">Atenção</span>
+      <p>Potencial zero não significa campo zero. No ponto médio entre duas cargas de mesmo módulo e sinais opostos, o potencial é nulo, mas o campo não é.</p>
+    </div>
+    <div class="sim"><span>Arraste uma carga de prova e leia o campo e o potencial em cada ponto.</span><a href="coulomb.html">Abrir a simulação de Coulomb e campo</a></div>
+  </section>
+
+  <section class="topic" id="condutores">
+    <span class="num">6</span>
+    <h2>Condutores em equilíbrio eletrostático</h2>
+    <p>Quando um condutor eletrizado está em equilíbrio (as cargas pararam de se mover):</p>
+    <ul class="pts">
+      <li>As cargas em excesso ficam na <b>superfície externa</b>, porque se repelem e se afastam o máximo possível.</li>
+      <li>O <b>campo elétrico no interior é nulo</b> e o potencial é o mesmo em todos os pontos do condutor.</li>
+      <li><b>Poder das pontas:</b> as cargas se concentram nas regiões pontiagudas, onde o campo fica mais intenso. É o princípio do para-raios.</li>
+      <li><b>Blindagem eletrostática (gaiola de Faraday):</b> uma casca condutora protege o seu interior de campos externos. Por isso é seguro ficar dentro de um carro ou avião atingido por um raio. Não são os pneus que protegem.</li>
+    </ul>
+  </section>
+
+  <section class="topic" id="formulas">
+    <h2>Quadro de fórmulas</h2>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Grandeza</th><th>Fórmula</th><th>Unidade (SI)</th></tr></thead>
+        <tbody>
+          <tr><td>Carga elétrica</td><td class="m">Q = n · e</td><td>coulomb (C)</td></tr>
+          <tr><td>Contato (esferas idênticas)</td><td class="m">Q' = (Q<sub>A</sub> + Q<sub>B</sub>) / 2</td><td>C</td></tr>
+          <tr><td>Lei de Coulomb</td><td class="m">F = k·|Q₁|·|Q₂| / d²</td><td>newton (N)</td></tr>
+          <tr><td>Campo elétrico</td><td class="m">E = F / q = k·|Q| / d²</td><td>N/C = V/m</td></tr>
+          <tr><td>Potencial elétrico</td><td class="m">V = k · Q / d</td><td>volt (V) = J/C</td></tr>
+          <tr><td>Energia potencial</td><td class="m">E<sub>p</sub> = q · V = k·Q·q / d</td><td>joule (J)</td></tr>
+          <tr><td>Trabalho da força elétrica</td><td class="m">τ = q · (V<sub>A</sub> − V<sub>B</sub>)</td><td>joule (J)</td></tr>
+          <tr><td>Campo uniforme</td><td class="m">U = E · d</td><td>volt (V)</td></tr>
+          <tr><td>Constante eletrostática</td><td class="m">k = 9 × 10⁹</td><td>N·m²/C²</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="cta">
+    <p>Próximo passo: veja esses conceitos funcionando nas simulações.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:10px">
+      <a href="contato.html">Eletrização por contato</a>
+      <a href="coulomb.html">Coulomb e campo elétrico</a>
+    </div>
+  </div>
+</div>
+<script>
+(() => {
+  // linhas de campo radiais para as figuras de carga positiva e negativa
+  function radial(id, out, color) {
+    const cx = 80, cy = 80, n = 8;
+    let s = '';
+    for (let i = 0; i < n; i++) {
+      const a = i * 2 * Math.PI / n, c = Math.cos(a), si = Math.sin(a);
+      const x1 = cx + 22 * c, y1 = cy + 22 * si, x2 = cx + 74 * c, y2 = cy + 74 * si;
+      s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="currentColor" stroke-width="2"/>`;
+      const m = out ? 56 : 40, dir = out ? 1 : -1;
+      const tx = cx + m * c, ty = cy + m * si;
+      const bx = tx - dir * 9 * c, by = ty - dir * 9 * si;
+      s += `<polygon points="${tx},${ty} ${bx - 5 * si},${by + 5 * c} ${bx + 5 * si},${by - 5 * c}" fill="currentColor"/>`;
+    }
+    s += `<circle cx="${cx}" cy="${cy}" r="16" fill="${color}"/>`;
+    s += `<text x="${cx}" y="${cy + 7}" text-anchor="middle" font-size="22" font-weight="700" fill="#fff" font-family="sans-serif">${out ? '+' : '−'}</text>`;
+    const el = document.getElementById(id); el.innerHTML = s; el.style.color = 'var(--muted)';
+  }
+  radial('figPos', true, 'var(--pos)');
+  radial('figNeg', false, 'var(--neg)');
+})();
+</script>
+</body>
+</html>

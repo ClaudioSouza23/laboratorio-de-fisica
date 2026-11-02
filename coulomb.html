@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Coulomb e Campo Elétrico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: roteiro no topo; palco 3D escuro + painel; medidores; gráfico F×d ou tabela de superposição. */
+:root {
+  --bg: #eef1f4; --surface: #ffffff; --ink: #16202b; --muted: #576575; --line: #d3dae2; --soft: #f6f8fa;
+  --accent: #a8650a; --cool: #2a73c0; --ok: #1f8a4c; --bad: #b8322a; --pos: #c8372d; --neg: #2a63c0;
+  --stage: #0e151d; --stage-ink: #dce6ef;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", Consolas, ui-monospace, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #0b1016; --surface: #141c25; --ink: #e5ecf2; --muted: #93a2b2; --line: #263240; --soft: #1a2430;
+  --accent: #e8a540; --cool: #5ea2ea; --ok: #4cc27f; --bad: #ff6b60; --pos: #ff6b5e; --neg: #6ea6f0; color-scheme: dark } }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.5; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-block: 20px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 20px; }
+.back { font-weight: 700; color: var(--muted); text-decoration: none; font-size: 14px; }
+.back:hover { color: var(--ink); }
+header { display: grid; gap: 6px; }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(28px, 4vw, 44px); line-height: 1.05; margin: 0; text-wrap: balance; }
+.lede { color: var(--muted); max-width: 72ch; margin: 0; }
+h2 { font-family: var(--f-display); font-weight: 600; font-size: 20px; margin: 0; text-wrap: balance; }
+.small { font-size: 13px; color: var(--muted); margin: 0; }
+
+.guide { background: var(--surface); border: 2px solid var(--accent); border-radius: 14px; padding: 18px; display: grid; gap: 14px; }
+.guide-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.steps { display: flex; flex-wrap: wrap; gap: 6px; }
+.steps button { font: inherit; font-family: var(--f-mono); font-weight: 700; width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid var(--line); background: var(--soft); color: var(--muted); cursor: pointer; }
+.steps button[aria-current="step"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.steps button.done { color: var(--accent); border-color: var(--accent); }
+.guide-body { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 18px; }
+@media (max-width: 800px) { .guide-body { grid-template-columns: minmax(0, 1fr); } }
+.guide h3 { font-family: var(--f-display); font-weight: 800; font-size: clamp(20px, 2.6vw, 26px); margin: 0 0 6px; line-height: 1.15; }
+.guide p { margin: 0; max-width: 65ch; }
+.ask { background: var(--soft); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; align-content: start; }
+.ask .k { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+.ask .q { font-weight: 700; font-size: 17px; }
+.ask .a { border-left: 3px solid var(--ok); padding-left: 10px; }
+.nav { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.btn { font: inherit; font-weight: 700; border: 1px solid var(--ink); background: transparent; color: var(--ink); border-radius: 10px; padding: 8px 14px; cursor: pointer; text-decoration: none; display: inline-block; }
+.btn:hover { background: var(--ink); color: var(--bg); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary:hover { filter: brightness(1.1); }
+.btn.sm { padding: 6px 10px; font-size: 14px; }
+.btn:disabled { opacity: .4; cursor: default; background: transparent; color: var(--ink); }
+button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid var(--cool); outline-offset: 2px; }
+
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 20px; align-items: start; }
+@media (max-width: 900px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.stage { position: relative; background: var(--stage); border-radius: 14px; overflow: hidden; aspect-ratio: 16 / 10; max-width: 100%; min-height: 300px; }
+.stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.badge { position: absolute; top: 14px; left: 14px; font-family: var(--f-mono); font-weight: 700; font-size: clamp(13px, 1.8vw, 18px);
+  color: #fff; padding: 6px 12px; border-radius: 8px; background: #6b4a12; }
+.hint { position: absolute; top: 18px; right: 14px; font-size: 12px; color: var(--stage-ink); opacity: .65; text-align: right; max-width: 45%; }
+.legend { position: absolute; left: 14px; bottom: 12px; right: 14px; display: flex; flex-wrap: wrap; gap: 4px 16px;
+  font-size: 13px; color: var(--stage-ink); opacity: .9; pointer-events: none; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+.lab3d { position: absolute; left: 0; top: 0; transform: translate(-50%, -100%); pointer-events: none; white-space: nowrap;
+  font-size: 13px; font-weight: 700; color: #fff; background: rgba(14, 21, 29, .8); border: 1px solid rgba(220, 230, 239, .35);
+  padding: 2px 8px; border-radius: 6px; }
+.lab3d b { font-family: var(--f-mono); }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 16px; }
+.ctl { display: grid; gap: 8px; }
+.ctl > label, .ctl > .lab { font-weight: 700; font-size: 14px; display: flex; justify-content: space-between; gap: 8px; }
+.ctl .val { font-family: var(--f-mono); color: var(--accent); }
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 3px; }
+.seg button { font: inherit; font-weight: 700; font-size: 14px; border: 0; border-radius: 7px; padding: 8px 6px; background: transparent; color: var(--muted); cursor: pointer; line-height: 1.25; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+.row { display: flex; flex-wrap: wrap; gap: 6px; }
+.checks { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; }
+.checks label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+
+.readouts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 700px) { .readouts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.ro { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; gap: 2px; min-width: 0; }
+.ro .k { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.ro .v { font-family: var(--f-mono); font-weight: 700; font-size: clamp(18px, 2.3vw, 26px); font-variant-numeric: tabular-nums; white-space: nowrap; overflow-x: auto; }
+.ro .u { font-size: .6em; color: var(--muted); margin-left: 3px; }
+.ro .tag { font-size: 12px; font-weight: 700; color: var(--muted); }
+.eq { font-family: var(--f-mono); font-size: clamp(14px, 1.9vw, 18px); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; overflow-x: auto; white-space: nowrap; }
+
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 900px) { .two { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.graphbox { overflow-x: auto; position: relative; }
+.graphbox svg { width: 100%; min-width: 320px; height: auto; display: block; }
+.graphbox svg text { font-family: var(--f-mono); }
+.tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--bg); font-family: var(--f-mono); font-size: 12px;
+  padding: 4px 8px; border-radius: 6px; white-space: nowrap; transform: translate(-50%, -130%); }
+.tbl { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 15px; }
+th, td { padding: 8px 10px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+thead th { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+td.m { font-family: var(--f-mono); font-weight: 700; }
+tr.tot td { border-top: 2px solid var(--ink); font-weight: 700; }
+.pairs { display: grid; gap: 8px; }
+.pair { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; background: var(--soft); border-radius: 10px; padding: 10px 12px; font-family: var(--f-mono); font-size: 15px; }
+.note { border-left: 4px solid var(--cool); background: var(--soft); border-radius: 0 10px 10px 0; padding: 10px 14px; margin: 0; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html#eletrostatica">&larr; Laboratório de Física</a>
+  <header>
+    <span class="eyebrow">Eletrostática · Lei de Coulomb e campo elétrico</span>
+    <h1>Cargas, forças e campo elétrico</h1>
+    <p class="lede">Duas cargas puntiformes no vácuo. No modo Força, veja a lei de Coulomb em ação. No modo Campo e potencial, veja as linhas de campo, o mapa de potencial e meça E e V em qualquer ponto.</p>
+  </header>
+
+  <section class="guide" aria-label="Roteiro da aula">
+    <div class="guide-top">
+      <h2>Roteiro da aula</h2>
+      <div class="steps" id="steps"></div>
+    </div>
+    <div class="guide-body">
+      <div><h3 id="gTitle"></h3><p id="gText"></p></div>
+      <div class="ask">
+        <span class="k">Pergunte à turma</span>
+        <span class="q" id="gQ"></span>
+        <span class="a" id="gA" hidden></span>
+        <div class="nav">
+          <button class="btn" id="gReveal">Ver resposta</button>
+          <button class="btn" id="gPrev">Voltar</button>
+          <button class="btn primary" id="gNext">Próximo passo</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="main">
+    <div class="stage" id="stage">
+      <div class="badge" id="badge"></div>
+      <div class="hint" id="hint"></div>
+      <div class="lab3d" id="lab1"></div>
+      <div class="lab3d" id="lab2"></div>
+      <div class="lab3d" id="labD"></div>
+      <div class="lab3d" id="labP"></div>
+      <div class="legend" id="legend"></div>
+    </div>
+
+    <aside class="panel" aria-label="Controles">
+      <div class="ctl">
+        <span class="lab">O que observar</span>
+        <div class="seg" id="mode">
+          <button data-v="F" aria-pressed="true">Força</button>
+          <button data-v="E" aria-pressed="false">Campo e potencial</button>
+        </div>
+      </div>
+      <div class="ctl">
+        <label for="q1">Carga Q₁ <span class="val" id="q1Val"></span></label>
+        <input type="range" id="q1" min="-10" max="10" step="1" value="4">
+      </div>
+      <div class="ctl" id="ctlQ2">
+        <label for="q2">Carga Q₂ <span class="val" id="q2Val"></span></label>
+        <input type="range" id="q2" min="-10" max="10" step="1" value="-2">
+      </div>
+      <div class="ctl" id="ctlD">
+        <label for="d">Distância d <span class="val" id="dVal"></span></label>
+        <input type="range" id="d" min="0.1" max="1" step="0.05" value="0.5">
+        <div class="row">
+          <button class="btn sm" id="dbl">Dobrar d</button>
+          <button class="btn sm" id="half">Metade de d</button>
+          <button class="btn sm" id="flip">Trocar sinal de Q₂</button>
+        </div>
+      </div>
+      <div class="ctl" id="ctlE" hidden>
+        <span class="lab">Configurações prontas</span>
+        <div class="row">
+          <button class="btn sm" data-pre="one">Uma carga</button>
+          <button class="btn sm" data-pre="dip">Dipolo (+ e −)</button>
+          <button class="btn sm" data-pre="eq">Duas iguais</button>
+        </div>
+        <div class="checks">
+          <label><input type="checkbox" id="two" checked> Segunda carga</label>
+          <label><input type="checkbox" id="showLines" checked> Linhas de campo</label>
+          <label><input type="checkbox" id="showMap" checked> Mapa de potencial</label>
+        </div>
+      </div>
+      <div class="checks">
+        <label><input type="checkbox" id="spin"> Girar sozinho</label>
+        <label><input type="checkbox" id="labels" checked> Etiquetas</label>
+      </div>
+      <button class="btn sm" id="reset">Restaurar valores</button>
+      <p class="small">Cargas em microcoulomb (1 μC = 10⁻⁶ C). Vácuo: k = 9 × 10⁹ N·m²/C².</p>
+    </aside>
+  </section>
+
+  <section class="readouts">
+    <div class="ro"><span class="k" id="k1"></span><span class="v" id="v1"></span><span class="tag" id="t1"></span></div>
+    <div class="ro"><span class="k" id="k2"></span><span class="v" id="v2"></span><span class="tag" id="t2"></span></div>
+    <div class="ro"><span class="k" id="k3"></span><span class="v" id="v3"></span><span class="tag" id="t3"></span></div>
+    <div class="ro"><span class="k" id="k4"></span><span class="v" id="v4"></span><span class="tag" id="t4"></span></div>
+  </section>
+  <div class="eq" id="eq"></div>
+
+  <section class="two" id="lowerF">
+    <div class="card">
+      <h2>Força em função da distância</h2>
+      <p class="small">Com as cargas fixas, F = k·|Q₁·Q₂| / d². Passe o mouse sobre o gráfico para ler valores.</p>
+      <div class="graphbox">
+        <svg id="graph" viewBox="0 0 420 280" role="img" aria-label="Gráfico da força em função da distância."></svg>
+        <div class="tip" id="tip" hidden></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Ação e reação</h2>
+      <div class="pairs">
+        <div class="pair"><span>Força em Q₁</span><span id="fq1"></span></div>
+        <div class="pair"><span>Força em Q₂</span><span id="fq2"></span></div>
+      </div>
+      <p class="note" id="arNote"></p>
+      <h2>Tabela do inverso do quadrado</h2>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Distância</th><th>Força</th><th>Comparada a F</th></tr></thead>
+          <tbody id="sqBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="two" id="lowerE" hidden>
+    <div class="card">
+      <h2>Superposição no ponto P</h2>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Origem</th><th>Distância a P</th><th>|E| (N/C)</th><th>V (V)</th></tr></thead>
+          <tbody id="supBody"></tbody>
+        </table>
+      </div>
+      <p class="note">O potencial é escalar: soma com sinal. O campo é vetor: soma como flechas. Por isso o |E| total quase nunca é a soma dos |E| de cada carga.</p>
+    </div>
+    <div class="card">
+      <h2>Como ler a cena</h2>
+      <ul style="margin:0;padding-left:20px;display:grid;gap:6px">
+        <li><b>Linhas brancas:</b> linhas de campo. Saem das cargas positivas e chegam às negativas. As setinhas mostram o sentido de E.</li>
+        <li><b>Fundo colorido:</b> potencial elétrico. Vermelho é potencial positivo; azul, negativo; escuro, perto de zero. As faixas claras são equipotenciais.</li>
+        <li><b>Ponto P:</b> clique no plano ou arraste o ponto. A seta amarela é o campo E em P.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Continue a trilha</h2>
+    <p class="small" style="font-size:15px">Veja a outra simulação ou siga para as questões de revisão. Se tiver dúvida, volte ao resumo.</p>
+    <div class="nav">
+      <a class="btn" href="contato.html">Simulação: eletrização por contato</a>
+      <a class="btn primary" href="questoes-eletrostatica.html">Questões de revisão</a>
+      <a class="btn" href="eletrostatica.html#coulomb">Rever o resumo</a>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(() => {
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const K = 9e9, S = 4, BOX = 1.1;
+const DEFAULTS = { mode: 'F', q1: 4, q2: -2, d: 0.5, two: true, px: 0.3, pz: 0.3 };
+const state = { ...DEFAULTS, lines: true, map: true, spin: false, labels: true };
+const $ = id => document.getElementById(id);
+const fmt = (x, d = 2) => x.toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
+const SUP = { '-': '⁻', 0: '⁰', 1: '¹', 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶', 7: '⁷', 8: '⁸', 9: '⁹' };
+function sci(x, sig = 2) {
+  if (!isFinite(x)) return '—';
+  if (x === 0 || Math.abs(x) < 1e-12) return '0';
+  const a = Math.abs(x);
+  if (a >= 0.01 && a < 1e4) return fmt(x, a >= 100 ? 0 : a >= 10 ? 1 : a >= 1 ? 2 : 3);
+  const e = Math.floor(Math.log10(a)); let m = x / Math.pow(10, e);
+  if (Math.abs(+m.toFixed(sig - 1)) >= 10) { m /= 10; return `${fmt(m, sig - 1)} × 10${String(e + 1).split('').map(c => SUP[c]).join('')}`; }
+  return `${fmt(m, sig - 1)} × 10${String(e).split('').map(c => SUP[c]).join('')}`;
+}
+const qtxt = q => (q > 0 ? '+' : q < 0 ? '−' : '') + Math.abs(q) + ' μC';
+
+function charges() {
+  if (state.mode === 'E' && !state.two) return [{ q: state.q1, x: 0, i: 0 }];
+  return [{ q: state.q1, x: -state.d / 2, i: 0 }, { q: state.q2, x: state.d / 2, i: 1 }];
+}
+function fieldAt(x, z, cs) {
+  let ex = 0, ez = 0, v = 0;
+  for (const c of cs) {
+    if (!c.q) continue;
+    const dx = x - c.x, r2 = dx * dx + z * z, r = Math.sqrt(r2), kq = K * c.q * 1e-6;
+    ex += kq * dx / (r2 * r); ez += kq * z / (r2 * r); v += kq / r;
+  }
+  return { ex, ez, v };
+}
+const forceF = () => K * Math.abs(state.q1 * state.q2) * 1e-12 / (state.d * state.d);
+
+/* ---------- 3D ---------- */
+const stage = $('stage');
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+stage.prepend(renderer.domElement);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(40, 1.6, 0.1, 100);
+camera.position.set(0, 6.4, 6.2);
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 0, 0.2);
+controls.enableDamping = true; controls.minDistance = 3; controls.maxDistance = 16;
+controls.maxPolarAngle = Math.PI * 0.48; controls.autoRotateSpeed = 0.5;
+scene.add(new THREE.HemisphereLight(0xcfe3ff, 0x1a1410, 0.7));
+const key = new THREE.DirectionalLight(0xffffff, 0.6); key.position.set(3, 6, 5); scene.add(key);
+
+const W = BOX * 2 * S;
+const mapCanvas = document.createElement('canvas'); mapCanvas.width = mapCanvas.height = 200;
+const mapTex = new THREE.CanvasTexture(mapCanvas);
+const plane = new THREE.Mesh(new THREE.PlaneGeometry(W, W), new THREE.MeshBasicMaterial({ map: mapTex }));
+plane.rotation.x = -Math.PI / 2; scene.add(plane);
+const grid = new THREE.GridHelper(W, 22, 0x34475a, 0x223140); grid.position.y = 0.005; scene.add(grid);
+
+function makeCharge() {
+  const mat = new THREE.MeshStandardMaterial({ color: 0x888888, emissive: 0x000000, roughness: 0.35, metalness: 0.2 });
+  const m = new THREE.Mesh(new THREE.SphereGeometry(0.16, 32, 24), mat); m.position.y = 0.16; scene.add(m);
+  const arrow = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(), 1, 0xffd24a, 0.22, 0.14); scene.add(arrow);
+  return { m, mat, arrow };
+}
+const C1 = makeCharge(), C2 = makeCharge();
+const probe = new THREE.Mesh(new THREE.SphereGeometry(0.09, 20, 16), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x666666 }));
+probe.position.y = 0.09; scene.add(probe);
+const eArrow = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(), 1, 0xffd24a, 0.22, 0.14); scene.add(eArrow);
+const dimLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), new THREE.LineDashedMaterial({ color: 0x9fb3c8, dashSize: 0.12, gapSize: 0.08 }));
+scene.add(dimLine);
+const linesGroup = new THREE.Group(); scene.add(linesGroup);
+const lineMat = new THREE.LineBasicMaterial({ color: 0xe8eef5, transparent: true, opacity: 0.75 });
+const coneGeo = new THREE.ConeGeometry(0.055, 0.17, 10), coneMat = new THREE.MeshBasicMaterial({ color: 0xe8eef5 });
+const UP = new THREE.Vector3(0, 1, 0);
+
+function colorCharge(c, q) {
+  const col = q > 0 ? 0xd8473a : q < 0 ? 0x3a73d8 : 0x8a96a3;
+  c.mat.color.setHex(col); c.mat.emissive.setHex(col).multiplyScalar(0.35);
+}
+const forceLen = F => Math.min(2.4, 0.35 + 0.75 * Math.log10(1 + F / 0.02));
+
+/* linhas de campo no plano */
+function trace(cs, c0, ang, dir) {
+  let x = c0.x + 0.06 * Math.cos(ang), z = 0.06 * Math.sin(ang);
+  const pts = [[x, z]]; let end = -1;
+  for (let s = 0; s < 700; s++) {
+    let f = fieldAt(x, z, cs), m = Math.hypot(f.ex, f.ez); if (!m) break;
+    const h = 0.012, mx = x + dir * h / 2 * f.ex / m, mz = z + dir * h / 2 * f.ez / m;
+    f = fieldAt(mx, mz, cs); m = Math.hypot(f.ex, f.ez); if (!m) break;
+    x += dir * h * f.ex / m; z += dir * h * f.ez / m; pts.push([x, z]);
+    if (Math.abs(x) > BOX || Math.abs(z) > BOX) break;
+    let hit = false;
+    for (const c of cs) { if (c === c0 || !c.q) continue; if (Math.hypot(x - c.x, z) < 0.045) { end = c.i; hit = true; break; } }
+    if (hit) break;
+  }
+  return { pts, end };
+}
+function buildLines() {
+  while (linesGroup.children.length) { const o = linesGroup.children.pop(); if (o.geometry !== coneGeo) o.geometry.dispose(); }
+  if (state.mode !== 'E' || !state.lines) return;
+  const cs = charges();
+  for (const c of cs) {
+    if (!c.q) continue;
+    const n = Math.max(6, Math.min(24, Math.round(Math.abs(c.q) * 2.4))), dir = c.q > 0 ? 1 : -1;
+    for (let k = 0; k < n; k++) {
+      const ang = 2 * Math.PI * k / n + (c.i ? Math.PI / n : 0);
+      const r = trace(cs, c, ang, dir);
+      if (c.q < 0 && r.end >= 0 && cs[r.end].q > 0) continue;
+      let pts = r.pts; if (dir < 0) pts = pts.slice().reverse();
+      if (pts.length < 3) continue;
+      linesGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts.map(([x, z]) => new THREE.Vector3(x * S, 0.03, z * S))), lineMat));
+      const j = Math.floor(pts.length * (dir > 0 ? 0.35 : 0.65));
+      if (j + 1 < pts.length) {
+        const a = pts[j], b = pts[j + 1], v = new THREE.Vector3(b[0] - a[0], 0, b[1] - a[1]).normalize();
+        const cone = new THREE.Mesh(coneGeo, coneMat); cone.position.set(a[0] * S, 0.03, a[1] * S);
+        cone.quaternion.setFromUnitVectors(UP, v); linesGroup.add(cone);
+      }
+    }
+  }
+}
+/* mapa de potencial */
+function drawMap() {
+  const g = mapCanvas.getContext('2d'), N = 200, img = g.createImageData(N, N), D = img.data;
+  const cs = charges(), on = state.mode === 'E' && state.map, Vref = 3e4;
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const p = (j * N + i) * 4;
+    let r = 14, gg = 21, b = 29;
+    if (on) {
+      const x = -BOX + (i + 0.5) * 2 * BOX / N, z = -BOX + (j + 0.5) * 2 * BOX / N;
+      const V = fieldAt(x, z, cs).v, t = Math.atan(V / Vref) * 2 / Math.PI, a = Math.abs(t);
+      const [tr, tg, tb] = t > 0 ? [200, 55, 45] : [42, 99, 192];
+      r = 14 + (tr - 14) * a; gg = 21 + (tg - 21) * a; b = 29 + (tb - 29) * a;
+      const lv = t * 8, fr = Math.abs(lv - Math.round(lv));
+      if (Math.round(lv) !== 0 && fr < 0.05) { r += 45; gg += 45; b += 45; }
+      if (cs.length > 1 && a < 0.006) { r = 235; gg = 235; b = 235; }
+    }
+    D[p] = r; D[p + 1] = gg; D[p + 2] = b; D[p + 3] = 255;
+  }
+  g.putImageData(img, 0, 0); mapTex.needsUpdate = true;
+}
+
+/* arrastar o ponto P */
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), ground = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), hitP = new THREE.Vector3();
+let dragging = false, downXY = null;
+function setRay(e) { const b = renderer.domElement.getBoundingClientRect(); ndc.set((e.clientX - b.left) / b.width * 2 - 1, -(e.clientY - b.top) / b.height * 2 + 1); ray.setFromCamera(ndc, camera); }
+function moveProbe(e) {
+  setRay(e); if (!ray.ray.intersectPlane(ground, hitP)) return;
+  state.px = Math.max(-1.05, Math.min(1.05, hitP.x / S)); state.pz = Math.max(-1.05, Math.min(1.05, hitP.z / S)); render();
+}
+renderer.domElement.addEventListener('pointerdown', e => {
+  downXY = [e.clientX, e.clientY];
+  if (state.mode !== 'E') return;
+  setRay(e);
+  if (ray.intersectObject(probe).length) { dragging = true; controls.enabled = false; renderer.domElement.setPointerCapture(e.pointerId); }
+});
+renderer.domElement.addEventListener('pointermove', e => { if (dragging) moveProbe(e); });
+renderer.domElement.addEventListener('pointerup', e => {
+  if (dragging) { dragging = false; controls.enabled = true; return; }
+  if (state.mode === 'E' && downXY && Math.hypot(e.clientX - downXY[0], e.clientY - downXY[1]) < 5) moveProbe(e);
+});
+
+/* etiquetas */
+const tmpV = new THREE.Vector3();
+function place(el, v) {
+  if (!state.labels || el.hidden) { el.style.visibility = 'hidden'; return; }
+  const p = v.clone().project(camera);
+  el.style.left = ((p.x + 1) / 2 * stage.clientWidth).toFixed(1) + 'px';
+  el.style.top = ((1 - p.y) / 2 * stage.clientHeight).toFixed(1) + 'px';
+  el.style.visibility = p.z > 1 ? 'hidden' : 'visible';
+}
+function resize() { const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+new ResizeObserver(resize).observe(stage); resize();
+
+function frame() {
+  controls.autoRotate = state.spin; controls.update();
+  renderer.render(scene, camera);
+  place($('lab1'), C1.m.position.clone().add(tmpV.set(0, 0.45, 0)));
+  place($('lab2'), C2.m.position.clone().add(tmpV.set(0, 0.45, 0)));
+  place($('labD'), new THREE.Vector3(0, 0.05, 0.55));
+  place($('labP'), probe.position.clone().add(tmpV.set(0, 0.35, 0)));
+  requestAnimationFrame(frame);
+}
+
+/* ---------- gráfico F × d ---------- */
+const G = { w: 420, h: 280, l: 62, r: 18, t: 18, b: 44 };
+function niceStep(raw) { const p = Math.pow(10, Math.floor(Math.log10(raw))); for (const m of [1, 2, 2.5, 5, 10]) if (m * p >= raw) return m * p; }
+let gScale = null;
+function drawGraph() {
+  const Fd = d => K * Math.abs(state.q1 * state.q2) * 1e-12 / (d * d), F = forceF(), svg = $('graph');
+  if (!F) { svg.innerHTML = `<text x="210" y="140" text-anchor="middle" font-size="14" fill="var(--muted)">Com uma das cargas nula, não há força.</text>`; gScale = null; return; }
+  const Dmax = 1, pStep = niceStep(F * 4.6 / 5), Fmax = pStep * 5;
+  const X = d => G.l + d / Dmax * (G.w - G.l - G.r), Y = f => G.h - G.b - f / Fmax * (G.h - G.t - G.b);
+  gScale = { X, Y, Fd, Dmax };
+  let o = '';
+  for (let i = 0; i <= 5; i++) {
+    const y = Y(i * pStep), x = X(i * 0.2);
+    o += `<line x1="${G.l}" x2="${G.w - G.r}" y1="${y}" y2="${y}" stroke="var(--line)"/>`;
+    o += `<text x="${G.l - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="var(--muted)">${sci(i * pStep)}</text>`;
+    o += `<text x="${x}" y="${G.h - G.b + 18}" text-anchor="middle" font-size="11" fill="var(--muted)">${fmt(i * 0.2, 1)}</text>`;
+  }
+  o += `<line x1="${G.l}" x2="${G.l}" y1="${G.t}" y2="${G.h - G.b}" stroke="var(--muted)"/>`;
+  o += `<text x="${(G.l + G.w - G.r) / 2}" y="${G.h - 6}" text-anchor="middle" font-size="12" fill="var(--ink)">Distância d (m)</text>`;
+  o += `<text x="14" y="${(G.t + G.h - G.b) / 2}" text-anchor="middle" font-size="12" fill="var(--ink)" transform="rotate(-90 14 ${(G.t + G.h - G.b) / 2})">Força F (N)</text>`;
+  const pts = [];
+  for (let i = 0; i <= 200; i++) { const d = 0.05 + 0.95 * i / 200, f = Fd(d); if (f <= Fmax) pts.push(`${X(d).toFixed(1)},${Y(f).toFixed(1)}`); }
+  o += `<polyline points="${pts.join(' ')}" fill="none" stroke="var(--accent)" stroke-width="2"/>`;
+  const marks = [[state.d, F, 'F', true]];
+  if (state.d * 2 <= 1) marks.push([state.d * 2, F / 4, 'F/4 (2d)', false]);
+  if (state.d / 2 >= 0.05 && 4 * F <= Fmax) marks.push([state.d / 2, 4 * F, '4F (d/2)', false]);
+  for (const [d, f, lab, main] of marks) {
+    const x = X(d), y = Y(f);
+    o += `<circle cx="${x}" cy="${y}" r="${main ? 7 : 5}" fill="${main ? 'var(--accent)' : 'var(--surface)'}" stroke="${main ? 'var(--surface)' : 'var(--accent)'}" stroke-width="2"/>`;
+    o += `<text x="${x + 10}" y="${y - 8}" font-size="12" font-weight="700" fill="var(--ink)">${lab}</text>`;
+  }
+  o += `<line id="hx" y1="${G.t}" y2="${G.h - G.b}" stroke="var(--muted)" visibility="hidden"/><circle id="hd" r="5" fill="var(--accent)" stroke="var(--surface)" stroke-width="2" visibility="hidden"/>`;
+  o += `<rect x="${G.l}" y="${G.t}" width="${G.w - G.l - G.r}" height="${G.h - G.t - G.b}" fill="transparent"/>`;
+  svg.innerHTML = o;
+}
+const graph = $('graph'), tip = $('tip');
+function hideHover() { tip.hidden = true; for (const id of ['hx', 'hd']) { const el = $(id); if (el) el.setAttribute('visibility', 'hidden'); } }
+graph.addEventListener('pointermove', e => {
+  if (!gScale) return;
+  const box = graph.getBoundingClientRect(), sx = (e.clientX - box.left) / box.width * G.w;
+  const d = (sx - G.l) / (G.w - G.l - G.r) * gScale.Dmax;
+  if (d < 0.05 || d > 1) return hideHover();
+  const f = gScale.Fd(d), x = gScale.X(d), y = gScale.Y(f);
+  $('hx').setAttribute('x1', x); $('hx').setAttribute('x2', x); $('hx').setAttribute('visibility', 'visible');
+  $('hd').setAttribute('cx', x); $('hd').setAttribute('cy', y); $('hd').setAttribute('visibility', y >= G.t ? 'visible' : 'hidden');
+  tip.hidden = false; tip.textContent = `d = ${fmt(d, 2)} m → F = ${sci(f)} N`;
+  tip.style.left = (x / G.w * box.width) + 'px'; tip.style.top = (Math.max(y, G.t) / G.h * box.height) + 'px';
+});
+graph.addEventListener('pointerleave', hideHover);
+
+/* ---------- UI ---------- */
+function setSeg(id, v) { for (const b of $(id).querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.v === String(v))); }
+function setRO(n, k, v, u, t) { $('k' + n).textContent = k; $('v' + n).innerHTML = v + (u ? `<span class="u">${u}</span>` : ''); $('t' + n).textContent = t || ''; }
+let lastKey = '';
+function render() {
+  const isF = state.mode === 'F', cs = charges();
+  setSeg('mode', state.mode);
+  $('q1').value = state.q1; $('q2').value = state.q2; $('d').value = state.d; $('two').checked = state.two;
+  $('q1Val').textContent = qtxt(state.q1); $('q2Val').textContent = qtxt(state.q2); $('dVal').textContent = fmt(state.d, 2) + ' m';
+  $('ctlE').hidden = isF; $('lowerF').hidden = !isF; $('lowerE').hidden = isF;
+  const hasTwo = isF || state.two;
+  $('ctlQ2').hidden = !hasTwo; $('ctlD').hidden = !hasTwo;
+  $('dbl').hidden = $('half').hidden = !isF;
+
+  // cargas na cena
+  colorCharge(C1, state.q1); colorCharge(C2, state.q2);
+  C1.m.position.x = cs[0].x * S; C2.m.visible = hasTwo; if (hasTwo) C2.m.position.x = cs[1].x * S;
+  $('lab1').hidden = false; $('lab2').hidden = !hasTwo;
+
+  const F = forceF(), repel = state.q1 * state.q2 > 0;
+  for (const [c, sgn] of [[C1, -1], [C2, 1]]) {
+    c.arrow.visible = isF && F > 0;
+    if (c.arrow.visible) {
+      c.arrow.position.set(c.m.position.x, 0.16, 0);
+      c.arrow.setDirection(new THREE.Vector3(repel ? sgn : -sgn, 0, 0));
+      c.arrow.setLength(forceLen(F), 0.22, 0.14);
+    }
+  }
+  dimLine.visible = isF;
+  if (isF) {
+    dimLine.geometry.setFromPoints([new THREE.Vector3(cs[0].x * S, 0.02, 0.55), new THREE.Vector3(cs[1].x * S, 0.02, 0.55)]);
+    dimLine.computeLineDistances();
+  }
+  $('labD').hidden = !isF; $('labD').textContent = `d = ${fmt(state.d, 2)} m`;
+
+  probe.visible = !isF; probe.position.set(state.px * S, 0.09, state.pz * S);
+  const P = fieldAt(state.px, state.pz, cs), Em = Math.hypot(P.ex, P.ez);
+  eArrow.visible = !isF && Em > 1;
+  if (eArrow.visible) {
+    eArrow.position.set(state.px * S, 0.09, state.pz * S);
+    eArrow.setDirection(new THREE.Vector3(P.ex, 0, P.ez).normalize());
+    eArrow.setLength(Math.min(2.2, 0.3 + 0.6 * Math.log10(1 + Em / 2e4)), 0.22, 0.14);
+  }
+  $('labP').hidden = isF;
+  $('labP').innerHTML = `P · E = <b>${sci(Em)} N/C</b> · V = <b>${sci(P.v)} V</b>`;
+
+  if (isF) {
+    $('lab1').innerHTML = `Q₁ ${qtxt(state.q1)} · F = <b>${sci(F)} N</b>`;
+    $('lab2').innerHTML = `Q₂ ${qtxt(state.q2)} · F = <b>${sci(F)} N</b>`;
+    $('badge').textContent = F === 0 ? 'SEM FORÇA' : repel ? 'REPULSÃO' : 'ATRAÇÃO';
+    $('hint').textContent = 'Arraste para girar · role para aproximar';
+    $('legend').innerHTML = '<span><i style="background:#d8473a"></i>positiva</span><span><i style="background:#3a73d8"></i>negativa</span><span><i style="background:#ffd24a"></i>força elétrica</span>';
+    setRO(1, 'Força F', sci(F), 'N', 'em cada carga');
+    setRO(2, 'Tipo', F === 0 ? '—' : repel ? 'Repulsão' : 'Atração', '', F === 0 ? '' : repel ? 'sinais iguais' : 'sinais opostos');
+    setRO(3, 'Distância d', fmt(state.d, 2), 'm', '');
+    setRO(4, '|Q₁ · Q₂|', Math.abs(state.q1 * state.q2), 'μC²', '');
+    $('eq').textContent = `F = k·|Q₁·Q₂| / d² = 9×10⁹ · ${Math.abs(state.q1)}×10⁻⁶ · ${Math.abs(state.q2)}×10⁻⁶ / (${fmt(state.d, 2)})² ≈ ${sci(F)} N`;
+    const d1 = repel ? 'para a esquerda' : 'para a direita', d2 = repel ? 'para a direita' : 'para a esquerda';
+    $('fq1').textContent = F ? `${sci(F)} N, ${d1}` : '0'; $('fq2').textContent = F ? `${sci(F)} N, ${d2}` : '0';
+    $('arNote').textContent = state.q1 !== state.q2 && F
+      ? `As cargas são diferentes (${qtxt(state.q1)} e ${qtxt(state.q2)}), mas as forças têm o mesmo módulo e sentidos opostos: é o par ação e reação.`
+      : 'As forças nas duas cargas sempre têm o mesmo módulo e sentidos opostos: é o par ação e reação.';
+    const rows = [[0.5, 4], [1, 1], [2, 1 / 4], [3, 1 / 9]].map(([k, f]) => {
+      const d = state.d * k;
+      return `<tr><td>${k === 1 ? 'd' : k === 0.5 ? 'd/2' : k + 'd'} = ${fmt(d, 2)} m</td><td>${sci(F * f)} N</td><td>${k === 1 ? 'F' : k < 1 ? '4F' : 'F/' + (k * k)}</td></tr>`;
+    });
+    $('sqBody').innerHTML = rows.join('');
+    drawGraph();
+  } else {
+    $('lab1').innerHTML = `Q₁ ${qtxt(state.q1)}`; $('lab2').innerHTML = `Q₂ ${qtxt(state.q2)}`;
+    $('badge').textContent = 'CAMPO E POTENCIAL';
+    $('hint').textContent = 'Clique no plano ou arraste o ponto P · arraste o fundo para girar';
+    $('legend').innerHTML = '<span><i style="background:#e8eef5"></i>linhas de campo</span><span><i style="background:#c8372d"></i>V positivo</span><span><i style="background:#2a63c0"></i>V negativo</span><span><i style="background:#ffd24a"></i>campo E em P</span>';
+    const ds = cs.map(c => Math.hypot(state.px - c.x, state.pz));
+    setRO(1, '|E| em P', sci(Em), 'N/C', 'soma vetorial');
+    setRO(2, 'V em P', sci(P.v), 'V', 'soma com sinal');
+    setRO(3, 'Força em +1 μC', sci(Em * 1e-6), 'N', 'F = q·E');
+    setRO(4, 'Distância P–Q₁', fmt(ds[0], 2), 'm', '');
+    $('eq').textContent = cs.length === 1
+      ? `E = k·|Q|/d² = 9×10⁹ · ${Math.abs(state.q1)}×10⁻⁶ / (${fmt(ds[0], 2)})² ≈ ${sci(Em)} N/C      V = k·Q/d ≈ ${sci(P.v)} V`
+      : `V = k·Q₁/d₁ + k·Q₂/d₂ ≈ ${sci(P.v)} V      E = soma vetorial de E₁ e E₂ ≈ ${sci(Em)} N/C`;
+    $('supBody').innerHTML = cs.map((c, k) => {
+      const f = fieldAt(state.px, state.pz, [c]);
+      return `<tr><td>Q${k ? '₂' : '₁'} (${qtxt(c.q)})</td><td class="m">${fmt(ds[k], 2)} m</td><td class="m">${sci(Math.hypot(f.ex, f.ez))}</td><td class="m">${sci(f.v)}</td></tr>`;
+    }).join('') + `<tr class="tot"><td>Total</td><td></td><td class="m">${sci(Em)}</td><td class="m">${sci(P.v)}</td></tr>`;
+  }
+  // linhas e mapa só mudam com as cargas
+  const keyNow = [state.mode, state.q1, state.q2, state.d, state.two, state.lines, state.map].join('|');
+  if (keyNow !== lastKey) { lastKey = keyNow; buildLines(); drawMap(); }
+}
+
+/* ---------- roteiro ---------- */
+const steps = [
+  { t: 'Atração e repulsão', apply: { mode: 'F', q1: 4, q2: 4, d: 0.5 },
+    x: 'Duas cargas positivas de 4 μC estão a 50 cm uma da outra. As setas amarelas mostram a força elétrica que cada uma sente.',
+    q: 'Se a carga Q₂ ficar negativa, o que muda nas setas?',
+    a: 'As setas invertem: as cargas passam a se atrair. O módulo da força continua o mesmo, porque a lei de Coulomb usa o módulo das cargas. Clique em "Trocar sinal de Q₂" para conferir.' },
+  { t: 'Ação e reação', apply: { mode: 'F', q1: 8, q2: 2, d: 0.5 },
+    x: 'Agora a carga Q₁ é 4 vezes maior que Q₂. Compare os valores das forças nas etiquetas e no quadro "Ação e reação".',
+    q: 'Qual das duas cargas sofre a força maior?',
+    a: 'Nenhuma. As forças têm o mesmo módulo e sentidos opostos: formam um par ação e reação (3ª lei de Newton).' },
+  { t: 'Dobrando a distância', apply: { mode: 'F', q1: 4, q2: -4, d: 0.3 },
+    x: 'Anote o valor da força. Depois clique em "Dobrar d" e compare. O gráfico e a tabela mostram o mesmo resultado.',
+    q: 'Quando a distância dobra, a força fica quantas vezes menor?',
+    a: '4 vezes menor. A força é inversamente proporcional ao quadrado da distância: 2² = 4. Triplicando a distância, ela ficaria 9 vezes menor.' },
+  { t: 'O campo de uma carga', apply: { mode: 'E', two: false, q1: 5, px: 0.3, pz: 0 },
+    x: 'Agora vemos o campo elétrico de uma carga positiva. As linhas mostram a direção do campo e o fundo colorido, o potencial. Clique no plano ou arraste o ponto P para medir.',
+    q: 'Para onde apontam as linhas? Se P ficar duas vezes mais longe, o que acontece com E e com V?',
+    a: 'As linhas saem da carga, porque ela é positiva. Com o dobro da distância, E fica 4 vezes menor (E = kQ/d²), mas V fica só 2 vezes menor (V = kQ/d). Teste levando P de 0,3 m para 0,6 m.' },
+  { t: 'Dipolo: potencial zero, campo não', apply: { mode: 'E', two: true, q1: 5, q2: -5, d: 0.6, px: 0, pz: 0.3 },
+    x: 'Uma carga positiva e uma negativa de mesmo módulo formam um dipolo. O ponto P está na linha clara, que fica à mesma distância das duas cargas.',
+    q: 'Quanto vale o potencial em P? E o campo, é nulo?',
+    a: 'V = 0, pois os potenciais das duas cargas têm mesmo módulo e sinais opostos. Mas o campo não é nulo: os dois vetores apontam para o lado da carga negativa e se somam. Potencial zero não significa campo zero.' },
+  { t: 'Duas cargas iguais', apply: { mode: 'E', two: true, q1: 5, q2: 5, d: 0.6, px: 0, pz: 0 },
+    x: 'Agora as duas cargas são positivas e iguais, e P está exatamente no ponto médio.',
+    q: 'Quanto vale o campo no ponto médio? E o potencial?',
+    a: 'O campo é nulo: os dois vetores têm o mesmo módulo e sentidos opostos. O potencial não é nulo: é a soma de dois valores positivos. Campo zero também não significa potencial zero.' },
+];
+let step = 0;
+const stepsEl = $('steps');
+steps.forEach((s, i) => { const b = document.createElement('button'); b.textContent = i + 1; b.setAttribute('aria-label', `Passo ${i + 1}: ${s.t}`); b.addEventListener('click', () => goStep(i)); stepsEl.append(b); });
+function goStep(i) {
+  step = i; const s = steps[i];
+  Object.assign(state, s.apply); render();
+  $('gTitle').textContent = `${i + 1}. ${s.t}`; $('gText').textContent = s.x; $('gQ').textContent = s.q;
+  $('gA').textContent = s.a; $('gA').hidden = true; $('gReveal').hidden = false;
+  [...stepsEl.children].forEach((b, k) => { if (k === i) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current'); b.classList.toggle('done', k < i); });
+  $('gPrev').disabled = i === 0;
+  $('gNext').textContent = i === steps.length - 1 ? 'Recomeçar' : 'Próximo passo';
+}
+$('gReveal').addEventListener('click', () => { $('gA').hidden = false; $('gReveal').hidden = true; });
+$('gPrev').addEventListener('click', () => goStep(Math.max(0, step - 1)));
+$('gNext').addEventListener('click', () => goStep((step + 1) % steps.length));
+
+$('mode').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { state.mode = b.dataset.v; render(); } });
+$('q1').addEventListener('input', e => { state.q1 = +e.target.value; render(); });
+$('q2').addEventListener('input', e => { state.q2 = +e.target.value; render(); });
+$('d').addEventListener('input', e => { state.d = +e.target.value; render(); });
+$('dbl').addEventListener('click', () => { state.d = Math.min(1, Math.round(state.d * 2 * 100) / 100); render(); });
+$('half').addEventListener('click', () => { state.d = Math.max(0.1, Math.round(state.d / 2 * 20) / 20); render(); });
+$('flip').addEventListener('click', () => { state.q2 = -state.q2; render(); });
+$('two').addEventListener('change', e => { state.two = e.target.checked; render(); });
+$('showLines').addEventListener('change', e => { state.lines = e.target.checked; render(); });
+$('showMap').addEventListener('change', e => { state.map = e.target.checked; render(); });
+$('spin').addEventListener('change', e => { state.spin = e.target.checked; });
+$('labels').addEventListener('change', e => { state.labels = e.target.checked; });
+$('reset').addEventListener('click', () => { Object.assign(state, DEFAULTS); render(); });
+$('ctlE').addEventListener('click', e => {
+  const b = e.target.closest('button[data-pre]'); if (!b) return;
+  const pre = { one: { two: false, q1: 5, px: 0.3, pz: 0 }, dip: { two: true, q1: 5, q2: -5, d: 0.6, px: 0, pz: 0.3 }, eq: { two: true, q1: 5, q2: 5, d: 0.6, px: 0, pz: 0.3 } }[b.dataset.pre];
+  Object.assign(state, pre); render();
+});
+
+state.spin = false; $('spin').checked = false;
+goStep(0);
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
