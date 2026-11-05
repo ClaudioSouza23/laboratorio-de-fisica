@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Resumo de Dinâmica</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;400i;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: coluna de leitura em duas partes, separadas por uma parada para a simulação; cada tópico tem texto, fórmulas, figura e exemplo resolvido. */
+:root {
+  --bg: #eef1f4; --surface: #ffffff; --ink: #16202b; --muted: #576575; --line: #d3dae2; --soft: #f6f8fa;
+  --accent: #2f6f9f; --on-accent: #ffffff; --cool: #2a73c0; --ok: #1f8a4c; --warn: #b8322a;
+  --cP: #c8372d; --cN: #1f8a4c; --cF: #7a3fb5; --cA: #b8650a;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", Consolas, ui-monospace, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #0b1016; --surface: #141c25; --ink: #e5ecf2; --muted: #93a2b2; --line: #263240; --soft: #1a2430;
+  --accent: #6eaee0; --on-accent: #0b1016; --cool: #5ea2ea; --ok: #4cc27f; --warn: #ff6b60;
+  --cP: #ff6b5e; --cN: #4cc27f; --cF: #c48ae6; --cA: #f0a030; color-scheme: dark } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 17px; line-height: 1.6; }
+.wrap { max-width: 860px; margin: 0 auto; padding-block: 28px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 28px; }
+.back { font-weight: 700; color: var(--muted); text-decoration: none; font-size: 14px; }
+.back:hover { color: var(--ink); }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(32px, 5vw, 50px); line-height: 1.05; margin: 6px 0 10px; text-wrap: balance; }
+.lede { color: var(--muted); margin: 0; max-width: 65ch; }
+.toc { display: grid; gap: 10px; margin-top: 16px; }
+.toc .grp { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.toc .lbl { font-family: var(--f-mono); font-size: 12px; font-weight: 700; color: var(--muted); min-width: 62px; }
+.toc a { text-decoration: none; font-weight: 700; font-size: 14px; color: var(--ink); border: 1px solid var(--line); background: var(--surface); padding: 6px 12px; border-radius: 999px; }
+.toc a:hover { border-color: var(--ink); }
+a:focus-visible, input:focus-visible { outline: 3px solid var(--cool); outline-offset: 2px; }
+
+.part { display: grid; gap: 2px; padding-top: 8px; scroll-margin-top: 16px; }
+.part .k { font-family: var(--f-mono); font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.part h2 { font-size: clamp(26px, 3.6vw, 34px); }
+
+section.topic { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 24px; display: grid; gap: 14px; scroll-margin-top: 16px; min-width: 0; }
+.topic > * { margin: 0; }
+.num { font-family: var(--f-mono); font-size: 13px; color: var(--accent); font-weight: 700; letter-spacing: .06em; }
+h2 { font-family: var(--f-display); font-weight: 800; font-size: clamp(24px, 3.2vw, 30px); line-height: 1.1; text-wrap: balance; margin: 0; }
+h3 { font-family: var(--f-display); font-weight: 600; font-size: 19px; margin: 6px 0 0; }
+p { max-width: 68ch; }
+ul.pts, ol.pts { margin: 0; padding-left: 22px; display: grid; gap: 4px; }
+
+.formulas { display: flex; flex-wrap: wrap; gap: 10px; }
+.fx { background: var(--soft); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; display: grid; gap: 2px; min-width: 0; }
+.fx b { font-family: var(--f-mono); font-size: 21px; font-weight: 700; white-space: nowrap; }
+.fx span { font-size: 13px; color: var(--muted); }
+
+.ex { border-left: 4px solid var(--cool); background: var(--soft); border-radius: 0 10px 10px 0; padding: 12px 16px; display: grid; gap: 6px; min-width: 0; }
+.ex .k, .alert .k { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; color: var(--cool); }
+.ex p { margin: 0; }
+.ex .calc { font-family: var(--f-mono); font-size: 15px; overflow-x: auto; white-space: nowrap; max-width: 100%; }
+.alert { border-left: 4px solid var(--warn); background: var(--soft); border-radius: 0 10px 10px 0; padding: 12px 16px; display: grid; gap: 4px; }
+.alert .k { color: var(--warn); }
+.alert p { margin: 0; }
+
+.fig { display: grid; gap: 6px; justify-items: center; }
+.fig svg { width: 100%; max-width: 440px; height: auto; display: block; }
+.fig svg text { font-family: var(--f-mono); font-weight: 700; }
+.fig .cap { font-size: 14px; color: var(--muted); text-align: center; max-width: 60ch; }
+
+.cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 640px) { .cards { grid-template-columns: minmax(0, 1fr); } }
+.fc { border: 1px solid var(--line); border-left: 5px solid var(--c, var(--line)); border-radius: 10px; padding: 12px 14px; display: grid; gap: 4px; align-content: start; min-width: 0; }
+.fc h3 { margin: 0; }
+.fc .f { font-family: var(--f-mono); font-weight: 700; font-size: 17px; }
+.fc p { margin: 0; font-size: 15px; }
+
+.tbl { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 15px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+thead th { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+td.m { font-family: var(--f-mono); font-weight: 700; white-space: nowrap; }
+.trig th, .trig td { text-align: center; font-family: var(--f-mono); }
+.trig th:first-child, .trig td:first-child { text-align: left; }
+
+.widget { border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.widget h3 { margin: 0; }
+.wgrid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 16px; align-items: center; }
+@media (max-width: 640px) { .wgrid { grid-template-columns: minmax(0, 1fr); } }
+.wgrid svg { width: 100%; height: auto; display: block; }
+.wgrid svg text { font-family: var(--f-mono); font-weight: 700; }
+.ctl { display: grid; gap: 4px; }
+.ctl label { font-weight: 700; font-size: 14px; display: flex; justify-content: space-between; gap: 8px; }
+.ctl .val { font-family: var(--f-mono); color: var(--accent); }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+.wres { font-family: var(--f-mono); font-size: 15px; background: var(--soft); border-radius: 8px; padding: 10px 12px; display: grid; gap: 2px; overflow-x: auto; }
+
+.stop { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; background: var(--surface); border: 2px solid var(--accent); border-radius: 14px; padding: 18px 22px; }
+.stop p { margin: 0; font-weight: 700; max-width: 46ch; }
+.stop .k { display: block; font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-bottom: 2px; }
+.stop a { font-weight: 700; color: var(--on-accent); background: var(--accent); text-decoration: none; padding: 10px 18px; border-radius: 10px; }
+.stop a:hover { filter: brightness(1.1); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html#dinamica">&larr; Laboratório de Física</a>
+  <header>
+    <span class="eyebrow">Mecânica · Dinâmica</span>
+    <h1>Dinâmica: resumo</h1>
+    <p class="lede">Por que os corpos se movem do jeito que se movem. Primeiro vamos entender o que é força e as três leis de Newton. Depois, aprender a decompor forças para resolver problemas em planos.</p>
+    <nav class="toc" aria-label="Sumário">
+      <div class="grp"><span class="lbl">Parte 1</span>
+        <a href="#forca">1. Força</a><a href="#inercia">2. Inércia e 1ª lei</a><a href="#segunda">3. 2ª lei</a><a href="#terceira">4. 3ª lei</a><a href="#tipos">5. Tipos de força</a>
+      </div>
+      <div class="grp"><span class="lbl">Parte 2</span>
+        <a href="#decomposicao">6. Decomposição</a><a href="#horizontal">7. Força inclinada</a><a href="#inclinado">8. Plano inclinado</a><a href="#metodo">9. Como resolver</a><a href="#formulas">Fórmulas</a>
+      </div>
+    </nav>
+  </header>
+
+  <div class="part" id="parte1"><span class="k">Parte 1</span><h2>Forças e leis de Newton</h2></div>
+
+  <section class="topic" id="forca">
+    <span class="num">1</span>
+    <h2>O que é força</h2>
+    <p><b>Força</b> é o resultado da <b>interação entre dois corpos</b>. Ela pode mudar a velocidade de um corpo ou deformá-lo. Toda força tem um corpo que a aplica e um corpo que a recebe.</p>
+    <ul class="pts">
+      <li><b>Forças de contato:</b> precisam de toque, como um empurrão, a normal e o atrito.</li>
+      <li><b>Forças de campo:</b> agem à distância, como o peso, a força elétrica e a magnética.</li>
+      <li>Força é um <b>vetor</b>: tem módulo (intensidade), direção e sentido. Por isso a representamos com uma seta.</li>
+      <li>Unidade: <b>newton (N)</b>. 1 N = 1 kg·m/s².</li>
+    </ul>
+    <h3>Força resultante</h3>
+    <p>A <b>força resultante (F<sub>R</sub>)</b> é a soma vetorial de todas as forças que agem no corpo. É ela que decide o que acontece com o movimento.</p>
+    <div class="cards">
+      <div class="fc"><h3>Mesmo sentido</h3><span class="f">F<sub>R</sub> = F₁ + F₂</span></div>
+      <div class="fc"><h3>Sentidos opostos</h3><span class="f">F<sub>R</sub> = F₁ − F₂</span><p>no sentido da maior</p></div>
+      <div class="fc"><h3>Perpendiculares</h3><span class="f">F<sub>R</sub>² = F₁² + F₂²</span><p>teorema de Pitágoras</p></div>
+      <div class="fc"><h3>Equilíbrio</h3><span class="f">F<sub>R</sub> = 0</span><p>as forças se cancelam</p></div>
+    </div>
+    <div class="ex">
+      <span class="k">Exemplo</span>
+      <p>Duas forças perpendiculares de 3 N e 4 N agem em um corpo. Qual a resultante?</p>
+      <p class="calc">F<sub>R</sub>² = 3² + 4² = 25 &nbsp;→&nbsp; F<sub>R</sub> = 5 N</p>
+    </div>
+  </section>
+
+  <section class="topic" id="inercia">
+    <span class="num">2</span>
+    <h2>Inércia e 1ª lei de Newton</h2>
+    <p><b>Inércia</b> é a tendência de um corpo manter seu estado de movimento. Parado, ele tende a continuar parado. Em movimento, tende a continuar em linha reta com a mesma velocidade. A <b>massa</b> é a medida da inércia: quanto maior a massa, mais difícil mudar a velocidade.</p>
+    <div class="formulas">
+      <div class="fx"><b>F<sub>R</sub> = 0 ⇔ v constante</b><span>repouso ou movimento retilíneo uniforme</span></div>
+    </div>
+    <ul class="pts">
+      <li><b>Equilíbrio estático:</b> corpo em repouso com F<sub>R</sub> = 0.</li>
+      <li><b>Equilíbrio dinâmico:</b> corpo em MRU com F<sub>R</sub> = 0.</li>
+      <li>No ônibus que freia, seu corpo tende a continuar andando: você "vai para frente". Nenhuma força te empurra; é o ônibus que para. Por isso o cinto de segurança é necessário.</li>
+    </ul>
+    <div class="alert">
+      <span class="k">Atenção</span>
+      <p>Um corpo <b>não precisa de força para continuar se movendo</b>. Precisa de força para <b>mudar</b> a velocidade. No dia a dia as coisas param porque existe atrito e resistência do ar, não porque "a força acabou".</p>
+    </div>
+  </section>
+
+  <section class="topic" id="segunda">
+    <span class="num">3</span>
+    <h2>2ª lei de Newton</h2>
+    <p>Quando a resultante <b>não é nula</b>, o corpo acelera. A aceleração tem a mesma direção e o mesmo sentido da resultante, é proporcional a ela e inversamente proporcional à massa.</p>
+    <div class="formulas">
+      <div class="fx"><b>F<sub>R</sub> = m · a</b><span>princípio fundamental da dinâmica</span></div>
+    </div>
+    <ul class="pts">
+      <li>Dobrar a resultante dobra a aceleração.</li>
+      <li>Dobrar a massa, com a mesma resultante, divide a aceleração por 2.</li>
+      <li>A aceleração depende da força <b>resultante</b>, não de uma força isolada.</li>
+    </ul>
+    <div class="ex">
+      <span class="k">Exemplo</span>
+      <p>Um carrinho de 4 kg é puxado com 30 N, e o atrito vale 10 N. Qual a aceleração?</p>
+      <p class="calc">F<sub>R</sub> = 30 − 10 = 20 N &nbsp;→&nbsp; a = F<sub>R</sub> / m = 20 / 4 = 5 m/s²</p>
+    </div>
+  </section>
+
+  <section class="topic" id="terceira">
+    <span class="num">4</span>
+    <h2>3ª lei de Newton: ação e reação</h2>
+    <p>Forças sempre aparecem em <b>pares</b>. Se A aplica uma força em B, então B aplica em A uma força de <b>mesmo módulo, mesma direção e sentido oposto</b>.</p>
+    <div class="formulas">
+      <div class="fx"><b>F<sub>A em B</sub> = −F<sub>B em A</sub></b><span>par ação e reação</span></div>
+    </div>
+    <ul class="pts">
+      <li>As forças do par agem em <b>corpos diferentes</b>. Por isso <b>não se anulam</b>.</li>
+      <li>São da mesma natureza e surgem ao mesmo tempo.</li>
+      <li>Numa batida entre um caminhão e um carro, os dois recebem forças iguais. O carro sofre mais porque tem menos massa: maior aceleração.</li>
+    </ul>
+    <div class="alert">
+      <span class="k">Atenção</span>
+      <p><b>Peso e normal não são um par ação e reação.</b> Os dois agem no mesmo corpo. A reação do peso é o corpo puxando a Terra. A reação da normal é o corpo comprimindo a superfície.</p>
+    </div>
+  </section>
+
+  <section class="topic" id="tipos">
+    <span class="num">5</span>
+    <h2>Tipos de força</h2>
+    <p>Estas são as forças que mais aparecem nos problemas. Saber identificá-las é o primeiro passo para resolver qualquer exercício.</p>
+    <div class="cards">
+      <div class="fc" style="--c:var(--cP)"><h3>Peso (P)</h3><span class="f">P = m · g</span><p>Atração gravitacional da Terra. Vertical, para baixo. Na Terra usamos g ≈ 10 m/s². A massa não muda de um planeta para outro; o peso muda.</p></div>
+      <div class="fc" style="--c:var(--cN)"><h3>Normal (N)</h3><span class="f">perpendicular à superfície</span><p>Reação da superfície à compressão. Sempre perpendicular ao apoio. Não tem fórmula própria: é calculada pelo equilíbrio. Nem sempre é igual ao peso.</p></div>
+      <div class="fc" style="--c:var(--cF)"><h3>Tração (T)</h3><span class="f">ao longo do fio</span><p>Força transmitida por fios e cordas. Sempre puxa, nunca empurra. Em fio ideal, tem o mesmo valor nas duas pontas.</p></div>
+      <div class="fc" style="--c:var(--cA)"><h3>Atrito (f<sub>at</sub>)</h3><span class="f">oposto ao deslizamento</span><p>Surge entre superfícies em contato, paralelo a elas, e se opõe ao escorregamento (ou à tendência de escorregar).</p></div>
+      <div class="fc"><h3>Elástica (F<sub>el</sub>)</h3><span class="f">F = k · x</span><p>Lei de Hooke. A mola puxa ou empurra de volta. k é a constante da mola (N/m); x é a deformação (m).</p></div>
+      <div class="fc"><h3>Resistência do ar</h3><span class="f">oposta ao movimento</span><p>Cresce com a velocidade. Muitos problemas a desprezam. É o que faz um paraquedista chegar a uma velocidade limite.</p></div>
+    </div>
+    <div class="fig">
+      <svg id="figFBD" viewBox="0 0 340 220" role="img" aria-label="Diagrama de forças de um bloco puxado para a direita sobre uma mesa: peso para baixo, normal para cima, força aplicada para a direita e atrito para a esquerda."></svg>
+      <span class="cap">Diagrama de corpo livre: um bloco puxado para a direita. Peso e normal se equilibram; F e f<sub>at</sub> decidem a aceleração.</span>
+    </div>
+    <h3>Os dois atritos</h3>
+    <div class="formulas">
+      <div class="fx"><b>f<sub>e</sub> ≤ μ<sub>e</sub> · N</b><span>estático: corpo parado</span></div>
+      <div class="fx"><b>f<sub>c</sub> = μ<sub>c</sub> · N</b><span>cinético: corpo deslizando</span></div>
+    </div>
+    <ul class="pts">
+      <li><b>Atrito estático:</b> tem o valor exato necessário para manter o corpo parado, até um limite máximo μ<sub>e</sub>·N.</li>
+      <li><b>Atrito cinético:</b> depois que o corpo desliza, vale μ<sub>c</sub>·N, um valor fixo.</li>
+      <li>Em geral μ<sub>c</sub> &lt; μ<sub>e</sub>: é mais difícil tirar do lugar do que manter deslizando.</li>
+      <li>O atrito depende da normal e dos materiais, não da área de contato.</li>
+    </ul>
+    <div class="ex">
+      <span class="k">Exemplo</span>
+      <p>Um bloco de 10 kg está parado em um piso com μ<sub>e</sub> = 0,5 e μ<sub>c</sub> = 0,4. Ele é puxado por uma força horizontal de 30 N. O que acontece? E com 60 N?</p>
+      <p class="calc">N = P = 100 N &nbsp;→&nbsp; f<sub>e,máx</sub> = 0,5 · 100 = 50 N &nbsp;·&nbsp; f<sub>c</sub> = 0,4 · 100 = 40 N</p>
+      <p class="calc">Com 30 N: 30 &lt; 50, fica parado, e o atrito vale 30 N (não 50 N)</p>
+      <p class="calc">Com 60 N: 60 &gt; 50, desliza &nbsp;→&nbsp; a = (60 − 40) / 10 = 2 m/s²</p>
+    </div>
+  </section>
+
+  <div class="stop">
+    <p><span class="k">Passo 2 da trilha</span>Agora experimente: inércia, 2ª lei e atrito em um bloco que você mesmo puxa.</p>
+    <a href="forcas.html">Abrir a simulação de forças</a>
+  </div>
+
+  <div class="part" id="parte2"><span class="k">Parte 2</span><h2>Decomposição de forças e planos</h2></div>
+
+  <section class="topic" id="decomposicao">
+    <span class="num">6</span>
+    <h2>Decomposição de forças</h2>
+    <p>Muitas forças são inclinadas em relação ao movimento. <b>Decompor</b> uma força é trocá-la por duas <b>componentes perpendiculares</b> que, somadas, têm exatamente o mesmo efeito. Assim podemos analisar cada eixo separadamente.</p>
+    <div class="formulas">
+      <div class="fx"><b>F<sub>x</sub> = F · cos θ</b><span>componente junto ao ângulo</span></div>
+      <div class="fx"><b>F<sub>y</sub> = F · sen θ</b><span>componente oposta ao ângulo</span></div>
+      <div class="fx"><b>F² = F<sub>x</sub>² + F<sub>y</sub>²</b><span>para conferir</span></div>
+    </div>
+    <div class="widget">
+      <h3>Experimente: decomponha uma força</h3>
+      <div class="wgrid">
+        <svg id="figDec" viewBox="0 0 320 240" role="img" aria-label="Força F inclinada de um ângulo teta, com as componentes horizontal e vertical."></svg>
+        <div style="display:grid;gap:12px;min-width:0">
+          <div class="ctl"><label for="wf">Força F <span class="val" id="wfVal"></span></label><input type="range" id="wf" min="10" max="100" step="5" value="100"></div>
+          <div class="ctl"><label for="wa">Ângulo θ <span class="val" id="waVal"></span></label><input type="range" id="wa" min="0" max="90" step="1" value="37"></div>
+          <div class="wres" id="wres"></div>
+        </div>
+      </div>
+    </div>
+    <div class="tbl">
+      <table class="trig">
+        <thead><tr><th>θ</th><th>0°</th><th>30°</th><th>37°</th><th>45°</th><th>53°</th><th>60°</th><th>90°</th></tr></thead>
+        <tbody>
+          <tr><td>sen θ</td><td>0</td><td>0,50</td><td>0,60</td><td>0,71</td><td>0,80</td><td>0,87</td><td>1</td></tr>
+          <tr><td>cos θ</td><td>1</td><td>0,87</td><td>0,80</td><td>0,71</td><td>0,60</td><td>0,50</td><td>0</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="alert">
+      <span class="k">Atenção</span>
+      <p>O cosseno fica com o cateto <b>junto</b> ao ângulo, seja ele qual for. Se θ for medido a partir da vertical, a componente vertical é que usa o cosseno. Sempre olhe onde o ângulo está antes de usar a fórmula.</p>
+    </div>
+  </section>
+
+  <section class="topic" id="horizontal">
+    <span class="num">7</span>
+    <h2>Força inclinada em um plano horizontal</h2>
+    <p>Ao puxar um bloco por uma corda inclinada, só a componente F<sub>x</sub> acelera o bloco. A componente F<sub>y</sub> alivia o apoio, e isso <b>muda a normal</b> e, com ela, o atrito.</p>
+    <div class="formulas">
+      <div class="fx"><b>N = P − F · sen θ</b><span>puxando para cima</span></div>
+      <div class="fx"><b>N = P + F · sen θ</b><span>empurrando para baixo</span></div>
+      <div class="fx"><b>F · cos θ − f<sub>at</sub> = m · a</b><span>eixo do movimento</span></div>
+    </div>
+    <div class="ex">
+      <span class="k">Exemplo</span>
+      <p>Um bloco de 10 kg é puxado por uma força de 50 N, inclinada 37° acima da horizontal. Considere μ<sub>c</sub> = 0,2 e o bloco já em movimento.</p>
+      <p class="calc">F<sub>x</sub> = 50 · 0,8 = 40 N &nbsp;·&nbsp; F<sub>y</sub> = 50 · 0,6 = 30 N</p>
+      <p class="calc">N = 100 − 30 = 70 N &nbsp;→&nbsp; f<sub>c</sub> = 0,2 · 70 = 14 N</p>
+      <p class="calc">a = (40 − 14) / 10 = 2,6 m/s²</p>
+    </div>
+    <div class="alert">
+      <span class="k">Atenção</span>
+      <p>N = P só vale quando nenhuma outra força tem componente vertical e o apoio é horizontal. Por isso é mais fácil <b>puxar</b> um carrinho do que empurrá-lo inclinado para baixo: empurrar aumenta a normal e o atrito.</p>
+    </div>
+  </section>
+
+  <section class="topic" id="inclinado">
+    <span class="num">8</span>
+    <h2>Plano inclinado</h2>
+    <p>No plano inclinado, o truque é <b>inclinar os eixos</b>: x ao longo da rampa e y perpendicular a ela. Normal e atrito já ficam sobre os eixos. Só o <b>peso</b> precisa ser decomposto.</p>
+    <div class="fig">
+      <svg id="figIncl" viewBox="0 0 440 310" role="img" aria-label="Bloco em um plano inclinado de ângulo teta, com peso, componentes do peso, normal e atrito."></svg>
+      <span class="cap">O ângulo entre P e P<sub>y</sub> é igual à inclinação θ da rampa.</span>
+    </div>
+    <div class="formulas">
+      <div class="fx"><b>P<sub>x</sub> = P · sen θ</b><span>puxa rampa abaixo</span></div>
+      <div class="fx"><b>P<sub>y</sub> = P · cos θ</b><span>comprime a rampa</span></div>
+      <div class="fx"><b>N = P · cos θ</b><span>equilíbrio no eixo y</span></div>
+    </div>
+    <p>Note que aqui o seno fica com a componente paralela à rampa. Isso acontece porque o ângulo θ aparece entre P e P<sub>y</sub>, e o cateto junto a ele é P<sub>y</sub>.</p>
+    <div class="cards">
+      <div class="fc"><h3>Sem atrito</h3><span class="f">a = g · sen θ</span><p>A massa se cancela: todos os corpos descem com a mesma aceleração.</p></div>
+      <div class="fc" style="--c:var(--cA)"><h3>Descendo com atrito</h3><span class="f">a = g · (sen θ − μ<sub>c</sub> · cos θ)</span><p>O atrito aponta rampa acima. A massa também se cancela.</p></div>
+      <div class="fc" style="--c:var(--cA)"><h3>Ângulo crítico</h3><span class="f">tg θ<sub>c</sub> = μ<sub>e</sub></span><p>Maior ângulo em que o corpo fica parado. É um jeito simples de medir μ<sub>e</sub> em laboratório.</p></div>
+      <div class="fc" style="--c:var(--cF)"><h3>Subindo a rampa</h3><span class="f">F − P<sub>x</sub> − f<sub>c</sub> = m · a</span><p>O atrito agora aponta rampa abaixo. Velocidade constante: F = P<sub>x</sub> + f<sub>c</sub>.</p></div>
+    </div>
+    <div class="ex">
+      <span class="k">Exemplo</span>
+      <p>Um bloco de 10 kg desce uma rampa de 37°, com μ<sub>c</sub> = 0,25. Qual a aceleração? (g = 10 m/s²)</p>
+      <p class="calc">P = 100 N &nbsp;→&nbsp; P<sub>x</sub> = 100 · 0,6 = 60 N &nbsp;·&nbsp; N = P<sub>y</sub> = 100 · 0,8 = 80 N</p>
+      <p class="calc">f<sub>c</sub> = 0,25 · 80 = 20 N &nbsp;→&nbsp; a = (60 − 20) / 10 = 4 m/s²</p>
+    </div>
+    <div class="alert">
+      <span class="k">Atenção</span>
+      <p>Na rampa, N é <b>menor</b> que o peso. Usar N = P é o erro mais comum. E quando o corpo está parado, o atrito vale P<sub>x</sub>, não μ<sub>e</sub>·N.</p>
+    </div>
+  </section>
+
+  <section class="topic" id="metodo">
+    <span class="num">9</span>
+    <h2>Como resolver um problema de dinâmica</h2>
+    <ol class="pts">
+      <li><b>Isole o corpo</b> e desenhe todas as forças que agem nele (diagrama de corpo livre).</li>
+      <li><b>Escolha os eixos:</b> x na direção do movimento (ou da tendência de movimento), y perpendicular.</li>
+      <li><b>Decomponha</b> toda força que não estiver sobre um eixo.</li>
+      <li><b>Eixo y:</b> se não há movimento nele, a soma é zero. Daí sai a normal.</li>
+      <li><b>Atrito:</b> compare a força que tenta mover com μ<sub>e</sub>·N. Se for menor, o corpo fica parado. Se for maior, use μ<sub>c</sub>·N.</li>
+      <li><b>Eixo x:</b> aplique F<sub>R</sub> = m · a.</li>
+      <li><b>Confira:</b> o resultado faz sentido? As unidades estão certas?</li>
+    </ol>
+  </section>
+
+  <section class="topic" id="formulas">
+    <h2>Quadro de fórmulas</h2>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Grandeza</th><th>Fórmula</th><th>Observação</th></tr></thead>
+        <tbody>
+          <tr><td>2ª lei de Newton</td><td class="m">F<sub>R</sub> = m · a</td><td>força em N, massa em kg</td></tr>
+          <tr><td>Peso</td><td class="m">P = m · g</td><td>g ≈ 10 m/s² na Terra</td></tr>
+          <tr><td>Atrito estático</td><td class="m">f<sub>e</sub> ≤ μ<sub>e</sub> · N</td><td>corpo parado</td></tr>
+          <tr><td>Atrito cinético</td><td class="m">f<sub>c</sub> = μ<sub>c</sub> · N</td><td>corpo deslizando</td></tr>
+          <tr><td>Força elástica</td><td class="m">F = k · x</td><td>lei de Hooke</td></tr>
+          <tr><td>Decomposição</td><td class="m">F<sub>x</sub> = F cos θ, F<sub>y</sub> = F sen θ</td><td>θ medido a partir do eixo x</td></tr>
+          <tr><td>Plano horizontal, força inclinada</td><td class="m">N = P − F sen θ</td><td>puxando para cima</td></tr>
+          <tr><td>Plano inclinado</td><td class="m">P<sub>x</sub> = P sen θ, N = P cos θ</td><td>θ: inclinação da rampa</td></tr>
+          <tr><td>Rampa sem atrito</td><td class="m">a = g sen θ</td><td>não depende da massa</td></tr>
+          <tr><td>Rampa com atrito, descendo</td><td class="m">a = g (sen θ − μ<sub>c</sub> cos θ)</td><td>não depende da massa</td></tr>
+          <tr><td>Ângulo crítico</td><td class="m">tg θ<sub>c</sub> = μ<sub>e</sub></td><td>início do escorregamento</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="stop">
+    <p><span class="k">Passo 4 da trilha</span>Agora experimente: decomponha o peso e faça o bloco descer uma rampa com atrito.</p>
+    <a href="plano-inclinado.html">Abrir o plano inclinado</a>
+  </div>
+</div>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const fmt = (x, d = 1) => x.toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
+  function arrow(x1, y1, x2, y2, color, w = 3, dash = '') {
+    const L = Math.hypot(x2 - x1, y2 - y1); if (L < 2) return '';
+    const ux = (x2 - x1) / L, uy = (y2 - y1) / L, h = Math.min(12, L * 0.5), bx = x2 - ux * h, by = y2 - uy * h;
+    return `<line x1="${x1}" y1="${y1}" x2="${bx}" y2="${by}" stroke="${color}" stroke-width="${w}" ${dash ? `stroke-dasharray="${dash}"` : ''}/>` +
+      `<polygon points="${x2},${y2} ${bx - uy * 6},${by + ux * 6} ${bx + uy * 6},${by - ux * 6}" fill="${color}"/>`;
+  }
+  const label = (x, y, t, anchor = 'middle', size = 15) => `<text x="${x}" y="${y}" text-anchor="${anchor}" font-size="${size}" fill="var(--ink)">${t}</text>`;
+  const sub = (a, b) => `${a}<tspan font-size="11" dy="4">${b}</tspan>`;
+
+  // diagrama de corpo livre
+  $('figFBD').innerHTML = `<line x1="20" y1="150" x2="320" y2="150" stroke="var(--muted)" stroke-width="3"/>
+    <rect x="130" y="95" width="80" height="55" rx="4" fill="var(--soft)" stroke="var(--muted)" stroke-width="2"/>` +
+    arrow(170, 122, 170, 205, 'var(--cP)') + arrow(170, 122, 170, 30, 'var(--cN)') + arrow(210, 122, 300, 122, 'var(--cF)') + arrow(130, 147, 60, 147, 'var(--cA)') +
+    label(186, 204, 'P') + label(186, 38, 'N') + label(296, 110, 'F') + label(70, 136, sub('f', 'at'));
+
+  // decomposição interativa
+  function dec() {
+    const F = +$('wf').value, a = +$('wa').value, r = a * Math.PI / 180, c = Math.cos(r), s = Math.sin(r), k = 1.7, ox = 55, oy = 205;
+    const fx = F * c, fy = F * s, tx = ox + fx * k, ty = oy - fy * k;
+    let o = `<line x1="${ox}" y1="${oy}" x2="300" y2="${oy}" stroke="var(--line)" stroke-width="2"/><line x1="${ox}" y1="${oy}" x2="${ox}" y2="10" stroke="var(--line)" stroke-width="2"/>`;
+    o += `<line x1="${tx}" y1="${ty}" x2="${tx}" y2="${oy}" stroke="var(--muted)" stroke-dasharray="4 4"/><line x1="${tx}" y1="${ty}" x2="${ox}" y2="${ty}" stroke="var(--muted)" stroke-dasharray="4 4"/>`;
+    o += arrow(ox, oy, tx, oy, 'var(--cN)') + arrow(ox, oy, ox, ty, 'var(--cP)') + arrow(ox, oy, tx, ty, 'var(--cF)', 4);
+    if (a > 2 && a < 88) {
+      const R = 36;
+      o += `<path d="M${ox + R},${oy} A${R},${R} 0 0 0 ${ox + R * c},${oy - R * s}" fill="none" stroke="var(--ink)" stroke-width="1.5"/>`;
+      o += label(ox + (R + 13) * Math.cos(r / 2), oy - (R + 13) * Math.sin(r / 2) + 5, 'θ', 'middle', 14);
+    }
+    if (fx > 12) o += label(ox + fx * k / 2, oy + 20, sub('F', 'x'));
+    if (fy > 12) o += label(ox - 18, oy - fy * k / 2 + 5, sub('F', 'y'));
+    o += label(tx + (c > 0.2 ? 12 : -14), ty - 8, 'F');
+    $('figDec').innerHTML = o;
+    $('wfVal').textContent = F + ' N'; $('waVal').textContent = a + '°';
+    $('wres').innerHTML = `<span>F<sub>x</sub> = ${F} · cos ${a}° = ${fmt(fx)} N</span><span>F<sub>y</sub> = ${F} · sen ${a}° = ${fmt(fy)} N</span><span>√(F<sub>x</sub>² + F<sub>y</sub>²) = ${fmt(Math.hypot(fx, fy))} N</span>`;
+  }
+  $('wf').addEventListener('input', dec); $('wa').addEventListener('input', dec); dec();
+
+  // plano inclinado (θ = 30°, setas em escala)
+  (function incl() {
+    const th = 30 * Math.PI / 180, c = Math.cos(th), s = Math.sin(th);
+    const A = [30, 30 + 0], B = [410, 30 + 380 * Math.tan(th)];
+    const d = [c, s], n = [s, -c];                 // rampa abaixo; normal para fora
+    const S = [A[0] + d[0] * 215, A[1] + d[1] * 215], hw = 34, hh = 22;
+    const C = [S[0] + n[0] * hh, S[1] + n[1] * hh];
+    const corner = (a, b) => `${C[0] + d[0] * a + n[0] * b},${C[1] + d[1] * a + n[1] * b}`;
+    const P = 120, Px = P * s, Py = P * c;
+    const tP = [C[0], C[1] + P], tX = [C[0] + d[0] * Px, C[1] + d[1] * Px], tY = [C[0] - n[0] * Py, C[1] - n[1] * Py], tN = [C[0] + n[0] * Py, C[1] + n[1] * Py];
+    const b0 = [S[0] - d[0] * hw, S[1] - d[1] * hw], tA = [b0[0] - d[0] * 40, b0[1] - d[1] * 40];
+    let o = `<polygon points="${A[0]},${A[1]} ${B[0]},${B[1]} ${A[0]},${B[1]}" fill="var(--soft)" stroke="var(--muted)" stroke-width="2"/>`;
+    o += `<polygon points="${corner(-hw, -hh)} ${corner(hw, -hh)} ${corner(hw, hh)} ${corner(-hw, hh)}" fill="var(--surface)" stroke="var(--muted)" stroke-width="2"/>`;
+    o += `<line x1="${tP[0]}" y1="${tP[1]}" x2="${tX[0]}" y2="${tX[1]}" stroke="var(--muted)" stroke-dasharray="4 4"/><line x1="${tP[0]}" y1="${tP[1]}" x2="${tY[0]}" y2="${tY[1]}" stroke="var(--muted)" stroke-dasharray="4 4"/>`;
+    o += arrow(C[0], C[1], tX[0], tX[1], 'var(--cP)', 2.5, '6 4') + arrow(C[0], C[1], tY[0], tY[1], 'var(--cP)', 2.5, '6 4');
+    o += arrow(C[0], C[1], tP[0], tP[1], 'var(--cP)', 3.5) + arrow(C[0], C[1], tN[0], tN[1], 'var(--cN)', 3.5) + arrow(b0[0], b0[1], tA[0], tA[1], 'var(--cA)', 3.5);
+    // arcos de θ: na base da rampa e entre P e Py
+    const R = 54;
+    o += `<path d="M${B[0] - R},${B[1]} A${R},${R} 0 0 1 ${B[0] - R * c},${B[1] - R * s}" fill="none" stroke="var(--ink)" stroke-width="1.5"/>`;
+    o += label(B[0] - R - 14, B[1] - 10, 'θ');
+    const r2 = 42, py = [-n[0], -n[1]];
+    o += `<path d="M${C[0]},${C[1] + r2} A${r2},${r2} 0 0 1 ${C[0] + py[0] * r2},${C[1] + py[1] * r2}" fill="none" stroke="var(--ink)" stroke-width="1.5"/>`;
+    o += label(C[0] - 13, C[1] + r2 + 16, 'θ', 'middle', 14);
+    o += label(tP[0] + 16, tP[1] + 2, 'P') + label(tX[0] + 18, tX[1] + 2, sub('P', 'x')) + label(tY[0] - 18, tY[1] + 6, sub('P', 'y')) + label(tN[0] + 2, tN[1] - 8, 'N') + label(tA[0] - 8, tA[1] - 8, sub('f', 'at'));
+    $('figIncl').innerHTML = o;
+  })();
+})();
+</script>
+</body>
+</html>

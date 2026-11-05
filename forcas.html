@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Forças no Plano Horizontal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: roteiro no topo; palco 3D escuro + painel; medidores; contas por eixo; gráfico v×t e pares de ação e reação. */
+:root {
+  --bg: #eef1f4; --surface: #ffffff; --ink: #16202b; --muted: #576575; --line: #d3dae2; --soft: #f6f8fa;
+  --accent: #2f6f9f; --on-accent: #ffffff; --cool: #2a73c0; --ok: #1f8a4c; --bad: #b8322a;
+  --stage: #0e151d; --stage-ink: #dce6ef;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", Consolas, ui-monospace, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #0b1016; --surface: #141c25; --ink: #e5ecf2; --muted: #93a2b2; --line: #263240; --soft: #1a2430;
+  --accent: #6eaee0; --on-accent: #0b1016; --cool: #5ea2ea; --ok: #4cc27f; --bad: #ff6b60; color-scheme: dark } }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.5; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-block: 20px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 20px; }
+.back { font-weight: 700; color: var(--muted); text-decoration: none; font-size: 14px; }
+.back:hover { color: var(--ink); }
+header { display: grid; gap: 6px; }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(28px, 4vw, 44px); line-height: 1.05; margin: 0; text-wrap: balance; }
+.lede { color: var(--muted); max-width: 72ch; margin: 0; }
+h2 { font-family: var(--f-display); font-weight: 600; font-size: 20px; margin: 0; text-wrap: balance; }
+.small { font-size: 13px; color: var(--muted); margin: 0; }
+
+.guide { background: var(--surface); border: 2px solid var(--accent); border-radius: 14px; padding: 18px; display: grid; gap: 14px; }
+.guide-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.steps { display: flex; flex-wrap: wrap; gap: 6px; }
+.steps button { font: inherit; font-family: var(--f-mono); font-weight: 700; width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid var(--line); background: var(--soft); color: var(--muted); cursor: pointer; }
+.steps button[aria-current="step"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.steps button.done { color: var(--accent); border-color: var(--accent); }
+.guide-body { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 18px; }
+@media (max-width: 800px) { .guide-body { grid-template-columns: minmax(0, 1fr); } }
+.guide h3 { font-family: var(--f-display); font-weight: 800; font-size: clamp(20px, 2.6vw, 26px); margin: 0 0 6px; line-height: 1.15; }
+.guide p { margin: 0; max-width: 65ch; }
+.ask { background: var(--soft); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; align-content: start; }
+.ask .k { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+.ask .q { font-weight: 700; font-size: 17px; }
+.ask .a { border-left: 3px solid var(--ok); padding-left: 10px; }
+.nav { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.btn { font: inherit; font-weight: 700; border: 1px solid var(--ink); background: transparent; color: var(--ink); border-radius: 10px; padding: 8px 14px; cursor: pointer; text-decoration: none; display: inline-block; }
+.btn:hover:not(:disabled) { background: var(--ink); color: var(--bg); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn.primary:hover:not(:disabled) { filter: brightness(1.1); background: var(--accent); color: var(--on-accent); }
+.btn.sm { padding: 6px 10px; font-size: 14px; }
+.btn:disabled { opacity: .4; cursor: default; }
+button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid var(--cool); outline-offset: 2px; }
+
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 20px; align-items: start; }
+@media (max-width: 900px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.stage { position: relative; background: var(--stage); border-radius: 14px; overflow: hidden; aspect-ratio: 16 / 10; max-width: 100%; min-height: 300px; }
+.stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.badge { position: absolute; top: 14px; left: 14px; font-family: var(--f-mono); font-weight: 700; font-size: clamp(13px, 1.8vw, 18px);
+  color: #fff; padding: 6px 12px; border-radius: 8px; background: #2a5d8f; }
+.badge.rest { background: #4b5a6a; } .badge.warn { background: #a8321f; }
+.hint { position: absolute; top: 18px; right: 14px; font-size: 12px; color: var(--stage-ink); opacity: .65; }
+@media (max-width: 700px) { .hint { display: none; } }
+.legend { position: absolute; left: 14px; bottom: 12px; right: 14px; display: flex; flex-wrap: wrap; gap: 4px 14px;
+  font-size: 13px; color: var(--stage-ink); opacity: .9; pointer-events: none; }
+.legend i { display: inline-block; width: 12px; height: 4px; border-radius: 2px; margin-right: 6px; vertical-align: 3px; }
+.lab3d { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); pointer-events: none; white-space: nowrap;
+  font-size: 13px; font-weight: 700; color: #fff; background: rgba(14, 21, 29, .78); padding: 1px 6px; border-radius: 5px; font-family: var(--f-mono); }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 14px; }
+.ctl { display: grid; gap: 6px; }
+.ctl > label, .ctl > .lab { font-weight: 700; font-size: 14px; display: flex; justify-content: space-between; gap: 8px; }
+.ctl .val { font-family: var(--f-mono); color: var(--accent); }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+.row { display: flex; flex-wrap: wrap; gap: 6px; }
+.play { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.play #rst { grid-column: 1 / -1; }
+.checks { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; }
+.checks label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+
+.readouts { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 760px) { .readouts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.ro { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; gap: 2px; min-width: 0; }
+.ro .k { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.ro .v { font-family: var(--f-mono); font-weight: 700; font-size: clamp(19px, 2.4vw, 28px); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ro .u { font-size: .55em; color: var(--muted); margin-left: 3px; }
+.ro .tag { font-size: 12px; font-weight: 700; color: var(--muted); }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.calc { display: grid; gap: 8px; }
+.calc .ln { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 10px; align-items: baseline; }
+@media (max-width: 560px) { .calc .ln { grid-template-columns: minmax(0, 1fr); gap: 0; } }
+.calc .ln b { font-size: 14px; }
+.calc .ln span { font-family: var(--f-mono); font-size: 15px; overflow-x: auto; white-space: nowrap; }
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 900px) { .two { grid-template-columns: minmax(0, 1fr); } }
+.graphbox { overflow-x: auto; position: relative; }
+.graphbox svg { width: 100%; min-width: 320px; height: auto; display: block; }
+.graphbox svg text { font-family: var(--f-mono); }
+.tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--bg); font-family: var(--f-mono); font-size: 12px;
+  padding: 4px 8px; border-radius: 6px; white-space: nowrap; transform: translate(-50%, -130%); }
+.tbl { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--line); }
+thead th { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+td.m { font-family: var(--f-mono); font-weight: 700; white-space: nowrap; text-align: right; }
+.note { border-left: 4px solid var(--cool); background: var(--soft); border-radius: 0 10px 10px 0; padding: 10px 14px; margin: 0; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html#dinamica">&larr; Laboratório de Física</a>
+  <header>
+    <span class="eyebrow">Dinâmica · Passo 2 da trilha</span>
+    <h1>Forças no plano horizontal</h1>
+    <p class="lede">Um bloco sobre um piso, puxado por uma força que você controla. Use para ver a inércia, a 2ª lei de Newton, os dois tipos de atrito e o que acontece quando a força é inclinada.</p>
+  </header>
+
+  <section class="guide" aria-label="Roteiro da aula">
+    <div class="guide-top">
+      <h2>Roteiro da aula</h2>
+      <div class="steps" id="steps"></div>
+    </div>
+    <div class="guide-body">
+      <div><h3 id="gTitle"></h3><p id="gText"></p></div>
+      <div class="ask">
+        <span class="k">Pergunte à turma</span>
+        <span class="q" id="gQ"></span>
+        <span class="a" id="gA" hidden></span>
+        <div class="nav">
+          <button class="btn" id="gReveal">Ver resposta</button>
+          <button class="btn" id="gPrev">Voltar</button>
+          <button class="btn primary" id="gNext">Próximo passo</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="main">
+    <div class="stage" id="stage">
+      <div class="badge" id="badge"></div>
+      <div class="hint">Arraste para girar · role para aproximar</div>
+      <div class="lab3d" id="lP"></div><div class="lab3d" id="lN"></div><div class="lab3d" id="lF"></div>
+      <div class="lab3d" id="lFx"></div><div class="lab3d" id="lFy"></div><div class="lab3d" id="lA"></div><div class="lab3d" id="lR"></div>
+      <div class="legend">
+        <span><i style="background:#ff5a4a"></i>peso</span><span><i style="background:#3fd07f"></i>normal</span>
+        <span><i style="background:#c48ae6"></i>força aplicada</span><span><i style="background:#ffa62b"></i>atrito</span><span><i style="background:#ffffff"></i>resultante</span>
+      </div>
+    </div>
+
+    <aside class="panel" aria-label="Controles">
+      <div class="play">
+        <button class="btn primary" id="run">Iniciar</button>
+        <button class="btn" id="pow">Desligar a força</button>
+        <button class="btn sm" id="rst">Reiniciar o movimento</button>
+      </div>
+      <div class="ctl">
+        <label for="f">Força F <span class="val" id="fVal"></span></label>
+        <input type="range" id="f" min="0" max="100" step="1" value="20">
+      </div>
+      <div class="ctl">
+        <label for="th">Ângulo θ da força <span class="val" id="thVal"></span></label>
+        <input type="range" id="th" min="0" max="80" step="1" value="0">
+      </div>
+      <div class="ctl">
+        <label for="m">Massa m <span class="val" id="mVal"></span></label>
+        <input type="range" id="m" min="1" max="20" step="1" value="5">
+      </div>
+      <div class="ctl">
+        <label for="me"><span>Atrito estático μ<sub>e</sub></span> <span class="val" id="meVal"></span></label>
+        <input type="range" id="me" min="0" max="1" step="0.05" value="0">
+      </div>
+      <div class="ctl">
+        <label for="mc"><span>Atrito cinético μ<sub>c</sub></span> <span class="val" id="mcVal"></span></label>
+        <input type="range" id="mc" min="0" max="1" step="0.05" value="0">
+      </div>
+      <div class="row">
+        <button class="btn sm" data-mu="0,0">Sem atrito</button>
+        <button class="btn sm" data-mu="0.5,0.4">Madeira</button>
+        <button class="btn sm" data-mu="0.8,0.6">Borracha</button>
+      </div>
+      <div class="checks">
+        <label><input type="checkbox" id="comps" checked> Componentes</label>
+        <label><input type="checkbox" id="labels" checked> Etiquetas</label>
+      </div>
+      <p class="small">g = 10 m/s². As setas estão em escala entre si. μ<sub>c</sub> nunca passa de μ<sub>e</sub>.</p>
+    </aside>
+  </section>
+
+  <section class="readouts">
+    <div class="ro"><span class="k">Aceleração a</span><span class="v" id="oA"></span><span class="tag">F<sub>R</sub> / m</span></div>
+    <div class="ro"><span class="k">Velocidade v</span><span class="v" id="oV"></span><span class="tag" id="oT"></span></div>
+    <div class="ro"><span class="k">Resultante F<sub>R</sub></span><span class="v" id="oR"></span><span class="tag">no eixo x</span></div>
+    <div class="ro"><span class="k">Normal N</span><span class="v" id="oN"></span><span class="tag" id="oNt"></span></div>
+    <div class="ro"><span class="k">Atrito f<sub>at</sub></span><span class="v" id="oF"></span><span class="tag" id="oFt"></span></div>
+  </section>
+
+  <section class="card">
+    <h2>As contas, eixo por eixo</h2>
+    <div class="calc" id="calc"></div>
+  </section>
+
+  <section class="two">
+    <div class="card">
+      <h2>Velocidade em função do tempo</h2>
+      <p class="small">A inclinação da linha é a aceleração. Linha na horizontal: F<sub>R</sub> = 0.</p>
+      <div class="graphbox">
+        <svg id="graph" viewBox="0 0 420 260" role="img" aria-label="Gráfico da velocidade do bloco em função do tempo."></svg>
+        <div class="tip" id="tip" hidden></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Pares de ação e reação</h2>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Ação (no bloco)</th><th>Reação (em outro corpo)</th><th style="text-align:right">Módulo</th></tr></thead>
+          <tbody id="pairs"></tbody>
+        </table>
+      </div>
+      <p class="note">As duas forças de um par agem em corpos diferentes. Peso e normal agem os dois no bloco, então <b>não</b> são um par.</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Continue a trilha</h2>
+    <p class="small" style="font-size:15px">O próximo passo é aprender a decompor forças. Depois vem o plano inclinado.</p>
+    <div class="nav">
+      <a class="btn primary" href="dinamica.html#parte2">Passo 3: decomposição e planos</a>
+      <a class="btn" href="dinamica.html#parte1">Rever a Parte 1</a>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(() => {
+const G = 10;
+const state = { F: 20, th: 0, m: 5, me: 0, mc: 0, on: true, running: false, x: 0, v: 0, t: 0, samples: [], offAt: null, comps: true, labels: true };
+const $ = id => document.getElementById(id);
+const fmt = (x, d = 1) => (Math.abs(x) < 5e-4 ? 0 : x).toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
+
+function solve() {
+  const F = state.on ? state.F : 0, r = state.th * Math.PI / 180;
+  const Fx = F * Math.cos(r), Fy = F * Math.sin(r), P = state.m * G;
+  const lift = Fy > P + 1e-9, N = Math.max(0, P - Fy), feMax = state.me * N, fc = state.mc * N;
+  const moving = state.v > 1e-6;
+  let fat, kind;
+  if (moving) { fat = fc; kind = 'cinético'; }
+  else if (Fx <= feMax + 1e-9) { fat = Fx; kind = 'estático'; }
+  else { fat = fc; kind = 'cinético'; }
+  const R = Fx - fat;
+  return { F, Fx, Fy, P, N, feMax, fc, fat, kind, R, a: lift ? 0 : R / state.m, lift, moving };
+}
+
+/* ---------- 3D ---------- */
+const stage = $('stage');
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+stage.prepend(renderer.domElement);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(40, 1.6, 0.1, 200);
+camera.position.set(0.8, 2.3, 9);
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.target.set(0.8, 0.45, 0);
+controls.enableDamping = true; controls.minDistance = 4; controls.maxDistance = 22; controls.maxPolarAngle = Math.PI * 0.495;
+scene.add(new THREE.HemisphereLight(0xcfe3ff, 0x1a1410, 0.8));
+const key = new THREE.DirectionalLight(0xffffff, 0.8); key.position.set(3, 7, 6); scene.add(key);
+
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(4000, 12), new THREE.MeshStandardMaterial({ color: 0x1d2935, roughness: 0.95 }));
+floor.rotation.x = -Math.PI / 2; scene.add(floor);
+const gp = []; for (let i = -60; i <= 60; i++) gp.push(new THREE.Vector3(i, 0, -6), new THREE.Vector3(i, 0, 6));
+const grid = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(gp), new THREE.LineBasicMaterial({ color: 0x3a4e62 })); grid.position.y = 0.005; scene.add(grid);
+const block = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1, 1.2), new THREE.MeshStandardMaterial({ color: 0x9fb4c8, roughness: 0.5, metalness: 0.15 }));
+block.position.y = 0.5; scene.add(block);
+
+const UP = new THREE.Vector3(0, 1, 0);
+function makeArrow(color, thin) {
+  const mat = new THREE.MeshBasicMaterial({ color, depthTest: false, transparent: true, opacity: thin ? 0.75 : 1 });
+  const g = new THREE.Group(), rs = thin ? 0.03 : 0.05, rh = thin ? 0.1 : 0.14;
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(rs, rs, 1, 10), mat), head = new THREE.Mesh(new THREE.ConeGeometry(rh, 0.32, 14), mat);
+  shaft.renderOrder = head.renderOrder = thin ? 4 : 5;
+  g.add(shaft, head); scene.add(g);
+  g.userData.tip = new THREE.Vector3();
+  g.userData.set = (o, dir, len) => {
+    g.visible = len > 0.04; g.position.copy(o); g.quaternion.setFromUnitVectors(UP, dir);
+    const h = Math.min(0.32, len * 0.6); head.scale.setScalar(h / 0.32); head.position.y = len - h / 2;
+    shaft.scale.y = Math.max(len - h, 0.001); shaft.position.y = Math.max(len - h, 0.001) / 2;
+    g.userData.tip.copy(dir).multiplyScalar(len).add(o);
+  };
+  return g;
+}
+const aP = makeArrow(0xff5a4a), aN = makeArrow(0x3fd07f), aF = makeArrow(0xc48ae6), aA = makeArrow(0xffa62b), aR = makeArrow(0xffffff);
+const aFx = makeArrow(0xc48ae6, true), aFy = makeArrow(0xc48ae6, true);
+const dashMat = new THREE.LineDashedMaterial({ color: 0xc48ae6, dashSize: 0.12, gapSize: 0.09, depthTest: false, transparent: true });
+const dash = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()]), dashMat);
+dash.renderOrder = 3; scene.add(dash);
+
+const V = (x, y, z = 0) => new THREE.Vector3(x, y, z);
+const tmp = new THREE.Vector3();
+function place(id, pos, text, show, dx = 0, dy = 0) {
+  const el = $(id);
+  if (!state.labels || !show) { el.hidden = true; return; }
+  el.hidden = false; el.innerHTML = text;
+  const p = tmp.copy(pos).project(camera);
+  el.style.left = ((p.x + 1) / 2 * stage.clientWidth + dx).toFixed(1) + 'px';
+  el.style.top = ((1 - p.y) / 2 * stage.clientHeight + dy).toFixed(1) + 'px';
+}
+function update3D() {
+  const s = solve(), x = state.x, k = 2 / Math.max(s.P, state.F, 1), z = 0.62, r = state.th * Math.PI / 180;
+  block.position.x = x; grid.position.x = Math.floor(x);
+  const C = V(x, 0.5, z), R0 = V(x + 0.8, 0.5, z), B0 = V(x - 0.8, 0.08, z);
+  aP.userData.set(C, V(0, -1), s.P * k); aN.userData.set(C, V(0, 1), s.N * k);
+  aF.userData.set(R0, V(Math.cos(r), Math.sin(r)), s.F * k);
+  const comps = state.comps && state.th > 0 && s.F > 0;
+  aFx.visible = aFy.visible = dash.visible = false;
+  if (comps) {
+    aFx.userData.set(R0, V(1, 0), s.Fx * k); aFy.userData.set(R0, V(0, 1), s.Fy * k);
+    dash.geometry.setFromPoints([aFx.userData.tip, aF.userData.tip, aFy.userData.tip]); dash.computeLineDistances(); dash.visible = true;
+  }
+  aA.userData.set(B0, V(-1, 0), s.fat * k);
+  aR.userData.set(V(x, 1.25, z), V(s.R >= 0 ? 1 : -1, 0), Math.abs(s.R) * k);
+  place('lP', aP.userData.tip, `P = ${fmt(s.P)} N`, true, 0, 12);
+  place('lN', aN.userData.tip, `N = ${fmt(s.N)} N`, s.N * k > 0.3, -8, -12);
+  place('lF', aF.userData.tip, `F = ${fmt(s.F)} N`, s.F > 0, 16, -12);
+  place('lFx', comps ? aFx.userData.tip : V(0, 0), `F<sub>x</sub> ${fmt(s.Fx)}`, comps && s.Fx * k > 0.4, 22, 12);
+  place('lFy', comps ? aFy.userData.tip : V(0, 0), `F<sub>y</sub> ${fmt(s.Fy)}`, comps && s.Fy * k > 0.4, -34, 0);
+  place('lA', aA.userData.tip, `f<sub>at</sub> = ${fmt(s.fat)} N`, s.fat > 0.01, -34, 14);
+  place('lR', V(x, 1.25, z), `F<sub>R</sub> = ${fmt(Math.abs(s.R))} N`, Math.abs(s.R) * k > 0.06, s.R >= 0 ? -96 : 96, 0);
+}
+function resize() { const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+new ResizeObserver(resize).observe(stage); resize();
+
+/* ---------- movimento ---------- */
+function advance(dt) {
+  const n = 4, h = dt / n;
+  for (let i = 0; i < n; i++) {
+    const s = solve();
+    if (s.lift) { state.running = false; return; }
+    let v = state.v + s.a * h;
+    if (v < 0) v = 0;
+    state.x += (state.v + v) / 2 * h; state.v = v; state.t += h;
+  }
+  const last = state.samples[state.samples.length - 1];
+  if (!last || state.t - last[0] >= 0.05) state.samples.push([state.t, state.v]);
+  if (state.t >= 30) state.running = false;
+}
+let t0 = performance.now(), acc = 0;
+function frame(now) {
+  const dt = Math.min((now - t0) / 1000, 0.05); t0 = now;
+  const prevX = state.x;
+  if (state.running) { advance(dt); acc += dt; if (acc > 0.12 || !state.running) { acc = 0; render(); } }
+  const dx = state.x - prevX; camera.position.x += dx; controls.target.x += dx;
+  controls.update(); update3D();
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+
+/* ---------- gráfico v × t ---------- */
+const GR = { w: 420, h: 260, l: 50, r: 16, t: 14, b: 42 };
+function niceStep(raw) { const p = Math.pow(10, Math.floor(Math.log10(raw))); for (const m of [1, 2, 2.5, 5, 10]) if (m * p >= raw) return m * p; }
+let gs = null;
+function drawGraph() {
+  const S = state.samples, tMax = niceStep(Math.max(state.t, 5) * 1.05 / 5) * 5, vTop = Math.max(2, ...S.map(p => p[1]));
+  const vStep = niceStep(vTop * 1.15 / 5), vMax = vStep * 5, tStep = tMax / 5;
+  const X = t => GR.l + t / tMax * (GR.w - GR.l - GR.r), Y = v => GR.h - GR.b - v / vMax * (GR.h - GR.t - GR.b);
+  gs = { X, Y, tMax };
+  let o = '';
+  for (let i = 0; i <= 5; i++) {
+    const y = Y(i * vStep), x = X(i * tStep);
+    o += `<line x1="${GR.l}" x2="${GR.w - GR.r}" y1="${y}" y2="${y}" stroke="var(--line)"/>`;
+    o += `<text x="${GR.l - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="var(--muted)">${fmt(i * vStep, vStep < 1 ? 1 : 0)}</text>`;
+    o += `<text x="${x}" y="${GR.h - GR.b + 17}" text-anchor="middle" font-size="11" fill="var(--muted)">${fmt(i * tStep, 0)}</text>`;
+  }
+  o += `<line x1="${GR.l}" x2="${GR.l}" y1="${GR.t}" y2="${GR.h - GR.b}" stroke="var(--muted)"/>`;
+  o += `<text x="${(GR.l + GR.w - GR.r) / 2}" y="${GR.h - 5}" text-anchor="middle" font-size="12" fill="var(--ink)">Tempo t (s)</text>`;
+  o += `<text x="13" y="${(GR.t + GR.h - GR.b) / 2}" text-anchor="middle" font-size="12" fill="var(--ink)" transform="rotate(-90 13 ${(GR.t + GR.h - GR.b) / 2})">Velocidade v (m/s)</text>`;
+  if (state.offAt !== null) {
+    const x = X(state.offAt);
+    o += `<line x1="${x}" x2="${x}" y1="${GR.t}" y2="${GR.h - GR.b}" stroke="var(--muted)" stroke-dasharray="4 4"/>`;
+    o += `<text x="${x + 5}" y="${GR.t + 12}" font-size="11" fill="var(--muted)">força desligada</text>`;
+  }
+  if (S.length) {
+    o += `<polyline points="${[[0, 0], ...S].map(p => `${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>`;
+    const e = S[S.length - 1];
+    o += `<circle cx="${X(e[0])}" cy="${Y(e[1])}" r="5" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/>`;
+  } else {
+    o += `<text x="${(GR.l + GR.w - GR.r) / 2}" y="${(GR.t + GR.h - GR.b) / 2}" text-anchor="middle" font-size="13" fill="var(--muted)">Clique em Iniciar para registrar o movimento</text>`;
+  }
+  o += `<circle id="hd" r="5" fill="var(--accent)" stroke="var(--surface)" stroke-width="2" visibility="hidden"/>`;
+  o += `<rect x="${GR.l}" y="${GR.t}" width="${GR.w - GR.l - GR.r}" height="${GR.h - GR.t - GR.b}" fill="transparent"/>`;
+  $('graph').innerHTML = o;
+}
+const graph = $('graph'), tip = $('tip');
+graph.addEventListener('pointermove', e => {
+  if (!gs || !state.samples.length) return;
+  const b = graph.getBoundingClientRect(), t = ((e.clientX - b.left) / b.width * GR.w - GR.l) / (GR.w - GR.l - GR.r) * gs.tMax;
+  const p = state.samples.reduce((m, q) => Math.abs(q[0] - t) < Math.abs(m[0] - t) ? q : m);
+  const x = gs.X(p[0]), y = gs.Y(p[1]), hd = $('hd');
+  hd.setAttribute('cx', x); hd.setAttribute('cy', y); hd.setAttribute('visibility', 'visible');
+  tip.hidden = false; tip.textContent = `t = ${fmt(p[0])} s · v = ${fmt(p[1])} m/s`;
+  tip.style.left = (x / GR.w * b.width) + 'px'; tip.style.top = (y / GR.h * b.height) + 'px';
+});
+graph.addEventListener('pointerleave', () => { tip.hidden = true; const hd = $('hd'); if (hd) hd.setAttribute('visibility', 'hidden'); });
+
+/* ---------- UI ---------- */
+const ro = (id, v, u) => { $(id).innerHTML = `${v}<span class="u">${u}</span>`; };
+function render() {
+  const s = solve();
+  for (const [id, k] of [['f', 'F'], ['th', 'th'], ['m', 'm'], ['me', 'me'], ['mc', 'mc']]) $(id).value = state[k];
+  $('fVal').textContent = state.F + ' N'; $('thVal').textContent = state.th + '°'; $('mVal').textContent = state.m + ' kg';
+  $('meVal').textContent = fmt(state.me, 2); $('mcVal').textContent = fmt(state.mc, 2);
+  $('run').textContent = state.running ? 'Pausar' : state.t > 0 ? 'Continuar' : 'Iniciar';
+  $('pow').textContent = state.on ? 'Desligar a força' : 'Ligar a força';
+
+  ro('oA', fmt(s.a, 2), 'm/s²'); ro('oV', fmt(state.v, 2), 'm/s'); ro('oR', fmt(s.R), 'N'); ro('oN', fmt(s.N), 'N'); ro('oF', fmt(s.fat), 'N');
+  $('oT').textContent = `t = ${fmt(state.t)} s · x = ${fmt(state.x)} m`;
+  $('oNt').textContent = Math.abs(s.N - s.P) < 0.05 ? 'igual ao peso' : `peso: ${fmt(s.P)} N`;
+  $('oFt').textContent = s.fat < 1e-9 ? 'sem atrito' : s.kind === 'estático' ? `estático · máx. ${fmt(s.feMax)} N` : 'cinético';
+
+  const badge = $('badge');
+  if (s.lift) { badge.className = 'badge warn'; badge.textContent = 'O BLOCO SAIRIA DO CHÃO'; }
+  else if (s.moving) { badge.className = 'badge'; badge.textContent = Math.abs(s.a) < 1e-6 ? 'VELOCIDADE CONSTANTE' : s.a > 0 ? 'ACELERANDO' : 'FREANDO'; }
+  else if (s.a > 0) { badge.className = 'badge'; badge.textContent = 'VAI ENTRAR EM MOVIMENTO'; }
+  else { badge.className = 'badge rest'; badge.textContent = 'EM REPOUSO'; }
+
+  const r = state.th;
+  const lines = [];
+  if (state.th > 0 && s.F > 0) lines.push(['Decompor F', `F_x = ${fmt(s.F)}·cos ${r}° = ${fmt(s.Fx)} N  ·  F_y = ${fmt(s.F)}·sen ${r}° = ${fmt(s.Fy)} N`]);
+  lines.push(['Peso', `P = m·g = ${state.m}·10 = ${fmt(s.P)} N`]);
+  lines.push(['Eixo y', s.lift ? `F_y (${fmt(s.Fy)} N) é maior que P: o bloco sairia do chão.` : state.th > 0 && s.F > 0 ? `N + F_y = P  →  N = ${fmt(s.P)} − ${fmt(s.Fy)} = ${fmt(s.N)} N` : `N = P = ${fmt(s.N)} N`]);
+  if (state.me > 0 || state.mc > 0) {
+    lines.push(['Atrito', s.moving ? `deslizando: f_c = μ_c·N = ${fmt(state.mc, 2)}·${fmt(s.N)} = ${fmt(s.fc)} N`
+      : s.kind === 'estático' ? `f_e,máx = μ_e·N = ${fmt(state.me, 2)}·${fmt(s.N)} = ${fmt(s.feMax)} N. Como ${fmt(s.Fx)} N ≤ ${fmt(s.feMax)} N, não desliza: f_at = ${fmt(s.fat)} N`
+      : `f_e,máx = ${fmt(s.feMax)} N. Como ${fmt(s.Fx)} N > ${fmt(s.feMax)} N, desliza: f_c = ${fmt(state.mc, 2)}·${fmt(s.N)} = ${fmt(s.fc)} N`]);
+  }
+  lines.push(['Eixo x', `F_R = ${fmt(s.Fx)} − ${fmt(s.fat)} = ${fmt(s.R)} N  →  a = F_R / m = ${fmt(s.R)} / ${state.m} = ${fmt(s.a, 2)} m/s²`]);
+  $('calc').innerHTML = lines.map(([k, v]) => `<div class="ln"><b>${k}</b><span>${v.replace(/([A-Za-zμ])_([A-Za-zá,]+)/g, '$1<sub>$2</sub>')}</span></div>`).join('');
+
+  const pr = [['Peso: Terra puxa o bloco', 'Bloco puxa a Terra', s.P], ['Normal: piso empurra o bloco', 'Bloco comprime o piso', s.N], ['Atrito: piso freia o bloco', 'Bloco arrasta o piso', s.fat], ['Força: corda puxa o bloco', 'Bloco puxa a corda', s.F]];
+  $('pairs').innerHTML = pr.map(([a, b, v]) => `<tr><td>${a}</td><td>${b}</td><td class="m">${fmt(v)} N</td></tr>`).join('');
+  drawGraph();
+}
+function resetMotion() { Object.assign(state, { running: false, x: 0, v: 0, t: 0, samples: [], offAt: null, on: true }); }
+
+/* ---------- roteiro ---------- */
+const steps = [
+  { t: 'Inércia: a 1ª lei', set: { F: 20, th: 0, m: 5, me: 0, mc: 0 },
+    x: 'Piso sem atrito. Clique em Iniciar para puxar o bloco. Depois de alguns segundos, clique em "Desligar a força" e observe o gráfico e o medidor de velocidade.',
+    q: 'O que acontece com o bloco quando a força é desligada?',
+    a: 'Ele continua em movimento, com velocidade constante. Sem resultante não há aceleração: a linha do gráfico fica na horizontal. Um corpo não precisa de força para continuar se movendo.' },
+  { t: 'Por que as coisas param?', set: { F: 20, th: 0, m: 5, me: 0.2, mc: 0.2 },
+    x: 'Agora o piso tem atrito. Repita: inicie, espere e desligue a força.',
+    q: 'Por que agora o bloco para? A força "acabou"?',
+    a: 'O bloco para porque o atrito passa a ser a força resultante, contrária ao movimento. A velocidade cai com a = −μ·g = −2 m/s². Sem atrito ele nunca pararia.' },
+  { t: 'A 2ª lei de Newton', set: { F: 20, th: 0, m: 5, me: 0, mc: 0 },
+    x: 'Sem atrito, F = 20 N e m = 5 kg. Observe a aceleração. Depois mude a força para 40 N. Em seguida, volte a 20 N e mude a massa para 10 kg.',
+    q: 'Antes de mexer: qual será a aceleração com 40 N? E com 20 N e 10 kg?',
+    a: 'Com 20 N e 5 kg, a = 4 m/s². Dobrando a força, a = 8 m/s². Dobrando a massa, a = 2 m/s². A aceleração é proporcional à resultante e inversamente proporcional à massa: FR = m·a.' },
+  { t: 'O atrito estático', set: { F: 30, th: 0, m: 10, me: 0.5, mc: 0.4 },
+    x: 'Bloco de 10 kg com μe = 0,5. O atrito estático pode chegar a 50 N. A força aplicada é de 30 N. Depois, aumente F aos poucos e descubra quando o bloco começa a se mover.',
+    q: 'Quanto vale o atrito com F = 30 N? Ele vale sempre 50 N?',
+    a: 'Vale 30 N, exatamente o necessário para manter o bloco parado. 50 N é só o limite. O bloco se move quando F passa de 50 N. Aí o atrito cai para o cinético: 0,4·100 = 40 N.' },
+  { t: 'Decompondo a força', set: { F: 50, th: 37, m: 10, me: 0, mc: 0 },
+    x: 'A força agora está inclinada 37° acima da horizontal. As setas finas mostram as componentes Fx e Fy.',
+    q: 'Dos 50 N, quanto puxa o bloco para frente? O que faz a outra componente?',
+    a: 'Fx = 50·cos 37° ≈ 40 N puxa para frente e é a única que acelera o bloco. Fy = 50·sen 37° ≈ 30 N puxa para cima e alivia o apoio.' },
+  { t: 'A normal nem sempre é o peso', set: { F: 50, th: 37, m: 10, me: 0.2, mc: 0.2 },
+    x: 'Mesma força inclinada, agora com atrito. Compare a normal com o peso nos medidores e acompanhe as contas por eixo. Depois mude o ângulo.',
+    q: 'A normal continua valendo 100 N? O que muda no atrito?',
+    a: 'Não. N = P − Fy ≈ 100 − 30 = 70 N. Como a normal diminuiu, o atrito também diminui: f = 0,2·70 = 14 N. Com isso, a = (40 − 14)/10 = 2,6 m/s².' },
+  { t: 'Puxar inclinado ajuda?', set: { F: 50, th: 0, m: 10, me: 0.5, mc: 0.5 },
+    x: 'Com θ = 0° e F = 50 N, o bloco está no limite e não sai do lugar. Mantenha F = 50 N e aumente o ângulo até uns 27°.',
+    q: 'A força na direção do movimento diminuiu. Por que agora o bloco se move?',
+    a: 'Porque a normal e o atrito máximo diminuem mais rápido do que Fx. Com 27°: Fx ≈ 44,6 N, N ≈ 77 N e f máx ≈ 39 N. É por isso que puxamos uma mala com a alça para cima. Se o ângulo for grande demais, Fx fica pequena e o efeito se perde.' },
+  { t: 'Ação e reação', set: { F: 30, th: 0, m: 10, me: 0.2, mc: 0.2 },
+    x: 'Veja o quadro "Pares de ação e reação". Peso e normal têm o mesmo valor aqui, e seria fácil confundi-los.',
+    q: 'Peso e normal formam um par de ação e reação? Por que não?',
+    a: 'Não. Os dois agem no mesmo corpo, o bloco, e por isso podem se equilibrar. As forças de um par agem em corpos diferentes: a reação do peso é o bloco puxando a Terra.' },
+];
+let step = 0;
+const stepsEl = $('steps');
+steps.forEach((s, i) => { const b = document.createElement('button'); b.textContent = i + 1; b.setAttribute('aria-label', `Passo ${i + 1}: ${s.t}`); b.addEventListener('click', () => goStep(i)); stepsEl.append(b); });
+function goStep(i) {
+  step = i; const s = steps[i];
+  Object.assign(state, s.set); resetMotion(); render();
+  $('gTitle').textContent = `${i + 1}. ${s.t}`; $('gText').textContent = s.x; $('gQ').textContent = s.q;
+  $('gA').textContent = s.a; $('gA').hidden = true; $('gReveal').hidden = false;
+  [...stepsEl.children].forEach((b, k) => { if (k === i) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current'); b.classList.toggle('done', k < i); });
+  $('gPrev').disabled = i === 0;
+  $('gNext').textContent = i === steps.length - 1 ? 'Recomeçar' : 'Próximo passo';
+}
+$('gReveal').addEventListener('click', () => { $('gA').hidden = false; $('gReveal').hidden = true; });
+$('gPrev').addEventListener('click', () => goStep(Math.max(0, step - 1)));
+$('gNext').addEventListener('click', () => goStep((step + 1) % steps.length));
+
+$('run').addEventListener('click', () => { if (state.t >= 30) resetMotion(); state.running = !state.running; render(); });
+$('pow').addEventListener('click', () => { state.on = !state.on; if (!state.on && state.offAt === null) state.offAt = state.t; render(); });
+$('rst').addEventListener('click', () => { resetMotion(); render(); });
+for (const [id, k] of [['f', 'F'], ['th', 'th'], ['m', 'm']]) $(id).addEventListener('input', e => { state[k] = +e.target.value; render(); });
+$('me').addEventListener('input', e => { state.me = +e.target.value; if (state.mc > state.me) state.mc = state.me; render(); });
+$('mc').addEventListener('input', e => { state.mc = Math.min(+e.target.value, state.me); render(); });
+document.querySelectorAll('[data-mu]').forEach(b => b.addEventListener('click', () => { [state.me, state.mc] = b.dataset.mu.split(',').map(Number); render(); }));
+$('comps').addEventListener('change', e => { state.comps = e.target.checked; });
+$('labels').addEventListener('change', e => { state.labels = e.target.checked; });
+
+goStep(0);
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

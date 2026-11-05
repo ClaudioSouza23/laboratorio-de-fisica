@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Questões de Dinâmica</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: placar e filtros por tema no topo; lista de questões em cartões, cada um com alternativas, correção e resolução. */
+:root {
+  --bg: #eef1f4; --surface: #ffffff; --ink: #16202b; --muted: #576575; --line: #d3dae2; --soft: #f6f8fa;
+  --accent: #2f6f9f; --cool: #2a73c0; --ok: #1f8a4c; --bad: #b8322a;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", Consolas, ui-monospace, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #0b1016; --surface: #141c25; --ink: #e5ecf2; --muted: #93a2b2; --line: #263240; --soft: #1a2430;
+  --accent: #6eaee0; --cool: #5ea2ea; --ok: #4cc27f; --bad: #ff6b60; color-scheme: dark } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 17px; line-height: 1.55; }
+.wrap { max-width: 860px; margin: 0 auto; padding-block: 28px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 22px; }
+.back { font-weight: 700; color: var(--muted); text-decoration: none; font-size: 14px; }
+.back:hover { color: var(--ink); }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(32px, 5vw, 50px); line-height: 1.05; margin: 6px 0 10px; text-wrap: balance; }
+.lede { color: var(--muted); margin: 0; max-width: 65ch; }
+.lede a { color: inherit; font-weight: 700; }
+a:focus-visible, button:focus-visible { outline: 3px solid var(--cool); outline-offset: 2px; }
+
+.score { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 20px; display: grid; gap: 12px; }
+.score .top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 10px; }
+.score .big { font-family: var(--f-mono); font-weight: 700; font-size: clamp(22px, 3vw, 28px); font-variant-numeric: tabular-nums; }
+.score .big small { font-size: 14px; color: var(--muted); font-weight: 500; }
+.bar { height: 10px; border-radius: 6px; background: var(--soft); overflow: hidden; display: flex; }
+.bar span { display: block; height: 100%; transition: width .3s; }
+.bar .ok { background: var(--ok); } .bar .bad { background: var(--bad); }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; }
+.filters button { font: inherit; font-size: 14px; font-weight: 700; border: 1px solid var(--line); background: var(--soft); color: var(--ink); border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+.filters button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.filters .n { font-family: var(--f-mono); font-size: 12px; opacity: .7; margin-left: 4px; }
+.btn { font: inherit; font-weight: 700; font-size: 14px; border: 1px solid var(--ink); background: transparent; color: var(--ink); border-radius: 10px; padding: 7px 14px; cursor: pointer; }
+.btn:hover { background: var(--ink); color: var(--bg); }
+
+.q { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px 22px; display: grid; gap: 12px; }
+.q.right { border-color: var(--ok); } .q.wrong { border-color: var(--bad); }
+.q .head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.q .no { font-family: var(--f-display); font-weight: 800; font-size: 20px; }
+.tag { font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--accent); border: 1px solid currentColor; border-radius: 999px; padding: 2px 9px; }
+.stmt { margin: 0; max-width: 68ch; }
+.opts { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.opts button { font: inherit; text-align: left; width: 100%; display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 10px; align-items: start;
+  border: 1px solid var(--line); background: var(--soft); color: var(--ink); border-radius: 10px; padding: 10px 12px; cursor: pointer; }
+.opts button:hover:not(:disabled) { border-color: var(--ink); }
+.opts button:disabled { cursor: default; }
+.opts .L { font-family: var(--f-display); font-weight: 800; color: var(--accent); }
+.opts .mark { font-weight: 700; font-size: 14px; }
+.opts button.is-right { border-color: var(--ok); border-width: 2px; }
+.opts button.is-right .mark { color: var(--ok); }
+.opts button.is-wrong { border-color: var(--bad); border-width: 2px; }
+.opts button.is-wrong .mark { color: var(--bad); }
+.opts button.dim { opacity: .55; }
+.fb { font-weight: 700; }
+.fb.ok { color: var(--ok); } .fb.bad { color: var(--bad); }
+.res { border-left: 4px solid var(--cool); background: var(--soft); border-radius: 0 10px 10px 0; padding: 12px 16px; display: grid; gap: 6px; }
+.res .k { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; color: var(--cool); }
+.res p { margin: 0; }
+.res .calc { font-family: var(--f-mono); font-size: 15px; overflow-x: auto; }
+.res a { font-weight: 700; color: var(--cool); font-size: 14px; }
+.done { background: var(--surface); border: 2px solid var(--accent); border-radius: 14px; padding: 18px 22px; display: grid; gap: 6px; }
+.done h2 { font-family: var(--f-display); font-weight: 800; font-size: 24px; margin: 0; }
+.done p { margin: 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html#dinamica">&larr; Laboratório de Física</a>
+  <header>
+    <span class="eyebrow">Dinâmica · Passo 5 da trilha</span>
+    <h1>Questões de dinâmica</h1>
+    <p class="lede">Escolha uma alternativa para ver na hora se acertou e ler a resolução. Seu progresso fica salvo neste navegador. Precisa revisar? Consulte o <a href="dinamica.html">resumo de dinâmica</a>.</p>
+  </header>
+
+  <section class="score" aria-live="polite">
+    <div class="top">
+      <span class="big" id="scoreTxt"></span>
+      <button class="btn" id="reset">Recomeçar</button>
+    </div>
+    <div class="bar"><span class="ok" id="barOk"></span><span class="bad" id="barBad"></span></div>
+    <div class="filters" id="filters"></div>
+  </section>
+
+  <div class="done" id="done" hidden>
+    <h2 id="doneTitle"></h2>
+    <p id="doneText"></p>
+  </div>
+
+  <main id="list" style="display:grid;gap:16px"></main>
+</div>
+<script>
+(() => {
+const TOPICS = {
+  forca: { name: 'Força e resultante', sec: 'forca' },
+  inercia: { name: 'Inércia e 1ª lei', sec: 'inercia' },
+  segunda: { name: '2ª lei', sec: 'segunda' },
+  terceira: { name: '3ª lei', sec: 'terceira' },
+  tipos: { name: 'Tipos de força', sec: 'tipos' },
+  decomposicao: { name: 'Decomposição', sec: 'decomposicao' },
+  inclinado: { name: 'Plano inclinado', sec: 'inclinado' },
+};
+const Q = [
+  { t: 'forca', s: 'Duas forças perpendiculares, de 6 N e 8 N, agem sobre um corpo. Qual o módulo da força resultante?',
+    o: ['2 N', '14 N', '10 N', '48 N', '7 N'], c: 2,
+    r: ['Forças perpendiculares se somam pelo teorema de Pitágoras.', 'F_R² = 6² + 8² = 100  →  F_R = 10 N'] },
+  { t: 'forca', s: 'Duas forças de 10 N e 4 N agem em um corpo, na mesma direção e em sentidos opostos. A resultante é:',
+    o: ['14 N, no sentido da força maior.', '6 N, no sentido da força maior.', '6 N, no sentido da força menor.', '10,8 N, perpendicular às duas.', 'nula.'], c: 1,
+    r: ['Sentidos opostos: subtraímos os módulos, e a resultante fica no sentido da maior.', 'F_R = 10 − 4 = 6 N'] },
+  { t: 'inercia', s: 'Um ônibus freia bruscamente e os passageiros em pé são projetados para frente. Isso acontece porque:',
+    o: ['uma força para frente empurra os passageiros.', 'o ônibus aplica neles uma força para frente.', 'o peso dos passageiros aumenta na freada.', 'os passageiros tendem a manter a velocidade que tinham, por inércia.', 'a freada cria uma reação no banco.'], c: 3,
+    r: ['Nenhuma força empurra os passageiros para frente. O ônibus reduz a velocidade e os corpos tendem a continuar como estavam: é a inércia, descrita pela 1ª lei de Newton.'] },
+  { t: 'inercia', s: 'Uma nave no espaço profundo, longe de qualquer astro, desliga os motores enquanto se move. A partir daí, ela:',
+    o: ['para aos poucos.', 'para imediatamente.', 'continua em linha reta com velocidade constante.', 'acelera.', 'passa a descrever uma curva.'], c: 2,
+    r: ['Sem forças, a resultante é nula. Pela 1ª lei, o corpo mantém velocidade constante, em linha reta. Não é preciso força para manter o movimento.'],
+    sim: ['forcas.html', 'Ver na simulação de forças'] },
+  { t: 'inercia', s: 'Uma caixa é empurrada com uma força horizontal de 30 N e se move com velocidade constante de 2 m/s sobre um piso. A força de atrito sobre ela vale:',
+    o: ['zero.', '15 N.', '60 N.', 'mais de 30 N.', '30 N.'], c: 4,
+    r: ['Velocidade constante significa aceleração nula e, portanto, resultante nula. O atrito equilibra a força aplicada: 30 N. O valor da velocidade não entra na conta.'] },
+  { t: 'segunda', s: 'Um carrinho de 4 kg é puxado com 30 N, e o atrito vale 10 N. Qual a aceleração?',
+    o: ['5 m/s²', '7,5 m/s²', '10 m/s²', '2,5 m/s²', '20 m/s²'], c: 0,
+    r: ['Use a força resultante, não a força aplicada.', 'F_R = 30 − 10 = 20 N  →  a = 20 / 4 = 5 m/s²'] },
+  { t: 'segunda', s: 'Uma força F produz aceleração de 6 m/s² em um corpo de massa m. Qual a aceleração produzida pela mesma força em um corpo de massa 3m?',
+    o: ['18 m/s²', '2 m/s²', '3 m/s²', '6 m/s²', '9 m/s²'], c: 1,
+    r: ['Com a mesma força, a aceleração é inversamente proporcional à massa.', 'a = F / 3m = (1/3) · 6 = 2 m/s²'],
+    sim: ['forcas.html', 'Ver na simulação de forças'] },
+  { t: 'segunda', s: 'Um corpo de 2 kg é puxado verticalmente para cima por um fio com tração de 30 N. Qual a aceleração do corpo? (g = 10 m/s²)',
+    o: ['15 m/s² para cima', '10 m/s² para baixo', '5 m/s² para baixo', '25 m/s² para cima', '5 m/s² para cima'], c: 4,
+    r: ['O peso vale P = 2 · 10 = 20 N, para baixo.', 'F_R = T − P = 30 − 20 = 10 N, para cima  →  a = 10 / 2 = 5 m/s²'] },
+  { t: 'terceira', s: 'Um caminhão colide de frente com um carro. Comparando as forças que um exerce no outro durante a batida:',
+    o: ['o caminhão exerce força maior, pois tem mais massa.', 'o carro exerce força maior, pois tem menos massa.', 'as forças têm o mesmo módulo, e o carro sofre aceleração maior.', 'as forças têm o mesmo módulo e se anulam.', 'só o caminhão exerce força.'], c: 2,
+    r: ['Pela 3ª lei, as forças têm o mesmo módulo. Elas agem em corpos diferentes, então não se anulam. Como o carro tem menos massa, sua aceleração é maior (a = F/m).'] },
+  { t: 'terceira', s: 'Um livro está em repouso sobre uma mesa. A reação ao peso do livro é:',
+    o: ['a força normal que a mesa exerce no livro.', 'a força que o livro exerce na mesa.', 'a força de atrito entre o livro e a mesa.', 'a força que o livro exerce na Terra.', 'a força que a mesa exerce no chão.'], c: 3,
+    r: ['O peso é a Terra puxando o livro. A reação é o livro puxando a Terra. A normal não é a reação do peso: as duas forças agem no mesmo corpo.'],
+    sim: ['forcas.html', 'Ver os pares na simulação'] },
+  { t: 'tipos', s: 'Um astronauta tem 80 kg de massa na Terra. Na Lua, onde g = 1,6 m/s², quais são sua massa e seu peso?',
+    o: ['80 kg e 128 N', '80 kg e 800 N', '13 kg e 128 N', '128 kg e 80 N', '50 kg e 80 N'], c: 0,
+    r: ['A massa não depende do local. O peso depende de g.', 'P = m · g = 80 · 1,6 = 128 N'] },
+  { t: 'tipos', s: 'Um bloco de 10 kg está em repouso sobre um piso horizontal, com μe = 0,4 e μc = 0,3. Uma força horizontal de 25 N é aplicada. Qual o valor do atrito? (g = 10 m/s²)',
+    o: ['0', '30 N', '25 N', '40 N', '100 N'], c: 2,
+    r: ['N = P = 100 N. O atrito estático máximo é 0,4 · 100 = 40 N.', 'Como 25 N < 40 N, o bloco fica parado, e o atrito vale exatamente 25 N.'],
+    sim: ['forcas.html', 'Testar na simulação de forças'] },
+  { t: 'tipos', s: 'O mesmo bloco de 10 kg (μe = 0,4 e μc = 0,3) agora é puxado por uma força horizontal de 50 N. Qual a aceleração? (g = 10 m/s²)',
+    o: ['1 m/s²', '5 m/s²', '1,5 m/s²', '2 m/s²', 'zero'], c: 3,
+    r: ['50 N é maior que o limite de 40 N: o bloco desliza, e vale o atrito cinético.', 'f_c = 0,3 · 100 = 30 N  →  a = (50 − 30) / 10 = 2 m/s²'] },
+  { t: 'tipos', s: 'Uma mola de constante k = 200 N/m é esticada por uma força de 10 N. Qual a deformação da mola?',
+    o: ['5 cm', '20 cm', '2 cm', '50 cm', '2 m'], c: 0,
+    r: ['Lei de Hooke: F = k · x.', 'x = F / k = 10 / 200 = 0,05 m = 5 cm'] },
+  { t: 'decomposicao', s: 'Uma força de 100 N faz 37° com a horizontal. Quais são as componentes horizontal e vertical? (sen 37° = 0,6 e cos 37° = 0,8)',
+    o: ['60 N e 80 N', '50 N e 50 N', '100 N e 37 N', '80 N e 60 N', '70 N e 30 N'], c: 3,
+    r: ['O ângulo está junto à horizontal, então a componente horizontal usa o cosseno.', 'F_x = 100 · 0,8 = 80 N  ·  F_y = 100 · 0,6 = 60 N'] },
+  { t: 'decomposicao', s: 'Uma força de 50 N faz 60° com a vertical. Qual a sua componente vertical? (cos 60° = 0,5)',
+    o: ['25 N', '43 N', '50 N', '30 N', '12,5 N'], c: 0,
+    r: ['Cuidado: aqui o ângulo está junto à vertical, então é a componente vertical que usa o cosseno.', 'F_vertical = 50 · cos 60° = 50 · 0,5 = 25 N'] },
+  { t: 'decomposicao', s: 'Um bloco de 10 kg sobre um piso horizontal é puxado por uma força de 50 N, inclinada 37° acima da horizontal. Qual o valor da normal? (g = 10 m/s², sen 37° = 0,6)',
+    o: ['100 N', '130 N', '70 N', '60 N', '80 N'], c: 2,
+    r: ['A componente vertical da força alivia o apoio.', 'F_y = 50 · 0,6 = 30 N  →  N = P − F_y = 100 − 30 = 70 N'],
+    sim: ['forcas.html', 'Ver na simulação de forças'] },
+  { t: 'decomposicao', s: 'Na situação anterior (10 kg, 50 N a 37°, N = 70 N), o bloco desliza com μc = 0,2. Qual a aceleração? (cos 37° = 0,8)',
+    o: ['2 m/s²', '4 m/s²', '3 m/s²', '2,6 m/s²', '3,4 m/s²'], c: 3,
+    r: ['F_x = 50 · 0,8 = 40 N  ·  f_c = 0,2 · 70 = 14 N', 'a = (40 − 14) / 10 = 2,6 m/s²'] },
+  { t: 'decomposicao', s: 'Para mover uma caixa pesada, com o mesmo ângulo e a mesma força, é mais fácil puxar com a corda para cima do que empurrar inclinado para baixo. Por quê?',
+    o: ['Porque puxar aumenta a massa da caixa.', 'Porque puxar diminui a normal e o atrito; empurrar para baixo aumenta os dois.', 'Porque empurrar diminui o peso da caixa.', 'Porque o atrito não depende da normal.', 'Porque a componente horizontal é maior ao puxar.'], c: 1,
+    r: ['A componente horizontal é a mesma nos dois casos. Ao puxar, N = P − F·sen θ. Ao empurrar, N = P + F·sen θ. O atrito é proporcional à normal.'] },
+  { t: 'inclinado', s: 'Um bloco de 4 kg desce uma rampa de 30° sem atrito. Qual a aceleração? (g = 10 m/s², sen 30° = 0,5)',
+    o: ['8,7 m/s²', '10 m/s²', '5 m/s²', '20 m/s²', '2,5 m/s²'], c: 2,
+    r: ['Sem atrito, a resultante é P_x = m · g · sen θ, e a massa se cancela.', 'a = g · sen θ = 10 · 0,5 = 5 m/s²'],
+    sim: ['plano-inclinado.html', 'Testar no plano inclinado'] },
+  { t: 'inclinado', s: 'Em um plano inclinado sem atrito, dobrar a massa do bloco faz a aceleração:',
+    o: ['dobrar.', 'cair pela metade.', 'quadruplicar.', 'permanecer igual.', 'ficar nula.'], c: 3,
+    r: ['a = g · sen θ não depende da massa. Dobrar a massa dobra P_x, mas também dobra a inércia.'],
+    sim: ['plano-inclinado.html', 'Testar no plano inclinado'] },
+  { t: 'inclinado', s: 'Em uma rampa, a normal sobre um bloco de peso P vale:',
+    o: ['P, sempre.', 'P · sen θ.', 'P · cos θ.', 'P · tg θ.', 'zero.'], c: 2,
+    r: ['No eixo perpendicular à rampa não há movimento: N equilibra P_y = P · cos θ. Por isso, na rampa, N é menor que o peso.'] },
+  { t: 'inclinado', s: 'Um bloco de 2 kg está em repouso em uma rampa de 30°, graças ao atrito. Qual o valor da força de atrito? (g = 10 m/s², sen 30° = 0,5)',
+    o: ['20 N', '17,3 N', '5 N', '2 N', '10 N'], c: 4,
+    r: ['Em repouso, o atrito equilibra P_x.', 'f_at = P_x = 2 · 10 · 0,5 = 10 N'],
+    sim: ['plano-inclinado.html', 'Testar no plano inclinado'] },
+  { t: 'inclinado', s: 'Um bloco de 10 kg desce uma rampa de 37°, com μc = 0,25. Qual a aceleração? (g = 10 m/s², sen 37° = 0,6 e cos 37° = 0,8)',
+    o: ['6 m/s²', '4 m/s²', '5 m/s²', '2 m/s²', '8 m/s²'], c: 1,
+    r: ['P_x = 100 · 0,6 = 60 N  ·  N = 100 · 0,8 = 80 N  ·  f_c = 0,25 · 80 = 20 N', 'a = (60 − 20) / 10 = 4 m/s²'],
+    sim: ['plano-inclinado.html', 'Testar no plano inclinado'] },
+  { t: 'inclinado', s: 'Um bloco começa a escorregar quando a rampa atinge 37°. Qual o coeficiente de atrito estático? (sen 37° = 0,6 e cos 37° = 0,8)',
+    o: ['0,60', '0,80', '0,37', '0,75', '1,33'], c: 3,
+    r: ['No limite, P_x = μe · N, ou seja, tg θ = μe.', 'μe = tg 37° = 0,6 / 0,8 = 0,75'],
+    sim: ['plano-inclinado.html', 'Fazer o experimento do ângulo crítico'] },
+  { t: 'inclinado', s: 'Um bloco de 10 kg sobe uma rampa de 37° com velocidade constante, empurrado por uma força paralela à rampa. Com μc = 0,25, qual o valor da força? (g = 10 m/s², sen 37° = 0,6 e cos 37° = 0,8)',
+    o: ['60 N', '40 N', '80 N', '100 N', '20 N'], c: 2,
+    r: ['Velocidade constante: resultante nula. Subindo, o atrito aponta rampa abaixo, no mesmo sentido de P_x.', 'F = P_x + f_c = 60 + 0,25 · 80 = 60 + 20 = 80 N'],
+    sim: ['plano-inclinado.html', 'Testar no plano inclinado'] },
+];
+const LET = 'ABCDE';
+const KEY = 'lab-fisica-questoes-dinamica-v1';
+let answers = {};
+try { answers = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { answers = {}; }
+let filter = 'todas';
+const $ = id => document.getElementById(id);
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(answers)); } catch (e) {} };
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/([A-Za-zμ])_([A-Za-zá]+)/g, '$1<sub>$2</sub>');
+
+function renderFilters() {
+  const counts = {}; Q.forEach(q => counts[q.t] = (counts[q.t] || 0) + 1);
+  const items = [['todas', 'Todas', Q.length], ...Object.entries(TOPICS).map(([k, v]) => [k, v.name, counts[k]])];
+  $('filters').innerHTML = items.map(([k, n, c]) => `<button data-f="${k}" aria-pressed="${filter === k}">${n}<span class="n">${c}</span></button>`).join('');
+}
+function renderScore() {
+  const done = Object.keys(answers).length, ok = Object.entries(answers).filter(([i, a]) => Q[i] && Q[i].c === a).length;
+  $('scoreTxt').innerHTML = `${ok} acerto${ok === 1 ? '' : 's'} <small>· ${done} de ${Q.length} respondidas</small>`;
+  $('barOk').style.width = (ok / Q.length * 100) + '%';
+  $('barBad').style.width = ((done - ok) / Q.length * 100) + '%';
+  const d = $('done');
+  d.hidden = done < Q.length;
+  if (done === Q.length) {
+    const pct = Math.round(ok / Q.length * 100);
+    $('doneTitle').textContent = `Você acertou ${ok} de ${Q.length} (${pct}%)`;
+    $('doneText').textContent = pct >= 80 ? 'Ótimo resultado! Revise as questões que errou e leia as resoluções.'
+      : pct >= 50 ? 'Bom caminho. Releia o resumo dos temas em que errou e clique em Recomeçar para tentar de novo.'
+      : 'Vale revisar o resumo com calma e tentar de novo. Use as simulações para ver os conceitos funcionando.';
+  }
+}
+function card(q, i) {
+  const a = answers[i], answered = a !== undefined, right = answered && a === q.c;
+  const opts = q.o.map((o, k) => {
+    let cls = '', mark = '';
+    if (answered) {
+      if (k === q.c) { cls = 'is-right'; mark = 'correta'; }
+      else if (k === a) { cls = 'is-wrong'; mark = 'sua resposta'; }
+      else cls = 'dim';
+    }
+    return `<li><button data-q="${i}" data-o="${k}" class="${cls}" ${answered ? 'disabled' : ''}><span class="L">${LET[k]}</span><span>${esc(o)}</span><span class="mark">${mark}</span></button></li>`;
+  }).join('');
+  const res = answered ? `
+    <p class="fb ${right ? 'ok' : 'bad'}">${right ? 'Correto!' : `Não foi dessa vez. A resposta é a alternativa ${LET[q.c]}.`}</p>
+    <div class="res"><span class="k">Resolução</span>${q.r.map((l, k) => `<p class="${k > 0 || /[=→]/.test(l) ? 'calc' : ''}">${esc(l)}</p>`).join('')}
+      <a href="dinamica.html#${TOPICS[q.t].sec}">Rever ${TOPICS[q.t].name.toLowerCase()} no resumo</a>
+      ${q.sim ? `<a href="${q.sim[0]}">${q.sim[1]}</a>` : ''}</div>` : '';
+  return `<article class="q ${answered ? (right ? 'right' : 'wrong') : ''}" id="q${i + 1}">
+    <div class="head"><span class="no">Questão ${i + 1}</span><span class="tag">${TOPICS[q.t].name}</span></div>
+    <p class="stmt">${esc(q.s)}</p>
+    <ol class="opts" aria-label="Alternativas">${opts}</ol>${res}</article>`;
+}
+function renderList() {
+  $('list').innerHTML = Q.map((q, i) => (filter === 'todas' || q.t === filter) ? card(q, i) : '').join('');
+}
+function renderAll() { renderFilters(); renderScore(); renderList(); }
+
+$('list').addEventListener('click', e => {
+  const b = e.target.closest('button[data-q]'); if (!b || b.disabled) return;
+  const i = +b.dataset.q; answers[i] = +b.dataset.o; save();
+  const el = $('q' + (i + 1)); el.outerHTML = card(Q[i], i); renderScore();
+});
+$('filters').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { filter = b.dataset.f; renderFilters(); renderList(); } });
+$('reset').addEventListener('click', () => { answers = {}; save(); renderAll(); window.scrollTo({ top: 0 }); });
+renderAll();
+})();
+</script>
+</body>
+</html>

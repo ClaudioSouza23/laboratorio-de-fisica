@@ -4,6 +4,17 @@ Simulações 3D interativas e material de estudo de física para o ensino médio
 
 Site: https://claudiosouza23.github.io/laboratorio-de-fisica/
 
+## Mecânica
+
+### Dinâmica
+Trilha em cinco passos, intercalando teoria e prática:
+
+1. **Resumo, Parte 1** (`dinamica.html#parte1`): força, resultante, inércia e leis de Newton, tipos de força.
+2. **Simulação: forças no plano horizontal** (`forcas.html`): inércia, 2ª lei, atrito estático e cinético, força inclinada, ação e reação.
+3. **Resumo, Parte 2** (`dinamica.html#parte2`): decomposição de forças, força inclinada no plano horizontal, plano inclinado e método de resolução.
+4. **Simulação: plano inclinado com atrito** (`plano-inclinado.html`): decomposição do peso, descida, subida e experimento do ângulo crítico.
+5. **Questões de revisão** (`questoes-dinamica.html`): 26 questões com correção na hora e resolução comentada.
+
 ## Eletricidade e Magnetismo
 
 Cada tema é uma trilha: resumo → simulações → questões de revisão.
@@ -20,6 +31,6 @@ Cada tema é uma trilha: resumo → simulações → questões de revisão.
 - **Simulação: duas lâmpadas** (`lampadas.html`): as mesmas lâmpadas em paralelo (mesma tensão) e em série (mesma corrente).
 - **Questões de revisão** (`questoes.html`): 17 questões com correção na hora e resolução comentada.
 
-Magnetismo, Mecânica, Termologia, Óptica, Ondulatória e Física Moderna: material em preparação.
+Magnetismo, outros temas de Mecânica, Termologia, Óptica, Ondulatória e Física Moderna: material em preparação.
 
 As páginas precisam de internet para carregar a biblioteca 3D (three.js).

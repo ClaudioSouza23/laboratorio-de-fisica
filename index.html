@@ -72,6 +72,8 @@ a:focus-visible { outline: 3px solid var(--cool); outline-offset: 2px; }
 .stepn { width: 32px; height: 32px; border-radius: 50%; background: #8a5208; color: #fff; font-family: var(--f-mono); font-weight: 700;
   display: grid; place-items: center; flex: none; box-shadow: 0 0 0 4px var(--bg); }
 .stephead h3 { font-size: 20px; }
+.trail.mec .eyebrow, .trail.mec .sim .k { color: var(--mec); }
+.trail.mec .stepn, .trail.mec .go { background: #2f6f9f; }
 footer { color: var(--muted); font-size: 14px; display: grid; gap: 4px; }
 </style>
 </head>
@@ -82,7 +84,7 @@ footer { color: var(--muted); font-size: 14px; display: grid; gap: 4px; }
     <h1>Laboratório de Física</h1>
     <p class="lede">Simulações interativas em 3D para explorar os fenômenos da física. Mude os valores, observe o que acontece e responda às perguntas do roteiro de cada experimento.</p>
     <nav class="areanav" aria-label="Áreas da física">
-      <a href="#mecanica"><i style="background:var(--mec)"></i>Mecânica <span class="n">0</span></a>
+      <a href="#mecanica"><i style="background:var(--mec)"></i>Mecânica <span class="n">2</span></a>
       <a href="#termologia"><i style="background:var(--ter)"></i>Termologia <span class="n">0</span></a>
       <a href="#optica"><i style="background:var(--opt)"></i>Óptica <span class="n">0</span></a>
       <a href="#ondulatoria"><i style="background:var(--ond)"></i>Ondulatória <span class="n">0</span></a>
@@ -90,6 +92,76 @@ footer { color: var(--muted); font-size: 14px; display: grid; gap: 4px; }
       <a href="#moderna"><i style="background:var(--mod)"></i>Física Moderna <span class="n">0</span></a>
     </nav>
   </header>
+
+  <section class="trail mec">
+    <div>
+      <span class="eyebrow">Mecânica · Dinâmica</span>
+      <h2>Trilha de dinâmica</h2>
+      <p class="lede">Por que os corpos se movem. Siga na ordem: cada parte da teoria vem seguida de uma simulação para experimentar, e no fim você testa o que aprendeu.</p>
+    </div>
+
+    <div class="step">
+      <div class="stephead"><span class="stepn">1</span><h3>Estude força e as leis de Newton</h3></div>
+      <article class="sim">
+        <span class="k">Resumo · Parte 1</span>
+        <h3>Forças e leis de Newton</h3>
+        <p>O que é força, força resultante, inércia e 1ª lei, 2ª lei, ação e reação e os tipos de força: peso, normal, tração, atrito e elástica.</p>
+        <a class="go" href="dinamica.html#parte1">Ler a Parte 1</a>
+      </article>
+    </div>
+
+    <div class="step">
+      <div class="stephead"><span class="stepn">2</span><h3>Experimente no plano horizontal</h3></div>
+      <article class="sim">
+        <span class="k">Simulação</span>
+        <h3>Forças no plano horizontal</h3>
+        <span class="f">F<sub>R</sub> = m · a</span>
+        <p>Um bloco puxado por uma força que você controla.</p>
+        <ul>
+          <li>Desligue a força e veja a inércia em ação</li>
+          <li>Compare o atrito estático com o cinético</li>
+          <li>Incline a força e veja a normal mudar</li>
+        </ul>
+        <a class="go" href="forcas.html">Abrir a simulação</a>
+      </article>
+    </div>
+
+    <div class="step">
+      <div class="stephead"><span class="stepn">3</span><h3>Estude a decomposição de forças</h3></div>
+      <article class="sim">
+        <span class="k">Resumo · Parte 2</span>
+        <h3>Decomposição de forças e planos</h3>
+        <p>Componentes de uma força, força inclinada no plano horizontal, plano inclinado com e sem atrito, ângulo crítico e um método para resolver problemas.</p>
+        <a class="go" href="dinamica.html#parte2">Ler a Parte 2</a>
+      </article>
+    </div>
+
+    <div class="step">
+      <div class="stephead"><span class="stepn">4</span><h3>Experimente no plano inclinado</h3></div>
+      <article class="sim">
+        <span class="k">Simulação</span>
+        <h3>Plano inclinado com atrito</h3>
+        <span class="f">a = g · (sen θ − μ<sub>c</sub> · cos θ)</span>
+        <p>Incline a rampa, decomponha o peso e solte o bloco.</p>
+        <ul>
+          <li>Veja P<sub>x</sub>, P<sub>y</sub>, normal e atrito em escala</li>
+          <li>Meça o coeficiente de atrito pelo ângulo crítico</li>
+          <li>Empurre o bloco rampa acima</li>
+        </ul>
+        <a class="go" href="plano-inclinado.html">Abrir o plano inclinado</a>
+      </article>
+    </div>
+
+    <div class="step">
+      <div class="stephead"><span class="stepn">5</span><h3>Teste o que aprendeu</h3></div>
+      <article class="sim">
+        <span class="k">Revisão</span>
+        <h3>Questões de dinâmica</h3>
+        <p>26 questões na mesma ordem da trilha, com correção na hora e resolução comentada. O seu progresso fica salvo no navegador.</p>
+        <a class="go" href="questoes-dinamica.html">Fazer as questões</a>
+      </article>
+    </div>
+  </section>
 
   <section class="trail">
     <div>
@@ -212,8 +284,22 @@ footer { color: var(--muted); font-size: 14px; display: grid; gap: 4px; }
     <div class="areas">
       <div class="area" id="mecanica" style="--c:var(--mec)">
         <div class="head"><span class="dot"></span><h4>Mecânica</h4></div>
-        <p class="topics">Cinemática, leis de Newton, energia, quantidade de movimento, gravitação, hidrostática.</p>
-        <p class="empty">Simulações em preparação.</p>
+        <div class="sub" id="dinamica">
+          <h5>Dinâmica</h5>
+          <p class="topics">Força, leis de Newton, tipos de força, decomposição e plano inclinado.</p>
+          <ul>
+            <li><a href="dinamica.html#parte1">1. Resumo: forças e leis de Newton</a></li>
+            <li><a href="forcas.html">2. Simulação: forças no plano horizontal</a></li>
+            <li><a href="dinamica.html#parte2">3. Resumo: decomposição e planos</a></li>
+            <li><a href="plano-inclinado.html">4. Simulação: plano inclinado</a></li>
+            <li><a href="questoes-dinamica.html">5. Questões de revisão</a></li>
+          </ul>
+        </div>
+        <div class="sub">
+          <h5>Outros temas</h5>
+          <p class="topics">Cinemática, energia, quantidade de movimento, gravitação, hidrostática.</p>
+          <p class="empty">Material em preparação.</p>
+        </div>
       </div>
       <div class="area" id="termologia" style="--c:var(--ter)">
         <div class="head"><span class="dot"></span><h4>Termologia</h4></div>
