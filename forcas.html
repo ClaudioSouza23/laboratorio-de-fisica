@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%232f6f9f'/%3E%3C/svg%3E">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Forças no Plano Horizontal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,6 +12,7 @@
 :root {
   --bg: #eef1f4; --surface: #ffffff; --ink: #16202b; --muted: #576575; --line: #d3dae2; --soft: #f6f8fa;
   --accent: #2f6f9f; --on-accent: #ffffff; --cool: #2a73c0; --ok: #1f8a4c; --bad: #b8322a;
+  --cP: #c8372d; --cN: #1f8a4c; --cF: #7a3fb5; --cA: #b8650a;
   --stage: #0e151d; --stage-ink: #dce6ef;
   --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
@@ -19,7 +21,8 @@
 }
 @media (prefers-color-scheme: dark) { :root {
   --bg: #0b1016; --surface: #141c25; --ink: #e5ecf2; --muted: #93a2b2; --line: #263240; --soft: #1a2430;
-  --accent: #6eaee0; --on-accent: #0b1016; --cool: #5ea2ea; --ok: #4cc27f; --bad: #ff6b60; color-scheme: dark } }
+  --accent: #6eaee0; --on-accent: #0b1016; --cool: #5ea2ea; --ok: #4cc27f; --bad: #ff6b60;
+  --cP: #ff6b5e; --cN: #4cc27f; --cF: #c48ae6; --cA: #f0a030; color-scheme: dark } }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.5; }
@@ -99,9 +102,13 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
 .calc .ln { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 10px; align-items: baseline; }
 @media (max-width: 560px) { .calc .ln { grid-template-columns: minmax(0, 1fr); gap: 0; } }
 .calc .ln b { font-size: 14px; }
-.calc .ln span { font-family: var(--f-mono); font-size: 15px; overflow-x: auto; white-space: nowrap; }
+.calc .ln span { font-family: var(--f-mono); font-size: 15px; min-width: 0; overflow-wrap: anywhere; }
 .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
 @media (max-width: 900px) { .two { grid-template-columns: minmax(0, 1fr); } }
+.two.dcl { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
+@media (max-width: 900px) { .two.dcl { grid-template-columns: minmax(0, 1fr); } }
+.fbd svg { width: 100%; max-width: 340px; height: auto; display: block; margin: 0 auto; }
+.fbd svg text { font-family: var(--f-mono); }
 .graphbox { overflow-x: auto; position: relative; }
 .graphbox svg { width: 100%; min-width: 320px; height: auto; display: block; }
 .graphbox svg text { font-family: var(--f-mono); }
@@ -190,6 +197,7 @@ td.m { font-family: var(--f-mono); font-weight: 700; white-space: nowrap; text-a
       </div>
       <div class="checks">
         <label><input type="checkbox" id="comps" checked> Componentes</label>
+        <label><input type="checkbox" id="slow"> Câmera lenta</label>
         <label><input type="checkbox" id="labels" checked> Etiquetas</label>
       </div>
       <p class="small">g = 10 m/s². As setas estão em escala entre si. μ<sub>c</sub> nunca passa de μ<sub>e</sub>.</p>
@@ -204,9 +212,15 @@ td.m { font-family: var(--f-mono); font-weight: 700; white-space: nowrap; text-a
     <div class="ro"><span class="k">Atrito f<sub>at</sub></span><span class="v" id="oF"></span><span class="tag" id="oFt"></span></div>
   </section>
 
-  <section class="card">
-    <h2>As contas, eixo por eixo</h2>
-    <div class="calc" id="calc"></div>
+  <section class="two dcl">
+    <div class="card">
+      <h2>As contas, eixo por eixo</h2>
+      <div class="calc" id="calc"></div>
+    </div>
+    <div class="card fbd">
+      <h2>Diagrama de corpo livre</h2>
+      <svg id="fbd" viewBox="0 0 320 250" role="img" aria-label="Diagrama com todas as forças que agem no bloco, em escala."></svg>
+    </div>
   </section>
 
   <section class="two">
@@ -245,7 +259,7 @@ td.m { font-family: var(--f-mono); font-weight: 700; white-space: nowrap; text-a
 <script>
 (() => {
 const G = 10;
-const state = { F: 20, th: 0, m: 5, me: 0, mc: 0, on: true, running: false, x: 0, v: 0, t: 0, samples: [], offAt: null, comps: true, labels: true };
+const state = { F: 20, th: 0, m: 5, me: 0, mc: 0, on: true, running: false, x: 0, v: 0, t: 0, samples: [], offAt: null, comps: true, labels: true, slow: false };
 const $ = id => document.getElementById(id);
 const fmt = (x, d = 1) => (Math.abs(x) < 5e-4 ? 0 : x).toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
 
@@ -265,7 +279,7 @@ function solve() {
 /* ---------- 3D ---------- */
 const stage = $('stage');
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
 stage.prepend(renderer.domElement);
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(40, 1.6, 0.1, 200);
@@ -273,8 +287,8 @@ camera.position.set(0.8, 2.3, 9);
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.target.set(0.8, 0.45, 0);
 controls.enableDamping = true; controls.minDistance = 4; controls.maxDistance = 22; controls.maxPolarAngle = Math.PI * 0.495;
-scene.add(new THREE.HemisphereLight(0xcfe3ff, 0x1a1410, 0.8));
-const key = new THREE.DirectionalLight(0xffffff, 0.8); key.position.set(3, 7, 6); scene.add(key);
+scene.add(new THREE.HemisphereLight(0xcfe3ff, 0x1a1410, 0.6));
+const key = new THREE.DirectionalLight(0xffffff, 0.55); key.position.set(3, 7, 6); scene.add(key);
 
 const floor = new THREE.Mesh(new THREE.PlaneGeometry(4000, 12), new THREE.MeshStandardMaterial({ color: 0x1d2935, roughness: 0.95 }));
 floor.rotation.x = -Math.PI / 2; scene.add(floor);
@@ -317,7 +331,7 @@ function place(id, pos, text, show, dx = 0, dy = 0) {
 }
 function update3D() {
   const s = solve(), x = state.x, k = 2 / Math.max(s.P, state.F, 1), z = 0.62, r = state.th * Math.PI / 180;
-  block.position.x = x; grid.position.x = Math.floor(x);
+  block.position.x = x; floor.position.x = x; grid.position.x = Math.floor(x);
   const C = V(x, 0.5, z), R0 = V(x + 0.8, 0.5, z), B0 = V(x - 0.8, 0.08, z);
   aP.userData.set(C, V(0, -1), s.P * k); aN.userData.set(C, V(0, 1), s.N * k);
   aF.userData.set(R0, V(Math.cos(r), Math.sin(r)), s.F * k);
@@ -328,14 +342,14 @@ function update3D() {
     dash.geometry.setFromPoints([aFx.userData.tip, aF.userData.tip, aFy.userData.tip]); dash.computeLineDistances(); dash.visible = true;
   }
   aA.userData.set(B0, V(-1, 0), s.fat * k);
-  aR.userData.set(V(x, 1.25, z), V(s.R >= 0 ? 1 : -1, 0), Math.abs(s.R) * k);
+  aR.userData.set(V(x, 1.45, z), V(s.R >= 0 ? 1 : -1, 0), Math.abs(s.R) * k);
   place('lP', aP.userData.tip, `P = ${fmt(s.P)} N`, true, 0, 12);
   place('lN', aN.userData.tip, `N = ${fmt(s.N)} N`, s.N * k > 0.3, -8, -12);
   place('lF', aF.userData.tip, `F = ${fmt(s.F)} N`, s.F > 0, 16, -12);
   place('lFx', comps ? aFx.userData.tip : V(0, 0), `F<sub>x</sub> ${fmt(s.Fx)}`, comps && s.Fx * k > 0.4, 22, 12);
   place('lFy', comps ? aFy.userData.tip : V(0, 0), `F<sub>y</sub> ${fmt(s.Fy)}`, comps && s.Fy * k > 0.4, -34, 0);
   place('lA', aA.userData.tip, `f<sub>at</sub> = ${fmt(s.fat)} N`, s.fat > 0.01, -34, 14);
-  place('lR', V(x, 1.25, z), `F<sub>R</sub> = ${fmt(Math.abs(s.R))} N`, Math.abs(s.R) * k > 0.06, s.R >= 0 ? -96 : 96, 0);
+  place('lR', aR.userData.tip, `F<sub>R</sub> = ${fmt(Math.abs(s.R))} N`, Math.abs(s.R) * k > 0.06, s.R >= 0 ? 30 : -30, -14);
 }
 function resize() { const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
 new ResizeObserver(resize).observe(stage); resize();
@@ -354,12 +368,11 @@ function advance(dt) {
   if (!last || state.t - last[0] >= 0.05) state.samples.push([state.t, state.v]);
   if (state.t >= 30) state.running = false;
 }
-let t0 = performance.now(), acc = 0;
+let t0 = performance.now(), acc = 0, camX = 0;
 function frame(now) {
   const dt = Math.min((now - t0) / 1000, 0.05); t0 = now;
-  const prevX = state.x;
-  if (state.running) { advance(dt); acc += dt; if (acc > 0.12 || !state.running) { acc = 0; render(); } }
-  const dx = state.x - prevX; camera.position.x += dx; controls.target.x += dx;
+  if (state.running) { advance(state.slow ? dt / 4 : dt); acc += dt; if (acc > 0.12 || !state.running) { acc = 0; render(); } }
+  const dx = state.x - camX; camX = state.x; camera.position.x += dx; controls.target.x += dx;
   controls.update(); update3D();
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
@@ -412,6 +425,32 @@ graph.addEventListener('pointermove', e => {
 });
 graph.addEventListener('pointerleave', () => { tip.hidden = true; const hd = $('hd'); if (hd) hd.setAttribute('visibility', 'hidden'); });
 
+/* ---------- diagrama de corpo livre ---------- */
+const svgArrow = (x1, y1, x2, y2, color, w = 3, dash = '') => {
+  const L = Math.hypot(x2 - x1, y2 - y1); if (L < 3) return '';
+  const ux = (x2 - x1) / L, uy = (y2 - y1) / L, h = Math.min(11, L * 0.5), bx = x2 - ux * h, by = y2 - uy * h;
+  return `<line x1="${x1}" y1="${y1}" x2="${bx}" y2="${by}" stroke="${color}" stroke-width="${w}" ${dash ? `stroke-dasharray="${dash}"` : ''}/><polygon points="${x2},${y2} ${bx - uy * 5.5},${by + ux * 5.5} ${bx + uy * 5.5},${by - ux * 5.5}" fill="${color}"/>`;
+};
+const svgLab = (x, y, t, sub = '') => `<text x="${x}" y="${y}" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">${t}${sub ? `<tspan font-size="10" dy="3">${sub}</tspan>` : ''}</text>`;
+function drawFBD(s) {
+  const cx = 130, cy = 125, k = 95 / Math.max(s.P, state.F, 1), r = state.th * Math.PI / 180, c = Math.cos(r), n = Math.sin(r);
+  let o = `<line x1="20" y1="${cy + 18}" x2="300" y2="${cy + 18}" stroke="var(--muted)" stroke-width="2"/><rect x="${cx - 26}" y="${cy - 18}" width="52" height="36" rx="3" fill="var(--soft)" stroke="var(--muted)" stroke-width="1.5"/>`;
+  const tF = [cx + s.F * k * c, cy - s.F * k * n];
+  if (state.comps && state.th > 0 && s.F > 0) {
+    o += `<path d="M${cx + s.Fx * k},${cy} L${tF[0]},${tF[1]} L${cx},${cy - s.Fy * k}" fill="none" stroke="var(--muted)" stroke-dasharray="4 4"/>`;
+    o += svgArrow(cx, cy, cx + s.Fx * k, cy, 'var(--cF)', 2, '5 3') + svgArrow(cx, cy, cx, cy - s.Fy * k, 'var(--cF)', 2, '5 3');
+    if (s.Fx * k > 22) o += svgLab(cx + s.Fx * k + 4, cy + 16, 'F', 'x');
+    if (s.Fy * k > 22) o += svgLab(cx + 14, cy - s.Fy * k + 2, 'F', 'y');
+  }
+  o += svgArrow(cx, cy, cx, cy + s.P * k, 'var(--cP)') + svgArrow(cx, cy, cx, cy - s.N * k, 'var(--cN)');
+  o += svgArrow(cx, cy, tF[0], tF[1], 'var(--cF)') + svgArrow(cx - 26, cy + 14, cx - 26 - s.fat * k, cy + 14, 'var(--cA)');
+  o += svgLab(cx + 13, cy + s.P * k + 4, 'P');
+  if (s.N * k > 14) o += svgLab(cx - 13, cy - s.N * k + 6, 'N');
+  if (s.F * k > 14) o += svgLab(tF[0] + 12, tF[1] - 4, 'F');
+  if (s.fat * k > 12) o += svgLab(cx - 26 - s.fat * k + 4, cy + 34, 'f', 'at');
+  $('fbd').innerHTML = o;
+}
+
 /* ---------- UI ---------- */
 const ro = (id, v, u) => { $(id).innerHTML = `${v}<span class="u">${u}</span>`; };
 function render() {
@@ -448,7 +487,7 @@ function render() {
 
   const pr = [['Peso: Terra puxa o bloco', 'Bloco puxa a Terra', s.P], ['Normal: piso empurra o bloco', 'Bloco comprime o piso', s.N], ['Atrito: piso freia o bloco', 'Bloco arrasta o piso', s.fat], ['Força: corda puxa o bloco', 'Bloco puxa a corda', s.F]];
   $('pairs').innerHTML = pr.map(([a, b, v]) => `<tr><td>${a}</td><td>${b}</td><td class="m">${fmt(v)} N</td></tr>`).join('');
-  drawGraph();
+  drawFBD(s); drawGraph();
 }
 function resetMotion() { Object.assign(state, { running: false, x: 0, v: 0, t: 0, samples: [], offAt: null, on: true }); }
 
@@ -510,7 +549,8 @@ for (const [id, k] of [['f', 'F'], ['th', 'th'], ['m', 'm']]) $(id).addEventList
 $('me').addEventListener('input', e => { state.me = +e.target.value; if (state.mc > state.me) state.mc = state.me; render(); });
 $('mc').addEventListener('input', e => { state.mc = Math.min(+e.target.value, state.me); render(); });
 document.querySelectorAll('[data-mu]').forEach(b => b.addEventListener('click', () => { [state.me, state.mc] = b.dataset.mu.split(',').map(Number); render(); }));
-$('comps').addEventListener('change', e => { state.comps = e.target.checked; });
+$('comps').addEventListener('change', e => { state.comps = e.target.checked; render(); });
+$('slow').addEventListener('change', e => { state.slow = e.target.checked; });
 $('labels').addEventListener('change', e => { state.labels = e.target.checked; });
 
 goStep(0);

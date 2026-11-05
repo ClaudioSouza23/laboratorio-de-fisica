@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%232f6f9f'/%3E%3C/svg%3E">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Coulomb e Campo Elétrico</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -253,7 +254,7 @@ tr.tot td { border-top: 2px solid var(--ink); font-weight: 700; }
       <h2>Como ler a cena</h2>
       <ul style="margin:0;padding-left:20px;display:grid;gap:6px">
         <li><b>Linhas brancas:</b> linhas de campo. Saem das cargas positivas e chegam às negativas. As setinhas mostram o sentido de E.</li>
-        <li><b>Fundo colorido:</b> potencial elétrico. Vermelho é potencial positivo; azul, negativo; escuro, perto de zero. As faixas claras são equipotenciais.</li>
+        <li><b>Fundo colorido:</b> potencial elétrico. Vermelho é potencial positivo; azul, negativo; escuro, perto de zero. As linhas claras são equipotenciais, e a linha branca marca V = 0.</li>
         <li><b>Ponto P:</b> clique no plano ou arraste o ponto. A seta amarela é o campo E em P.</li>
       </ul>
     </div>
@@ -310,7 +311,7 @@ const forceF = () => K * Math.abs(state.q1 * state.q2) * 1e-12 / (state.d * stat
 /* ---------- 3D ---------- */
 const stage = $('stage');
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
 stage.prepend(renderer.domElement);
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(40, 1.6, 0.1, 100);
@@ -323,22 +324,31 @@ scene.add(new THREE.HemisphereLight(0xcfe3ff, 0x1a1410, 0.7));
 const key = new THREE.DirectionalLight(0xffffff, 0.6); key.position.set(3, 6, 5); scene.add(key);
 
 const W = BOX * 2 * S;
-const mapCanvas = document.createElement('canvas'); mapCanvas.width = mapCanvas.height = 200;
+const mapCanvas = document.createElement('canvas'); mapCanvas.width = mapCanvas.height = 400;
 const mapTex = new THREE.CanvasTexture(mapCanvas);
 const plane = new THREE.Mesh(new THREE.PlaneGeometry(W, W), new THREE.MeshBasicMaterial({ map: mapTex }));
 plane.rotation.x = -Math.PI / 2; scene.add(plane);
 const grid = new THREE.GridHelper(W, 22, 0x34475a, 0x223140); grid.position.y = 0.005; scene.add(grid);
 
+const UPV = new THREE.Vector3(0, 1, 0);
+function thickArrow(color) {
+  const mat = new THREE.MeshBasicMaterial({ color, depthTest: false, transparent: true });
+  const g = new THREE.Group(), shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1, 10), mat), head = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.28, 14), mat);
+  shaft.renderOrder = head.renderOrder = 5; g.add(shaft, head); scene.add(g);
+  g.setDirection = v => g.quaternion.setFromUnitVectors(UPV, v);
+  g.setLength = len => { const h = Math.min(0.28, len * 0.6); head.scale.setScalar(h / 0.28); head.position.y = len - h / 2; shaft.scale.y = Math.max(len - h, 0.001); shaft.position.y = Math.max(len - h, 0.001) / 2; };
+  return g;
+}
 function makeCharge() {
   const mat = new THREE.MeshStandardMaterial({ color: 0x888888, emissive: 0x000000, roughness: 0.35, metalness: 0.2 });
   const m = new THREE.Mesh(new THREE.SphereGeometry(0.16, 32, 24), mat); m.position.y = 0.16; scene.add(m);
-  const arrow = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(), 1, 0xffd24a, 0.22, 0.14); scene.add(arrow);
+  const arrow = thickArrow(0xffd24a);
   return { m, mat, arrow };
 }
 const C1 = makeCharge(), C2 = makeCharge();
 const probe = new THREE.Mesh(new THREE.SphereGeometry(0.09, 20, 16), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x666666 }));
 probe.position.y = 0.09; scene.add(probe);
-const eArrow = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(), 1, 0xffd24a, 0.22, 0.14); scene.add(eArrow);
+const eArrow = thickArrow(0xffd24a);
 const dimLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), new THREE.LineDashedMaterial({ color: 0x9fb3c8, dashSize: 0.12, gapSize: 0.08 }));
 scene.add(dimLine);
 const linesGroup = new THREE.Group(); scene.add(linesGroup);
@@ -393,20 +403,20 @@ function buildLines() {
 }
 /* mapa de potencial */
 function drawMap() {
-  const g = mapCanvas.getContext('2d'), N = 200, img = g.createImageData(N, N), D = img.data;
-  const cs = charges(), on = state.mode === 'E' && state.map, Vref = 3e4;
+  const g = mapCanvas.getContext('2d'), N = 400;
+  if (state.mode !== 'E' || !state.map) { g.fillStyle = '#0e151d'; g.fillRect(0, 0, N, N); mapTex.needsUpdate = true; return; }
+  const img = g.createImageData(N, N), D = img.data, cs = charges(), Vref = 3e4, T = new Float32Array(N * N);
   for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
-    const p = (j * N + i) * 4;
-    let r = 14, gg = 21, b = 29;
-    if (on) {
-      const x = -BOX + (i + 0.5) * 2 * BOX / N, z = -BOX + (j + 0.5) * 2 * BOX / N;
-      const V = fieldAt(x, z, cs).v, t = Math.atan(V / Vref) * 2 / Math.PI, a = Math.abs(t);
-      const [tr, tg, tb] = t > 0 ? [200, 55, 45] : [42, 99, 192];
-      r = 14 + (tr - 14) * a; gg = 21 + (tg - 21) * a; b = 29 + (tb - 29) * a;
-      const lv = t * 8, fr = Math.abs(lv - Math.round(lv));
-      if (Math.round(lv) !== 0 && fr < 0.05) { r += 45; gg += 45; b += 45; }
-      if (cs.length > 1 && a < 0.006) { r = 235; gg = 235; b = 235; }
-    }
+    const x = -BOX + (i + 0.5) * 2 * BOX / N, z = -BOX + (j + 0.5) * 2 * BOX / N;
+    T[j * N + i] = Math.atan(fieldAt(x, z, cs).v / Vref) * 2 / Math.PI;
+  }
+  const lev = t => Math.round(t * 8);
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const q = j * N + i, p = q * 4, t = T[q], a = Math.abs(t), [tr, tg, tb] = t > 0 ? [200, 55, 45] : [42, 99, 192];
+    let r = 14 + (tr - 14) * a, gg = 21 + (tg - 21) * a, b = 29 + (tb - 29) * a;
+    const tR = i + 1 < N ? T[q + 1] : t, tD = j + 1 < N ? T[q + N] : t;
+    if (lev(t) !== lev(tR) || lev(t) !== lev(tD)) { r += 60; gg += 60; b += 60; }   // equipotenciais
+    if (t * tR < 0 || t * tD < 0) { r = gg = b = 240; }                              // V = 0
     D[p] = r; D[p + 1] = gg; D[p + 2] = b; D[p + 3] = 255;
   }
   g.putImageData(img, 0, 0); mapTex.needsUpdate = true;

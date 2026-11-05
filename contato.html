@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%232f6f9f'/%3E%3C/svg%3E">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Eletrização por Contato</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -150,8 +151,8 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
       <div class="lab3d" id="labB"></div>
       <div class="lab3d" id="labC"></div>
       <div class="legend">
-        <span><i style="background:#ff5a4a"></i>cada ponto vermelho: 0,5 μC positivo (falta de elétrons)</span>
-        <span><i style="background:#4a8cff"></i>cada ponto azul: 0,5 μC negativo (excesso de elétrons)</span>
+        <span><i style="background:#ff5a4a"></i>cada sinal +: 0,5 μC (falta de elétrons)</span>
+        <span><i style="background:#4a8cff"></i>cada sinal −: 0,5 μC (excesso de elétrons)</span>
       </div>
     </div>
 
@@ -251,7 +252,7 @@ const electrons = dq => Math.abs(dq) * 1e-6 / 1.6e-19;
 /* ---------- 3D ---------- */
 const stage = $('stage');
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
 stage.prepend(renderer.domElement);
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(40, 1.6, 0.1, 100);
@@ -275,16 +276,23 @@ const dot = document.createElement('canvas'); dot.width = dot.height = 64;
 { const c = dot.getContext('2d'); const g = c.createRadialGradient(32, 32, 0, 32, 32, 32);
   g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.5, 'rgba(255,255,255,.9)'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.fillRect(0, 0, 64, 64); }
 const dotTex = new THREE.CanvasTexture(dot);
+function signTex(color, plus) {
+  const cv = document.createElement('canvas'); cv.width = cv.height = 64;
+  const c = cv.getContext('2d'); c.fillStyle = color; c.beginPath(); c.arc(32, 32, 30, 0, 7); c.fill();
+  c.fillStyle = '#fff'; c.fillRect(13, 27, 38, 10); if (plus) c.fillRect(27, 13, 10, 38);
+  return new THREE.CanvasTexture(cv);
+}
+const plusTex = signTex('#d8372a', true), minusTex = signTex('#2a63d8', false);
 
 const spheres = HOME.map((x, i) => {
   const grp = new THREE.Group(); grp.position.x = x; scene.add(grp);
   const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.1, 12), new THREE.MeshStandardMaterial({ color: 0xe8dcc0, roughness: 0.4, transparent: true, opacity: 0.85 }));
   stand.position.y = 0.55; grp.add(stand);
   const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 0.08, 24), new THREE.MeshStandardMaterial({ color: 0x1b222b })); foot.position.y = 0.04; grp.add(foot);
-  const mat = new THREE.MeshStandardMaterial({ color: 0xb8c2cc, roughness: 0.25, metalness: 0.85, emissive: 0x000000 });
+  const mat = new THREE.MeshStandardMaterial({ color: 0xc4cdd6, roughness: 0.42, metalness: 0.2, emissive: 0x000000 });
   const ball = new THREE.Mesh(new THREE.SphereGeometry(RAD, 40, 28), mat); ball.position.y = 1.1 + RAD; grp.add(ball);
   const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(0), 3));
-  const pts = new THREE.Points(geo, new THREE.PointsMaterial({ size: 0.2, map: dotTex, color: 0xff5a4a, transparent: true, depthWrite: false }));
+  const pts = new THREE.Points(geo, new THREE.PointsMaterial({ size: 0.34, map: plusTex, transparent: true, alphaTest: 0.3 }));
   pts.position.copy(ball.position); grp.add(pts);
   return { grp, mat, ball, pts, geo, i };
 });
@@ -292,10 +300,10 @@ function setDots(s, q) {
   const n = Math.min(40, Math.round(Math.abs(q) * 2)), arr = new Float32Array(n * 3), g = Math.PI * (3 - Math.sqrt(5));
   for (let k = 0; k < n; k++) {
     const y = 1 - (k + 0.5) / n * 2, r = Math.sqrt(1 - y * y), a = k * g;
-    arr[k * 3] = Math.cos(a) * r * RAD * 1.03; arr[k * 3 + 1] = y * RAD * 1.03; arr[k * 3 + 2] = Math.sin(a) * r * RAD * 1.03;
+    arr[k * 3] = Math.cos(a) * r * RAD * 1.06; arr[k * 3 + 1] = y * RAD * 1.06; arr[k * 3 + 2] = Math.sin(a) * r * RAD * 1.06;
   }
   s.geo.setAttribute('position', new THREE.BufferAttribute(arr, 3));
-  s.pts.material.color.setHex(q > 0 ? 0xff5a4a : 0x4a8cff);
+  s.pts.material.map = q > 0 ? plusTex : minusTex; s.pts.material.needsUpdate = true;
   const t = Math.min(Math.abs(q) / 12, 1);
   s.mat.emissive.setHex(q > 0 ? 0x5a1008 : q < 0 ? 0x08245a : 0x000000).multiplyScalar(t);
 }
