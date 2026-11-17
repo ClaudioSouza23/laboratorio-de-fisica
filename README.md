@@ -30,6 +30,7 @@ Cada tema é uma trilha: resumo → simulações → questões de revisão.
 - **Simulação: secador de cabelo** (`secador.html`): por que a posição quente tem a menor resistência quando a tensão da tomada é fixa (P = U²/R).
 - **Simulação: duas lâmpadas** (`lampadas.html`): as mesmas lâmpadas em paralelo (mesma tensão) e em série (mesma corrente).
 - **Questões de revisão** (`questoes.html`): 17 questões com correção na hora e resolução comentada.
+- **Jogo em grupo: Trilha da Energia** (`trilha-da-energia.html`, imagem em `img/trilha-da-energia.jpg`): jogo de tabuleiro para a sala (3º ano: potência, consumo, 1ª Lei de Ohm e questões no estilo ENEM). O computador do professor no projetor é a mesa e abre uma sala com QR code; cada equipe entra pelo celular, escolhe a equipe e joga o dado na sua vez. A conexão entre os aparelhos usa PeerJS (WebRTC), sem conta. Também funciona num aparelho só, sem abrir sala.
 
 Magnetismo, outros temas de Mecânica, Termologia, Óptica, Ondulatória e Física Moderna: material em preparação.
 

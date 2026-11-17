@@ -1,0 +1,851 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Trilha da Energia</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@400;700;800&display=swap">
+<style>
+/* Layout: mesa de jogo azul-marinho; tabuleiro ilustrado à esquerda, painel do professor à direita; cartas abrem por cima. */
+:root{
+  --mesa:#0f2140; --painel:#18305a; --painel2:#21407a; --linha:#2f5290;
+  --texto:#f3f6fc; --suave:#a9bbdc; --ouro:#f5be28; --creme:#fffaf0; --tinta:#1b2a44;
+  --pot:#2166ac; --con:#1a8c4b; --ohm:#e15f0a; --enem:#762a83; --sorte:#d69600; --esp:#c81e3c;
+  --display:"Baloo 2","Trebuchet MS",system-ui,sans-serif;
+  --corpo:"Nunito","Segoe UI",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{min-height:100%}
+body{margin:0;background:var(--mesa);color:var(--texto);font-family:var(--corpo);font-size:15px;
+  background-image:radial-gradient(circle at 20% 0%,#1d3a6b 0,transparent 55%),radial-gradient(circle at 100% 100%,#14305e 0,transparent 50%);}
+button{font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--ouro);outline-offset:2px}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:12px;padding-block:10px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  margin:0 auto;align-items:start}
+@media (max-width:960px){.app{grid-template-columns:minmax(0,1fr)}}
+.amplo .app{grid-template-columns:minmax(0,1fr);padding-block:6px}
+.amplo .painel{display:none}
+
+/* ---------- tabuleiro ---------- */
+.mesa{min-width:0;display:flex;justify-content:center}
+.board{position:relative;width:min(100%,calc((100vh - 20px) * 40 / 28));aspect-ratio:40/28;max-width:100%;
+  border-radius:18px;box-shadow:0 18px 50px rgba(0,0,0,.45);overflow:hidden;background:#cfe6a8}
+.amplo .board{width:min(100%,calc((100vh - 12px) * 40 / 28))}
+@media (max-width:960px){.board{width:100%}}
+.mini{position:fixed;top:max(14px,env(safe-area-inset-top,0px));right:max(14px,env(safe-area-inset-right,0px));z-index:10;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;max-width:calc(100% - 28px);
+  background:var(--painel);border:1px solid var(--linha);border-radius:16px;padding:10px 12px;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+.mini .mq{font:800 20px/1.1 var(--display);max-width:240px;color:#fff;padding:8px 12px;border-radius:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dado.peq{width:54px;height:54px;padding:9px;border-radius:12px;gap:2px}
+.dado.peq i{width:9px;height:9px}
+.board img{display:block;width:100%;height:100%;user-select:none;-webkit-user-drag:none}
+.ring{position:absolute;width:7.1%;height:10.1%;transform:translate(-50%,-50%);border-radius:14px;
+  box-shadow:0 0 0 4px var(--ouro),0 0 26px 6px rgba(245,190,40,.75);pointer-events:none;transition:left .25s,top .25s;
+  animation:pulsa 1.2s ease-in-out infinite}
+@keyframes pulsa{50%{box-shadow:0 0 0 6px var(--ouro),0 0 36px 12px rgba(245,190,40,.55)}}
+.peao{position:absolute;width:3%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;
+  display:grid;place-items:center;color:#fff;font:800 clamp(10px,1.4vw,24px)/1 var(--display);
+  border:3px solid #fff;box-shadow:0 4px 8px rgba(0,0,0,.45);transition:left .2s ease,top .2s ease;z-index:3}
+.peao.junto{width:2.15%;border-width:2px;font-size:clamp(8px,1.05vw,18px)}
+.peao.ativo{z-index:4;box-shadow:0 0 0 3px var(--ouro),0 6px 12px rgba(0,0,0,.5)}
+.peao.pula{animation:pula .22s ease}
+@keyframes pula{50%{transform:translate(-50%,-85%) scale(1.15)}}
+
+/* ---------- painel ---------- */
+.painel{display:flex;flex-direction:column;gap:14px;min-width:0}
+.bloco{background:var(--painel);border:1px solid var(--linha);border-radius:16px;padding:16px}
+.marca{display:flex;align-items:center;gap:10px}
+.marca h1{font:800 28px/1 var(--display);margin:0;letter-spacing:.3px}
+.marca h1 span{color:var(--ouro)}
+.marca p{margin:2px 0 0;color:var(--suave);font-size:13px}
+.vez{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
+.vez .rotulo{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:var(--suave);font-weight:800}
+.vez .quem{font:800 30px/1.05 var(--display);text-wrap:balance}
+.dado{width:92px;height:92px;border-radius:20px;background:var(--creme);display:grid;
+  grid-template:repeat(3,1fr)/repeat(3,1fr);padding:14px;gap:4px;box-shadow:inset 0 -6px 0 #e6dcc4,0 8px 18px rgba(0,0,0,.4)}
+.dado i{border-radius:50%;background:var(--tinta);opacity:0;align-self:center;justify-self:center;width:15px;height:15px}
+.dado i.on{opacity:1}
+.dado.rolando{animation:rola .35s linear infinite}
+@keyframes rola{25%{transform:rotate(14deg) translateY(-6px)}75%{transform:rotate(-14deg) translateY(-3px)}}
+.btn{border:0;border-radius:14px;padding:12px 18px;font-weight:800;color:var(--tinta);background:var(--ouro);
+  box-shadow:0 5px 0 #b98a0e;transition:transform .08s}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 #b98a0e}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.grande{font:800 22px/1 var(--display);padding:16px 26px;width:100%}
+.btn.sec{background:var(--painel2);color:var(--texto);box-shadow:0 4px 0 #0c1a33}
+.btn.ok{background:#2fb565;color:#fff;box-shadow:0 5px 0 #1b7a41}
+.btn.nao{background:#e0444f;color:#fff;box-shadow:0 5px 0 #9c2530}
+.equipes{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none}
+.equipe{display:grid;grid-template-columns:30px minmax(0,1fr) auto;align-items:center;gap:10px;
+  padding:8px 10px;border-radius:12px;background:var(--painel2)}
+.equipe.atual{outline:2px solid var(--ouro)}
+.equipe .bola{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font:800 15px/1 var(--display);color:#fff;border:2px solid #fff}
+.equipe .nome{font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.equipe .info{font-size:12px;color:var(--suave)}
+.ajuste{display:flex;gap:4px}
+.ajuste button{width:28px;height:28px;border-radius:8px;border:1px solid var(--linha);background:transparent;color:var(--suave);font-weight:800}
+.titulo-bloco{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:var(--suave);font-weight:800;margin:0 0 10px}
+.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--suave);max-height:150px;overflow:auto}
+.log li:first-child{color:var(--texto)}
+.ferramentas{display:flex;flex-wrap:wrap;gap:8px}
+.ferramentas .btn{padding:9px 12px;font-size:13px}
+.campo{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.campo label{font-size:13px;color:var(--suave);font-weight:700}
+.contagem{display:flex;gap:6px;flex-wrap:wrap}
+.contagem button{width:42px;height:40px;border-radius:10px;border:1px solid var(--linha);background:var(--painel2);color:var(--texto);font-weight:800}
+.contagem button[aria-pressed="true"]{background:var(--ouro);color:var(--tinta);border-color:var(--ouro)}
+.nomes{display:flex;flex-direction:column;gap:6px}
+.nomes div{display:flex;gap:8px;align-items:center}
+.nomes span{width:14px;height:14px;border-radius:50%;flex:none}
+input[type=text],select{width:100%;min-width:0;padding:9px 10px;border-radius:10px;border:1px solid var(--linha);background:var(--mesa);color:var(--texto);font:inherit}
+
+/* ---------- cartas (modal) ---------- */
+.veu{position:fixed;inset:0;background:rgba(6,14,30,.72);display:grid;place-items:center;z-index:20;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  backdrop-filter:blur(3px)}
+.carta{--cor:var(--pot);width:min(620px,100%);max-height:100%;overflow:auto;background:var(--creme);color:var(--tinta);border-radius:22px;
+  border:4px solid var(--cor);box-shadow:0 30px 80px rgba(0,0,0,.6);animation:vira .45s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes vira{from{transform:rotateY(80deg) scale(.8);opacity:0}}
+.carta header{background:var(--cor);color:#fff;display:flex;align-items:center;gap:12px;padding:14px 18px}
+.carta header .ic{width:46px;height:46px;border-radius:50%;background:#fff;display:grid;place-items:center;flex:none}
+.carta header .ic svg{width:30px;height:30px}
+.carta header h2{margin:0;font:800 24px/1 var(--display);letter-spacing:.04em;flex:1}
+.carta header .cod{font-weight:800;opacity:.8;font-size:13px}
+.carta .corpo{padding:22px 24px 8px;font-size:clamp(18px,2.1vw,25px);line-height:1.4;text-wrap:pretty}
+.carta .corpo .equipe-da-vez{display:block;font-size:13px;text-transform:uppercase;letter-spacing:.1em;font-weight:800;color:var(--cor);margin-bottom:8px}
+.m{font-family:"Cambria Math","Times New Roman",serif;font-style:italic;white-space:nowrap}
+.m sub{font-size:.7em}
+.resposta{margin:14px 24px 0;padding:14px 16px;border-radius:14px;background:color-mix(in srgb,var(--cor) 12%,white);
+  border:2px dashed var(--cor);font-size:clamp(16px,1.8vw,21px);line-height:1.4}
+.resposta b:first-child{color:var(--cor)}
+.acoes{display:flex;flex-wrap:wrap;gap:10px;padding:18px 24px 22px;align-items:center}
+.acoes .espaco{flex:1}
+.relogio{display:flex;align-items:center;gap:8px;font:800 22px/1 var(--display);color:var(--cor);font-variant-numeric:tabular-nums}
+.relogio svg{width:40px;height:40px;transform:rotate(-90deg)}
+.relogio.fim{color:#e0444f}
+.sorte-grande{display:grid;place-items:center;padding-top:6px}
+.sorte-grande svg{width:90px;height:90px}
+.acao-sorte{margin:6px 24px 0;padding:14px;border-radius:14px;background:#fff;border:3px solid var(--cor);text-align:center;font:800 26px/1.2 var(--display);color:#6b4a00}
+.escolha{display:flex;flex-wrap:wrap;gap:8px}
+.toast{position:fixed;left:50%;bottom:max(24px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--creme);color:var(--tinta);
+  padding:12px 20px;border-radius:14px;font:800 20px/1.2 var(--display);box-shadow:0 10px 30px rgba(0,0,0,.5);z-index:30;max-width:calc(100% - 32px);text-align:center;
+  animation:sobe .3s ease}
+@keyframes sobe{from{transform:translate(-50%,20px);opacity:0}}
+.vitoria{text-align:center;padding:26px}
+.vitoria h2{font:800 44px/1 var(--display);margin:8px 0 6px;color:var(--tinta)}
+.vitoria ol{text-align:left;display:inline-block;font-size:18px;margin:12px 0 0}
+canvas.confete{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:25}
+.regras{padding:20px 24px;font-size:16px;line-height:1.5}
+.regras h3{font:800 20px/1.2 var(--display);margin:14px 0 4px;color:var(--pot)}
+.regras ul{margin:0;padding-left:20px}
+/* ---------- celular: tabuleiro grande com rolagem lateral, dado numa barra fixa embaixo ---------- */
+@media (max-width:760px){
+  body{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+  .app{padding-block:8px;gap:10px}
+  .mesa{display:block;overflow-x:auto;overflow-y:hidden;border-radius:14px;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+  .board,.amplo .board{width:210%;max-width:none;border-radius:14px}
+  .peao{border-width:2px}
+  .marca h1{font-size:24px}
+  .vez{position:fixed;left:0;right:0;bottom:0;z-index:15;flex-direction:row;justify-content:space-between;gap:10px;
+    border-radius:18px 18px 0 0;border-width:1px 0 0;box-shadow:0 -8px 24px rgba(0,0,0,.4);
+    padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+  .vez .rotulo{display:none}
+  .vez{border-top:5px solid var(--cor-vez,var(--ouro))}
+  .vez .quem{color:#fff!important}
+  .vez .quem{font-size:20px;text-align:left;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .vez .dado{width:52px;height:52px;padding:8px;border-radius:12px;gap:2px;flex:none}
+  .vez .dado i{width:9px;height:9px}
+  .vez .btn.grande{width:auto;font-size:18px;padding:13px 16px;flex:none}
+  #bAmpliar,#bTela{display:none}
+  .dica-celular{display:block}
+  .carta .corpo{padding:16px 16px 6px}
+  .m{white-space:normal}
+  .resposta{margin:12px 16px 0}
+  .acoes{padding:14px 16px 16px}
+  .acoes .btn{flex:1 1 auto}
+  .acoes .espaco{display:none}
+}
+.dica-celular{display:none;font-size:12px;color:var(--suave);text-align:center;margin:6px 0 0}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="app">
+  <main class="mesa">
+    <div class="board" id="board">
+      <img src="img/trilha-da-energia.jpg" alt="Tabuleiro Trilha da Energia: caminho de 40 casas da usina até a casa iluminada, passando por rio, selva, sertão e cidade">
+      <div class="ring" id="ring" hidden></div>
+    </div>
+  </main>
+  <p class="dica-celular">Arraste o tabuleiro para os lados. Ele acompanha o peão sozinho. Com o celular deitado fica ainda maior.</p>
+
+  <aside class="painel">
+    <div class="bloco marca">
+      <svg width="40" height="40" viewBox="-1 -1 2 2" aria-hidden="true"><path fill="#f5be28" d="M.14-.6-.32.06h.29L-.16.6.34-.1H.05Z"/></svg>
+      <div><h1>Trilha da <span>Energia</span></h1><p>Física 3º ano · Potência, consumo e Lei de Ohm<br><a href="index.html#eletrodinamica" style="color:var(--ouro)">← Laboratório de Física</a></p></div>
+    </div>
+
+    <section class="bloco" id="config">
+      <p class="titulo-bloco">Novo jogo</p>
+      <div class="campo"><label>Quantas equipes?</label><div class="contagem" id="qtd"></div></div>
+      <div class="campo"><label>Nomes das equipes</label><div class="nomes" id="nomes"></div></div>
+      <div class="campo"><label for="tempo">Tempo para responder</label>
+        <select id="tempo">
+          <option value="0">Sem cronômetro</option>
+          <option value="60" selected>1 minuto (ENEM: 2 minutos)</option>
+          <option value="90">1 min e 30 s (ENEM: 3 minutos)</option>
+        </select></div>
+      <button class="btn grande" id="comecar">Começar o jogo</button>
+    </section>
+
+    <section class="bloco vez" id="vez" hidden>
+      <span class="rotulo">Vez de</span>
+      <span class="quem" id="quem">Equipe 1</span>
+      <div class="dado" id="dado" aria-label="Dado"></div>
+      <button class="btn grande" id="jogar">Jogar o dado</button>
+    </section>
+
+    <section class="bloco" id="placar" hidden>
+      <p class="titulo-bloco">Equipes</p>
+      <ul class="equipes" id="lista"></ul>
+    </section>
+
+    <section class="bloco" id="historico" hidden>
+      <p class="titulo-bloco">O que aconteceu</p>
+      <ul class="log" id="log"></ul>
+    </section>
+
+    <div class="ferramentas">
+      <button class="btn sec" id="bAmpliar" hidden>Ampliar tabuleiro</button>
+      <button class="btn sec" id="bRegras">Regras</button>
+      <button class="btn sec" id="bSom" aria-pressed="true">Som: ligado</button>
+      <button class="btn sec" id="bTela">Tela cheia</button>
+      <button class="btn sec" id="bNovo" hidden>Novo jogo</button>
+    </div>
+  </aside>
+</div>
+
+<div class="mini" id="mini" hidden>
+  <span class="mq" id="mquem">Equipe 1</span>
+  <div class="dado peq" id="dado2" aria-hidden="true"></div>
+  <button class="btn" id="mjogar">Jogar o dado</button>
+  <button class="btn sec" id="mpainel">Mostrar painel</button>
+</div>
+<div class="veu" id="veu" hidden></div>
+<canvas class="confete" id="confete" hidden></canvas>
+
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+const CARTAS = {"P": [{"c": "P1", "q": "Um chuveiro de <b>5500 W</b> está ligado em <b>220 V</b>. Qual é a corrente elétrica?", "r": "<span class=\"m\">i = P/U = 5500/220 = 25</span> A"}, {"c": "P2", "q": "Um ferro de passar de <b>1100 W</b> funciona em <b>220 V</b>. Qual é a corrente?", "r": "<span class=\"m\">i = P/U = 1100/220 = 5</span> A"}, {"c": "P3", "q": "Um resistor de <b>10 <span class=\"m\">Ω</span></b> é percorrido por uma corrente de <b>2 A</b>. Qual é a potência dissipada?", "r": "<span class=\"m\">P = R· i² = 10· 2² = 40</span> W"}, {"c": "P4", "q": "Um resistor de <b>20 <span class=\"m\">Ω</span></b> é ligado a uma tensão de <b>100 V</b>. Qual é a potência?", "r": "<span class=\"m\">P = U²/R = 10 000/20 = 500</span> W"}, {"c": "P5", "q": "Uma lâmpada de <b>60 W – 120 V</b> é ligada em <b>60 V</b> (metade da tensão). Qual a nova potência? (Considere <span class=\"m\">R</span> constante.)", "r": "<span class=\"m\">P = U²/R</span>: tensão pela metade <span class=\"m\">⇒</span> potência <span class=\"m\">÷ 4</span>. <span class=\"m\">P = 15</span> W"}, {"c": "P6", "q": "No chuveiro, a posição <b>INVERNO</b> tem resistência <b>maior</b> ou <b>menor</b> que a posição VERÃO? Justifique.", "r": "Menor. Com <span class=\"m\">U</span> fixa, <span class=\"m\">P = U²/R</span>: menor <span class=\"m\">R</span> <span class=\"m\">⇒</span> maior potência <span class=\"m\">⇒</span> água mais quente."}, {"c": "P7", "q": "Qual é a unidade de potência no SI? O que ela significa?", "r": "Watt (W). 1 W = 1 joule por segundo (1 J/s)."}, {"c": "P8", "q": "Um secador tem a etiqueta <b>1200 W – 120 V</b>. Qual é a resistência dele em funcionamento?", "r": "<span class=\"m\">R = U²/P = 14 400/1200 = 12 Ω</span>"}, {"c": "P9", "q": "Um aparelho de <b>2200 W</b> é vendido em versões de <b>110 V</b> e <b>220 V</b>. Em qual a corrente é maior? Quanto vale em cada?", "r": "<span class=\"m\">i = P/U</span>: 110 V <span class=\"m\">→</span> 20 A; 220 V <span class=\"m\">→</span> 10 A. Maior em 110 V (o dobro)."}, {"c": "P10", "q": "O que é o <b>efeito Joule</b>? Cite dois aparelhos que funcionam por ele.", "r": "Transformação de energia elétrica em térmica num resistor. Ex.: chuveiro, ferro, torradeira, secador."}, {"c": "P11", "q": "A etiqueta de um liquidificador diz <b>400 W – 127 V</b>. O que significam esses valores?", "r": "São os valores nominais: ligado em 127 V, ele funciona com potência de 400 W (400 J por segundo)."}, {"c": "P12", "q": "Dois resistores de <b>10 <span class=\"m\">Ω</span></b> em <b>série</b> estão ligados a <b>20 V</b>. Qual a corrente e a potência total?", "r": "<span class=\"m\">R<sub>eq</sub> = 20 Ω</span>; <span class=\"m\">i = 20/20 = 1</span> A; <span class=\"m\">P = U· i = 20</span> W."}], "C": [{"c": "C1", "q": "Um chuveiro de <b>5000 W</b> fica ligado <b>30 min</b> por dia. Qual é o consumo diário em kWh?", "r": "<span class=\"m\">E = P·Δ t = 5 kW· 0,5 h = 2,5</span> kWh"}, {"c": "C2", "q": "Um chuveiro consome <b>2,5 kWh</b> por dia. Quanto consome em <b>30 dias</b>?", "r": "<span class=\"m\">2,5· 30 = 75</span> kWh"}, {"c": "C3", "q": "O consumo do mês foi de <b>75 kWh</b> e a tarifa é <b>R$ 0,80 por kWh</b>. Quanto custa?", "r": "<span class=\"m\">75· 0,80 =</span> R$ 60,00"}, {"c": "C4", "q": "Uma lâmpada LED de <b>10 W</b> fica acesa por <b>10 h</b>. Qual o consumo em kWh?", "r": "<span class=\"m\">10 W· 10 h = 100</span> Wh <span class=\"m\">= 0,1</span> kWh"}, {"c": "C5", "q": "Quantos <b>joules</b> existem em <b>1 kWh</b>?", "r": "<span class=\"m\">1000 W· 3600 s = 3,6· 10⁶</span> J"}, {"c": "C6", "q": "No medidor, a leitura anterior era <b>4250 kWh</b> e a atual é <b>4400 kWh</b>. Qual foi o consumo do mês?", "r": "<span class=\"m\">4400 - 4250 = 150</span> kWh"}, {"c": "C7", "q": "O que significa a <b>bandeira tarifária vermelha</b> na conta de luz?", "r": "A geração está mais cara (ex.: mais usinas termelétricas por falta de chuva). Paga-se um valor extra por kWh."}, {"c": "C8", "q": "Trocou-se uma lâmpada de <b>60 W</b> por uma LED de <b>9 W</b>, usada <b>5 h/dia</b> por <b>30 dias</b>. Quanto se economiza?", "r": "<span class=\"m\">(60-9) W· 150 h = 7650</span> Wh <span class=\"m\">≈ 7,65</span> kWh"}, {"c": "C9", "q": "O que indica o <b>selo PROCEL classe A</b> em um eletrodoméstico?", "r": "É dos mais eficientes da categoria: gasta menos energia para fazer o mesmo serviço."}, {"c": "C10", "q": "Um ar-condicionado de <b>1500 W</b> funciona <b>4 h por dia</b> durante <b>30 dias</b>. Qual o consumo?", "r": "<span class=\"m\">1,5 kW· 4 h· 30 = 180</span> kWh"}, {"c": "C11", "q": "Um ferro de <b>1000 W</b> é usado <b>15 min</b> por vez, <b>8 vezes</b> no mês. Qual o consumo mensal?", "r": "<span class=\"m\">1 kW· 0,25 h· 8 = 2</span> kWh"}, {"c": "C12", "q": "O <b>kWh</b> é unidade de <b>potência</b> ou de <b>energia</b>? Explique.", "r": "De energia: é potência (kW) multiplicada por tempo (h)."}], "O": [{"c": "O1", "q": "Escreva a <b>1ª Lei de Ohm</b> e diga a unidade de cada grandeza.", "r": "<span class=\"m\">U = R· i</span>. <span class=\"m\">U</span> em volt (V), <span class=\"m\">R</span> em ohm (<span class=\"m\">Ω</span>), <span class=\"m\">i</span> em ampère (A)."}, {"c": "O2", "q": "Um resistor de <b>10 <span class=\"m\">Ω</span></b> é percorrido por uma corrente de <b>3 A</b>. Qual é a tensão nele?", "r": "<span class=\"m\">U = R· i = 10· 3 = 30</span> V"}, {"c": "O3", "q": "Um resistor ligado em <b>220 V</b> é percorrido por <b>2 A</b>. Qual é a resistência dele?", "r": "<span class=\"m\">R = U/i = 220/2 = 110 Ω</span>"}, {"c": "O4", "q": "Uma tensão de <b>12 V</b> é aplicada a um resistor de <b>4 <span class=\"m\">Ω</span></b>. Qual é a corrente?", "r": "<span class=\"m\">i = U/R = 12/4 = 3</span> A"}, {"c": "O5", "q": "Tabela de um resistor: <span class=\"m\">i</span> = 0, 1, 2, 3 A e <span class=\"m\">U</span> = 0, 12, 24, 36 V. Qual é a resistência? E a tensão para <b>5 A</b>?", "r": "<span class=\"m\">R = 12/1 = 12 Ω</span>. Para 5 A: <span class=\"m\">U = 12· 5 = 60</span> V."}, {"c": "O6", "q": "Num resistor de <b>10 <span class=\"m\">Ω</span></b>, a corrente <b>dobra</b> de 2 A para 4 A. O que acontece com a tensão?", "r": "Também dobra: de 20 V para 40 V (<span class=\"m\">U</span> e <span class=\"m\">i</span> são diretamente proporcionais)."}, {"c": "O7", "q": "Numa associação em <b>série</b>, que grandeza é <b>igual</b> em todos os resistores?", "r": "A corrente. (A tensão da fonte se divide entre eles.)"}, {"c": "O8", "q": "Numa associação em <b>paralelo</b>, que grandeza é <b>igual</b> em todos os resistores?", "r": "A tensão. (A corrente total se divide entre eles.)"}, {"c": "O9", "q": "Resistores de <b>6 <span class=\"m\">Ω</span></b> e <b>4 <span class=\"m\">Ω</span></b> ligados em <b>série</b>. Qual é a resistência equivalente?", "r": "<span class=\"m\">R<sub>eq</sub> = 6 + 4 = 10 Ω</span>"}, {"c": "O10", "q": "Dois resistores <b>iguais de 10 <span class=\"m\">Ω</span></b> ligados em <b>paralelo</b>. Qual é a resistência equivalente?", "r": "<span class=\"m\">R<sub>eq</sub> = 10/2 = 5 Ω</span> (dois iguais em paralelo: metade)."}, {"c": "O11", "q": "Em <b>série</b> (mesma corrente), qual dissipa mais potência: o resistor de <b>10 <span class=\"m\">Ω</span></b> ou o de <b>20 <span class=\"m\">Ω</span></b>?", "r": "O de 20 <span class=\"m\">Ω</span>: <span class=\"m\">P = R· i²</span>, maior <span class=\"m\">R</span> dissipa mais."}, {"c": "O12", "q": "Em <b>paralelo</b> (mesma tensão), qual dissipa mais potência: o resistor de <b>10 <span class=\"m\">Ω</span></b> ou o de <b>20 <span class=\"m\">Ω</span></b>?", "r": "O de 10 <span class=\"m\">Ω</span>: <span class=\"m\">P = U²/R</span>, menor <span class=\"m\">R</span> dissipa mais."}], "E": [{"c": "E1", "q": "Um chuveiro de <b>4400 W – 220 V</b> será instalado. Qual disjuntor usar: <b>15 A</b>, <b>25 A</b> ou <b>40 A</b>?", "r": "<span class=\"m\">i = 4400/220 = 20</span> A <span class=\"m\">⇒</span> 25 A. (15 A desarma; 40 A não protege bem a fiação.)"}, {"c": "E2", "q": "Família de <b>4 pessoas</b>, cada uma toma banho de <b>15 min</b> por dia num chuveiro de <b>6000 W</b>. Consumo em <b>30 dias</b>?", "r": "<span class=\"m\">6 kW· 0,25 h· 4· 30 = 180</span> kWh"}, {"c": "E3", "q": "Um chuveiro de <b>220 V</b> é ligado por engano em <b>110 V</b>. O que acontece com a potência? (Mesma <span class=\"m\">R</span>.)", "r": "<span class=\"m\">P = U²/R</span>: tensão pela metade <span class=\"m\">⇒</span> potência 4 vezes menor. A água esquenta muito pouco."}, {"c": "E4", "q": "Por que as lâmpadas de uma casa são ligadas em <b>paralelo</b>?", "r": "Cada uma recebe a tensão da rede e funciona de forma independente: se uma queima, as outras continuam."}, {"c": "E5", "q": "Uma TV em <b>stand-by</b> consome <b>5 W</b>, 24 h por dia. Quanto consome em <b>30 dias</b>?", "r": "<span class=\"m\">5 W· 720 h = 3600</span> Wh <span class=\"m\">= 3,6</span> kWh"}, {"c": "E6", "q": "Uma lâmpada de <b>60 W</b> é trocada por uma LED de <b>8 W</b> que ilumina igual. Qual a economia em porcentagem?", "r": "<span class=\"m\">(60-8)/60 = 52/60 ≈ 87%</span>"}, {"c": "E7", "q": "Por que ligar <b>muitos aparelhos num benjamim</b> pode <b>superaquecer</b> os fios?", "r": "Os aparelhos ficam em paralelo: a corrente total é a soma das correntes. Corrente alta aquece os fios (<span class=\"m\">P = R· i²</span>). Risco de incêndio!"}, {"c": "E8", "q": "O gráfico <span class=\"m\">U × i</span> de um resistor é uma reta pela origem que passa por <b>(2 A; 10 V)</b>. Qual a resistência? Ele é ôhmico?", "r": "<span class=\"m\">R = U/i = 10/2 = 5 Ω</span>. Sim: reta pela origem, <span class=\"m\">R</span> constante."}, {"c": "E9", "q": "Placas solares produzem <b>300 kWh/mês</b> e a casa consome <b>250 kWh</b>. O que acontece com a sobra?", "r": "Os 50 kWh vão para a rede e viram créditos para abater contas futuras."}, {"c": "E10", "q": "Lâmpadas de <b>100 W</b> e <b>60 W</b>, ambas para <b>220 V</b>. Qual tem <b>maior resistência</b>?", "r": "A de 60 W: <span class=\"m\">R = U²/P</span> (menor <span class=\"m\">P</span>, maior <span class=\"m\">R</span>). 60 W: <span class=\"m\">≈ 807 Ω</span>; 100 W: <span class=\"m\">484 Ω</span>."}, {"c": "E11", "q": "Ao mudar a chave do chuveiro de <b>morno</b> para <b>quente</b>, a corrente <b>aumenta</b> ou <b>diminui</b>?", "r": "Aumenta: <span class=\"m\">P = U· i</span> com <span class=\"m\">U</span> fixa; se <span class=\"m\">P</span> aumenta, <span class=\"m\">i</span> aumenta."}, {"c": "E12", "q": "Uma conta de luz deu <b>R$ 150,00</b> com tarifa de <b>R$ 0,75 por kWh</b>. Quanto foi consumido?", "r": "<span class=\"m\">150/0,75 = 200</span> kWh"}], "S": [{"c": "S1", "q": "Você trocou todas as lâmpadas de casa por <b>LED</b>!", "a": "Avance <b>3</b> casas."}, {"c": "S2", "q": "Esqueceu o <b>ar-condicionado ligado</b> com a janela aberta.", "a": "Volte <b>2</b> casas."}, {"c": "S3", "q": "<b>Bandeira vermelha!</b> A conta de todo mundo ficou mais cara.", "a": "<b>Todos</b> os jogadores voltam <b>1</b> casa."}, {"c": "S4", "q": "Sua família instalou <b>placas solares</b> no telhado.", "a": "Avance <b>2</b> casas."}, {"c": "S5", "q": "Fizeram um <b>“gato”</b> na rede elétrica. Além de perigoso, é crime!", "a": "Fique <b>uma rodada</b> sem jogar."}, {"c": "S6", "q": "Você tirou da tomada os aparelhos em <b>stand-by</b>.", "a": "Avance <b>1</b> casa."}, {"c": "S7", "q": "Tomou um banho de <b>40 minutos</b> no modo inverno.", "a": "Volte <b>3</b> casas."}, {"c": "S8", "q": "Comprou uma geladeira com <b>selo PROCEL A</b>.", "a": "Avance <b>2</b> casas."}, {"c": "S9", "q": "O <b>disjuntor desarmou</b>: chuveiro e micro-ondas ligados ao mesmo tempo.", "a": "Fique <b>uma rodada</b> sem jogar."}, {"c": "S10", "q": "Você ajudou um colega a entender a Lei de Ohm.", "a": "Escolha um jogador: <b>os dois</b> avançam <b>1</b> casa."}, {"c": "S11", "q": "Ligou vários aparelhos num único <b>benjamim (T)</b>.", "a": "Volte <b>2</b> casas."}, {"c": "S12", "q": "Fez a <b>leitura do medidor</b> certinho e conferiu a conta.", "a": "<b>Jogue o dado de novo.</b>"}, {"c": "S13", "q": "Apagou a luz ao sair do quarto.", "a": "Avance <b>1</b> casa."}, {"c": "S14", "q": "Deixou a <b>porta da geladeira</b> aberta enquanto decidia o lanche.", "a": "Volte <b>1</b> casa."}, {"c": "S15", "q": "Leu a <b>etiqueta</b> (potência e tensão) antes de ligar o aparelho novo.", "a": "Avance <b>1</b> casa."}]};
+
+const CORES = ["#2166ac","#1a8c4b","#e15f0a","#762a83","#d69600","#c81e3c"];
+const CAT = {
+  P:{nome:"POTÊNCIA ELÉTRICA",cor:"var(--pot)",ic:"raio"},
+  C:{nome:"CONSUMO E CONTA DE LUZ",cor:"var(--con)",ic:"medidor"},
+  O:{nome:"1ª LEI DE OHM",cor:"var(--ohm)",ic:"resistor"},
+  E:{nome:"DESAFIO ENEM",cor:"var(--enem)",ic:"estrela"},
+  S:{nome:"SORTE OU REVÉS",cor:"var(--sorte)",ic:"interroga"}
+};
+const ICONES = {
+  raio:'<svg viewBox="-1 -1 2 2"><path fill="#2166ac" d="M.14-.6-.32.06h.29L-.16.6.34-.1H.05Z"/></svg>',
+  medidor:'<svg viewBox="-1 -1 2 2" fill="none" stroke="#1a8c4b" stroke-width=".1"><rect x="-.55" y="-.55" width="1.1" height="1.1" rx=".12"/><path d="M-.34.12A.34.34 0 0 1 .34.12"/><path d="M0 .12.2-.12" stroke-linecap="round"/><path d="M-.3.38h.6" stroke-width=".12"/></svg>',
+  resistor:'<svg viewBox="-1 -1 2 2" fill="none" stroke="#e15f0a" stroke-width=".13" stroke-linejoin="round" stroke-linecap="round"><path d="M-.7 0h.25l.09-.26.17.52.17-.52.17.52.17-.52.09.26h.25"/></svg>',
+  estrela:'<svg viewBox="-1 -1 2 2"><path fill="#762a83" d="M0-.7.2-.24.68-.2.32.11.43.6 0 .34-.43.6-.32.11-.68-.2-.2-.24Z"/></svg>',
+  interroga:'<svg viewBox="-1 -1 2 2"><circle r=".72" fill="#d69600"/><text y=".33" text-anchor="middle" font-family="Baloo 2,Arial" font-weight="800" font-size="1" fill="#fff">?</text></svg>'
+};
+
+/* ---------- casas do tabuleiro (iguais ao tabuleiro impresso) ---------- */
+const XS = Array.from({length:10},(_,c)=>4.2+3.51*c), YS=[3.2,8.9,14.6,20.3];
+function cm(k){const r=Math.floor(k/10);let c=k%10;if(r%2)c=9-c;return {x:XS[c],y:YS[r]};}
+function pct(x,y){return {l:x/40*100,t:(28-y)/28*100};}
+const ESP = {
+  0:{t:"inicio"}, 6:{t:"sobe",d:13,msg:"Linha de transmissão nova! Atalho até a casa 13"}, 12:{t:"desce",d:7,msg:"Benjamim lotado, sobrecarga! Desce para a casa 7"},
+  19:{t:"disj",msg:"Disjuntor desarmou! Fica 1 rodada sem jogar"}, 26:{t:"sobe",d:33,msg:"Linha de transmissão nova! Atalho até a casa 33"},
+  32:{t:"desce",d:27,msg:"Curto-circuito! Desce para a casa 27"}, 36:{t:"band",msg:"Bandeira verde! Joga de novo"}, 39:{t:"fim"}
+};
+const CICLO = ["P","C","O","S","P","C","O","E"];
+const TIPO = {}; {let n=0; for(let k=0;k<40;k++){ if(ESP[k]) TIPO[k]=ESP[k].t; else TIPO[k]=CICLO[(n++)%8]; }}
+const EFEITOS = [{m:3},{m:-2},{todos:-1},{m:2},{pula:1},{m:1},{m:-3},{m:2},{pula:1},{par:1},{m:-2},{denovo:1},{m:1},{m:-1},{m:1}];
+// posições dentro da casa (cm) para até 6 peões juntos: grade 3 x 2
+const OFF = [[-.86,-.42],[0,-.42],[.86,-.42],[-.86,.5],[0,.5],[.86,.5]];
+
+/* ---------- estado ---------- */
+let S = null, ocupado = false, som = true, qtd = 4;
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+function embaralha(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function salvar(){ try{ localStorage.setItem("trilha-energia-v1", JSON.stringify(S)); }catch(e){} }
+function carregar(){ try{ const t=localStorage.getItem("trilha-energia-v1"); return t?JSON.parse(t):null; }catch(e){ return null; } }
+
+function novoEstado(nomes, tempo){
+  const baralhos = {}; for(const k of "PCOES") baralhos[k] = embaralha(CARTAS[k].map((_,i)=>i));
+  return {fase:"jogo", tempo, vez:0, baralhos,
+    equipes: nomes.map((n,i)=>({nome:n, cor:CORES[i], pos:0, pula:0})), log:["O jogo começou! Todos na Usina."]};
+}
+function tirar(cat){ const b=S.baralhos[cat]; const i=b.shift(); b.push(i); salvar(); return CARTAS[cat][i]; }
+
+/* ---------- som ---------- */
+let ac=null;
+function tom(freq,dur,tipo="triangle",vol=.15,atraso=0){
+  if(!som) return; try{ ac = ac || new (window.AudioContext||window.webkitAudioContext)();
+    const o=ac.createOscillator(), g=ac.createGain(); o.type=tipo; o.frequency.value=freq;
+    const t=ac.currentTime+atraso; g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.001,t+dur);
+    o.connect(g).connect(ac.destination); o.start(t); o.stop(t+dur);}catch(e){}
+}
+const SOM = {
+  passo:()=>tom(520,.08,"square",.05), dado:()=>tom(300+Math.random()*300,.05,"square",.04),
+  certo:()=>{[523,659,784,1047].forEach((f,i)=>tom(f,.25,"triangle",.14,i*.09));},
+  errado:()=>{tom(220,.35,"sawtooth",.08);tom(165,.45,"sawtooth",.08,.15);},
+  tempo:()=>{tom(880,.15,"square",.08);tom(880,.15,"square",.08,.25);},
+  vitoria:()=>{[523,659,784,659,784,1047].forEach((f,i)=>tom(f,.3,"triangle",.15,i*.14));}
+};
+
+/* ---------- desenho ---------- */
+const PIPS = {1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+function desenhaDado(n){ const h=Array.from({length:9},(_,i)=>`<i class="${PIPS[n].includes(i)?"on":""}"></i>`).join(""); $("dado").innerHTML=h; $("dado2").innerHTML=h; $("dado").setAttribute("aria-label","Dado: "+n); }
+let amplo=false;
+function amplia(on){ amplo=on; document.body.classList.toggle("amplo",on); desenhaPainel(); }
+function posPeao(i){
+  const e=S.equipes[i]; const p=cm(e.pos);
+  const mesmos = S.equipes.map((q,j)=>j).filter(j=>S.equipes[j].pos===e.pos);
+  const o = mesmos.length>1 ? OFF[mesmos.indexOf(i)] : [0,.1];
+  return pct(p.x+o[0], p.y-o[1]);
+}
+function desenhaPeoes(pulo){
+  const b=$("board");
+  S.equipes.forEach((e,i)=>{
+    let el=document.getElementById("peao"+i);
+    if(!el){ el=document.createElement("div"); el.id="peao"+i; el.className="peao"; el.textContent=i+1; b.appendChild(el); }
+    el.style.background=e.cor; const p=posPeao(i); el.style.left=p.l+"%"; el.style.top=p.t+"%";
+    el.classList.toggle("ativo", i===S.vez);
+    el.classList.toggle("junto", S.equipes.filter(q=>q.pos===e.pos).length>2);
+    if(pulo===i){ el.classList.remove("pula"); void el.offsetWidth; el.classList.add("pula"); }
+  });
+  for(let i=S.equipes.length;i<6;i++){ const el=document.getElementById("peao"+i); if(el) el.remove(); }
+}
+function marca(k){ const r=$("ring"); if(k==null){r.hidden=true;return;} const p=cm(k), q=pct(p.x,p.y); r.style.left=q.l+"%"; r.style.top=q.t+"%"; r.hidden=false; centraliza(q.l); }
+function centraliza(l){ // no celular o tabuleiro rola de lado: mantém a casa marcada no meio da tela
+  const m=document.querySelector(".mesa"); if(!m || m.scrollWidth<=m.clientWidth+2) return;
+  const alvo=l/100*m.scrollWidth - m.clientWidth/2;
+  try{ m.scrollTo({left:Math.max(0,alvo),behavior:"smooth"}); }catch(e){ m.scrollLeft=Math.max(0,alvo); }
+}
+function desenhaPainel(){
+  const jogo = S && S.fase!=="config";
+  $("config").hidden = jogo; $("vez").hidden=!jogo; $("placar").hidden=!jogo; $("historico").hidden=!jogo; $("bNovo").hidden=!jogo; $("bAmpliar").hidden=!jogo;
+  $("mini").hidden = !(jogo && amplo);
+  if(!jogo){ if(amplo){ amplo=false; document.body.classList.remove("amplo"); } return; }
+  const e=S.equipes[S.vez]; $("quem").textContent=e.nome; $("quem").style.color=e.cor; $("vez").style.setProperty("--cor-vez", e.cor);
+  $("mquem").textContent="Vez: "+e.nome; $("mquem").style.background=e.cor; $("mjogar").disabled = ocupado || S.fase==="fim";
+  $("lista").innerHTML = S.equipes.map((q,i)=>`<li class="equipe ${i===S.vez?"atual":""}">
+     <span class="bola" style="background:${q.cor}">${i+1}</span>
+     <span style="min-width:0"><span class="nome" style="display:block">${esc(q.nome)}</span><span class="info">${q.pos===0?"Na Usina":q.pos===39?"Chegou!":"Casa "+q.pos}${q.pula?" · perde a vez":""}</span></span>
+     <span class="ajuste"><button data-aj="${i}" data-d="-1" aria-label="Voltar ${esc(q.nome)} uma casa">−</button><button data-aj="${i}" data-d="1" aria-label="Avançar ${esc(q.nome)} uma casa">+</button></span></li>`).join("");
+  $("log").innerHTML = S.log.slice(0,12).map(t=>`<li>${t}</li>`).join("");
+  $("jogar").disabled = ocupado || S.fase==="fim";
+}
+function esc(t){return String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function registra(t){ S.log.unshift(t); S.log=S.log.slice(0,30); salvar(); desenhaPainel(); }
+function toast(t,ms=2200){ const d=document.createElement("div"); d.className="toast"; d.textContent=t; document.body.appendChild(d); setTimeout(()=>d.remove(),ms); }
+
+/* ---------- movimento ---------- */
+async function anda(i, alvo){
+  const e=S.equipes[i]; alvo=Math.max(0,Math.min(39,alvo));
+  while(e.pos!==alvo){ e.pos += alvo>e.pos?1:-1; desenhaPeoes(i); marca(e.pos); SOM.passo(); await sleep(230); }
+  salvar(); desenhaPainel();
+}
+async function pula(i, alvo){ const e=S.equipes[i]; e.pos=alvo; desenhaPeoes(i); marca(alvo); SOM.passo(); await sleep(450); salvar(); desenhaPainel(); }
+
+/* ---------- turno ---------- */
+async function jogar(){
+  if(ocupado||S.fase!=="jogo") return; ocupado=true; desenhaPainel();
+  const i=S.vez, e=S.equipes[i];
+  $("dado").classList.add("rolando"); $("dado2").classList.add("rolando"); let n=1;
+  for(let t=0;t<12;t++){ n=1+Math.floor(Math.random()*6); desenhaDado(n); SOM.dado(); await sleep(70); }
+  $("dado").classList.remove("rolando"); $("dado2").classList.remove("rolando");
+  const ant=e.pos; registra(`<b style="color:${e.cor}">${esc(e.nome)}</b> tirou ${n} no dado.`);
+  await anda(i, ant+n);
+  const denovo = await resolve(i, ant);
+  if(S.fase==="fim"){ ocupado=false; desenhaPainel(); return; }
+  if(!denovo) proxima();
+  ocupado=false; desenhaPainel(); salvar();
+}
+function proxima(){
+  for(let tent=0;tent<12;tent++){
+    S.vez=(S.vez+1)%S.equipes.length; const e=S.equipes[S.vez];
+    if(e.pula>0){ e.pula--; registra(`<b style="color:${e.cor}">${esc(e.nome)}</b> perdeu a vez.`); continue; }
+    break;
+  }
+  desenhaPeoes(); marca(S.equipes[S.vez].pos); salvar();
+}
+async function resolve(i, ant){
+  const e=S.equipes[i], k=e.pos, t=TIPO[k];
+  if(k===39) return vence(i);
+  if(t==="sobe"||t==="desce"){ toast(ESP[k].msg); registra(ESP[k].msg+"."); await sleep(600); await pula(i, ESP[k].d); if(t==="sobe") SOM.certo(); else SOM.errado(); return false; }
+  if(t==="disj"){ e.pula=1; toast(ESP[k].msg); registra(`<b style="color:${e.cor}">${esc(e.nome)}</b>: disjuntor desarmou.`); SOM.errado(); return false; }
+  if(t==="band"){ toast(ESP[k].msg); registra("Bandeira verde: joga de novo."); SOM.certo(); return true; }
+  if(t==="S") return sorte(i);
+  const acertou = await pergunta(i, t);
+  if(acertou){
+    SOM.certo();
+    if(t==="E"){ toast("Acertou o Desafio ENEM! +2 casas"); registra(`<b style="color:${e.cor}">${esc(e.nome)}</b> acertou o Desafio ENEM e avançou 2.`); await sleep(500); await anda(i, e.pos+2); if(e.pos===39) return vence(i); }
+    else { toast("Acertou! Fica na casa."); registra(`<b style="color:${e.cor}">${esc(e.nome)}</b> acertou.`); }
+  } else {
+    SOM.errado(); toast("Errou! Volta para a casa de onde saiu."); registra(`<b style="color:${e.cor}">${esc(e.nome)}</b> errou e voltou para a casa ${ant}.`);
+    await sleep(500); await anda(i, ant);
+  }
+  return false;
+}
+
+/* ---------- cartas ---------- */
+function abre(html){ const v=$("veu"); v.innerHTML=html; v.hidden=false; return v; }
+function fecha(){ const v=$("veu"); v.hidden=true; v.innerHTML=""; }
+function cabecalho(cat, cod){ const c=CAT[cat]; return `<header><span class="ic">${ICONES[c.ic]}</span><h2>${c.nome}</h2>${cod?`<span class="cod">${cod}</span>`:""}</header>`; }
+function pergunta(i, cat){
+  return new Promise(resolver=>{
+    const e=S.equipes[i], c=tirar(cat), cor=CAT[cat].cor;
+    const tempo = S.tempo ? (cat==="E" ? S.tempo*2 : S.tempo) : 0;
+    const v=abre(`<div class="carta" style="--cor:${cor}" role="dialog" aria-modal="true" aria-label="${CAT[cat].nome}">
+      ${cabecalho(cat,c.c)}
+      <div class="corpo"><span class="equipe-da-vez">Pergunta para ${esc(e.nome)}</span>${c.q}</div>
+      <div class="resposta" id="resp" hidden><b>Resposta:</b> ${c.r}</div>
+      <div class="acoes">
+        ${tempo?`<span class="relogio" id="rel"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" stroke-opacity=".2" stroke-width="5"/><circle id="arco" cx="20" cy="20" r="16" fill="none" stroke="currentColor" stroke-width="5" stroke-dasharray="100.5" stroke-dashoffset="0" stroke-linecap="round"/></svg><span id="seg">${tempo}</span></span>`:""}
+        <button class="btn sec" id="ver">Mostrar resposta</button>
+        <span class="espaco"></span>
+        <button class="btn nao" id="errou">Errou</button>
+        <button class="btn ok" id="acertou">Acertou</button>
+      </div></div>`);
+    let rest=tempo, timer=null;
+    if(tempo){ timer=setInterval(()=>{ rest--; const s=v.querySelector("#seg"); if(!s){clearInterval(timer);return;}
+        s.textContent=Math.max(rest,0); v.querySelector("#arco").setAttribute("stroke-dashoffset", (100.5*(1-rest/tempo)).toFixed(1));
+        if(rest<=0){ clearInterval(timer); v.querySelector("#rel").classList.add("fim"); s.textContent="Tempo!"; SOM.tempo(); } },1000); }
+    v.querySelector("#ver").onclick=()=>{ v.querySelector("#resp").hidden=false; v.querySelector("#ver").hidden=true; };
+    const fim = ok => { clearInterval(timer); fecha(); resolver(ok); };
+    v.querySelector("#acertou").onclick=()=>fim(true);
+    v.querySelector("#errou").onclick=()=>fim(false);
+    v.querySelector("#ver").focus();
+  });
+}
+function sorte(i){
+  return new Promise(resolver=>{
+    const e=S.equipes[i], idx=S.baralhos.S[0], c=tirar("S"), ef=EFEITOS[idx];
+    const outros = S.equipes.map((q,j)=>j).filter(j=>j!==i);
+    const v=abre(`<div class="carta" style="--cor:var(--sorte)" role="dialog" aria-modal="true" aria-label="Sorte ou Revés">
+      ${cabecalho("S",c.c)}
+      <div class="sorte-grande">${ICONES.interroga}</div>
+      <div class="corpo" style="text-align:center;padding-top:8px"><span class="equipe-da-vez">Carta para ${esc(e.nome)}</span>${c.q}</div>
+      <div class="acao-sorte">${c.a}</div>
+      <div class="acoes">${ef.par
+        ? `<span>Escolha o jogador que avança junto:</span><div class="escolha">${outros.map(j=>`<button class="btn" data-par="${j}" style="background:${S.equipes[j].cor};color:#fff;box-shadow:none">${esc(S.equipes[j].nome)}</button>`).join("")}</div>`
+        : `<span class="espaco"></span><button class="btn grande" id="aplica" style="width:auto">${ef.denovo?"Jogar de novo":"Cumprir a carta"}</button>`}
+      </div></div>`);
+    const nome=`<b style="color:${e.cor}">${esc(e.nome)}</b>`;
+    const fim = async (par) => {
+      fecha(); const ant=e.pos;
+      if(ef.m){ registra(`${nome}: Sorte ou Revés (${ef.m>0?"avança":"volta"} ${Math.abs(ef.m)}).`); (ef.m>0?SOM.certo:SOM.errado)(); await anda(i, e.pos+ef.m); if(e.pos===39) return resolver(vence(i)); }
+      else if(ef.todos){ registra("Bandeira vermelha: todos voltam 1 casa."); SOM.errado(); for(let j=0;j<S.equipes.length;j++) await anda(j, S.equipes[j].pos-1); }
+      else if(ef.pula){ e.pula=1; registra(`${nome} vai ficar uma rodada sem jogar.`); SOM.errado(); }
+      else if(ef.denovo){ registra(`${nome} joga de novo.`); SOM.certo(); return resolver(true); }
+      else if(par!=null){ const q=S.equipes[par]; registra(`${nome} e <b style="color:${q.cor}">${esc(q.nome)}</b> avançam 1 casa.`); SOM.certo();
+        await anda(i, e.pos+1); if(e.pos===39) return resolver(vence(i)); await anda(par, q.pos+1); if(q.pos===39) return resolver(vence(par)); }
+      desenhaPeoes(); resolver(false);
+    };
+    if(ef.par){ v.querySelectorAll("[data-par]").forEach(b=>b.onclick=()=>fim(+b.dataset.par)); }
+    else { v.querySelector("#aplica").onclick=()=>fim(null); v.querySelector("#aplica").focus(); }
+  });
+}
+
+/* ---------- vitória ---------- */
+function vence(i){
+  const e=S.equipes[i]; S.fase="fim"; salvar(); SOM.vitoria(); confete();
+  registra(`<b style="color:${e.cor}">${esc(e.nome)}</b> chegou à Casa iluminada!`);
+  const rank = S.equipes.map((q,j)=>({...q,j})).sort((a,b)=>b.pos-a.pos);
+  const v=abre(`<div class="carta" style="--cor:${e.cor}" role="dialog" aria-modal="true" aria-label="Fim de jogo">
+    <header><span class="ic">${ICONES.raio}</span><h2>CASA ILUMINADA!</h2></header>
+    <div class="vitoria"><div style="font-weight:800;color:var(--suave)">Vencedora</div><h2 style="color:${e.cor}">${esc(e.nome)}</h2>
+    <div>A energia chegou do outro lado da trilha.</div>
+    <ol>${rank.map(q=>`<li><b style="color:${q.cor}">${esc(q.nome)}</b>: ${q.pos===39?"chegada":"casa "+q.pos}</li>`).join("")}</ol></div>
+    <div class="acoes"><span class="espaco"></span><button class="btn sec" id="verTab">Ver o tabuleiro</button><button class="btn" id="denovo">Jogar outra vez</button></div></div>`);
+  v.querySelector("#verTab").onclick=fecha;
+  v.querySelector("#denovo").onclick=()=>{ fecha(); configura(); };
+  return false;
+}
+function confete(){
+  const c=$("confete"); c.hidden=false; const x=c.getContext("2d"); c.width=innerWidth; c.height=innerHeight;
+  const ps=Array.from({length:160},()=>({x:Math.random()*c.width,y:-20-Math.random()*c.height*.5,v:2+Math.random()*4,r:Math.random()*6.28,s:5+Math.random()*7,c:CORES[Math.floor(Math.random()*6)]}));
+  let f=0; (function q(){ x.clearRect(0,0,c.width,c.height); ps.forEach(p=>{p.y+=p.v;p.x+=Math.sin((f+p.r*10)/20);p.r+=.1;x.save();x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;x.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);x.restore();});
+    if(++f<260) requestAnimationFrame(q); else c.hidden=true; })();
+}
+
+/* ---------- configuração ---------- */
+function configura(){
+  S = {fase:"config", equipes:[]};
+  try{ localStorage.removeItem("trilha-energia-v1"); }catch(e){}
+  marca(null); desenhaQtd(); desenhaPainel();
+  document.querySelectorAll(".peao").forEach(p=>p.remove());
+  previa();
+}
+function desenhaQtd(){
+  $("qtd").innerHTML=[2,3,4,5,6].map(n=>`<button data-n="${n}" aria-pressed="${n===qtd}">${n}</button>`).join("");
+  const atuais=[...document.querySelectorAll("#nomes input")].map(i=>i.value);
+  $("nomes").innerHTML=Array.from({length:qtd},(_,i)=>`<div><span style="background:${CORES[i]}"></span><input type="text" id="nome${i}" maxlength="22" value="${esc(atuais[i]||"Equipe "+(i+1))}" aria-label="Nome da equipe ${i+1}"></div>`).join("");
+}
+function previa(){ // peões esperando na Usina
+  const b=$("board"); document.querySelectorAll(".peao").forEach(p=>p.remove());
+  for(let i=0;i<qtd;i++){ const el=document.createElement("div"); el.className="peao"+(qtd>2?" junto":""); el.id="peao"+i; el.textContent=i+1; el.style.background=CORES[i];
+    const p=cm(0), o=OFF[i], q=pct(p.x+o[0],p.y-o[1]); el.style.left=q.l+"%"; el.style.top=q.t+"%"; b.appendChild(el); }
+}
+$("qtd").addEventListener("click",ev=>{ const b=ev.target.closest("[data-n]"); if(!b) return; qtd=+b.dataset.n; desenhaQtd(); previa(); });
+$("comecar").onclick=()=>{
+  const nomes=Array.from({length:qtd},(_,i)=>($("nome"+i).value.trim()||"Equipe "+(i+1)));
+  S=novoEstado(nomes, +$("tempo").value); salvar();
+  document.querySelectorAll(".peao").forEach(p=>p.remove());
+  desenhaDado(1); desenhaPeoes(); marca(0); desenhaPainel(); toast("Boa sorte! "+nomes[0]+" começa.");
+};
+$("jogar").onclick=jogar;
+$("mjogar").onclick=jogar;
+$("bAmpliar").onclick=()=>amplia(true);
+$("mpainel").onclick=()=>amplia(false);
+$("lista").addEventListener("click",async ev=>{ const b=ev.target.closest("[data-aj]"); if(!b||ocupado) return;
+  const i=+b.dataset.aj, e=S.equipes[i]; e.pos=Math.max(0,Math.min(39,e.pos+(+b.dataset.d))); desenhaPeoes(i); marca(e.pos); salvar(); desenhaPainel(); });
+$("bNovo").onclick=()=>{
+  const v=abre(`<div class="carta" style="--cor:var(--esp)" role="dialog" aria-modal="true" aria-label="Novo jogo"><header><span class="ic">${ICONES.interroga}</span><h2>COMEÇAR DE NOVO?</h2></header>
+   <div class="regras">O jogo atual será apagado e as equipes voltam para a Usina.</div>
+   <div class="acoes"><span class="espaco"></span><button class="btn sec" id="nao">Continuar este jogo</button><button class="btn nao" id="sim">Apagar e começar de novo</button></div></div>`);
+  v.querySelector("#nao").onclick=fecha; v.querySelector("#sim").onclick=()=>{ fecha(); configura(); };
+};
+$("bRegras").onclick=()=>{
+  const v=abre(`<div class="carta" style="--cor:var(--pot)" role="dialog" aria-modal="true" aria-label="Regras"><header><span class="ic">${ICONES.raio}</span><h2>COMO JOGAR</h2></header>
+   <div class="regras">
+   <h3>Objetivo</h3>Levar a energia da <b>Usina</b> até a <b>Casa iluminada</b>. Vence a primeira equipe a chegar.
+   <h3>Na sua vez</h3><ul><li>Clique em <b>Jogar o dado</b>: o peão anda sozinho.</li><li>A cor da casa sorteia uma carta. O professor lê a pergunta; a equipe explica o raciocínio.</li>
+   <li><b>Acertou:</b> fica na casa. <b>Errou:</b> volta para a casa de onde saiu.</li><li><b>Desafio ENEM:</b> quem acerta avança mais 2 casas.</li><li><b>Sorte ou Revés:</b> sem pergunta, cumpra a carta.</li></ul>
+   <h3>Casas especiais</h3><ul><li><b>Atalho (linha de transmissão nova):</b> sobe pela seta verde.</li><li><b>Sobrecarga e curto-circuito:</b> desce pela seta vermelha.</li><li><b>Disjuntor:</b> uma rodada sem jogar. <b>Bandeira verde:</b> joga de novo.</li></ul>
+   <h3>Para o professor</h3><ul><li><b>Ampliar tabuleiro</b> esconde o painel e deixa o tabuleiro do tamanho da tela; o dado fica num controle no canto. Use junto com <b>Tela cheia</b> no projetor.</li><li>Os botões <b>−</b> e <b>+</b> ao lado de cada equipe corrigem a posição do peão.</li><li>O jogo fica salvo neste navegador: se a página recarregar, continua de onde parou.</li><li>Sem calculadora, como no ENEM. Rascunho pode.</li></ul>
+   </div><div class="acoes"><span class="espaco"></span><button class="btn" id="ok">Entendi</button></div></div>`);
+  v.querySelector("#ok").onclick=fecha; v.querySelector("#ok").focus();
+};
+$("bSom").onclick=()=>{ som=!som; $("bSom").textContent="Som: "+(som?"ligado":"desligado"); $("bSom").setAttribute("aria-pressed",som); };
+$("bTela").onclick=()=>{ const d=document.documentElement; try{ if(!document.fullscreenElement) d.requestFullscreen?.().catch(()=>{}); else document.exitFullscreen?.(); }catch(e){} };
+addEventListener("keydown",ev=>{ if(ev.key===" "&&$("veu").hidden&&S&&S.fase==="jogo"&&document.activeElement.tagName!=="INPUT"){ ev.preventDefault(); jogar(); } });
+addEventListener("resize",()=>{ if(S&&S.fase!=="config") desenhaPeoes(); });
+
+/* ---------- início ---------- */
+function inicia(dados){
+  const salvo = (dados && dados.fase) ? dados : carregar();
+  desenhaDado(1);
+  if(salvo && (salvo.fase==="jogo"||salvo.fase==="fim")){ S=salvo; qtd=S.equipes.length; desenhaQtd(); desenhaPeoes(); marca(S.equipes[S.vez].pos); desenhaPainel(); }
+  else { S={fase:"config",equipes:[]}; desenhaQtd(); desenhaPainel(); previa(); }
+}
+window.claude?.hot?.snapshot?.(()=>S);
+window.claude?.hot?.ready ? window.claude.hot.ready(inicia) : inicia(window.claude?.hot?.data ?? {});
+</script>
+
+<style>
+/* ---------- multijogador: sala, QR code e modo celular ---------- */
+.sala{display:flex;flex-direction:column;gap:10px}
+.sala .codigo{font:800 44px/1 var(--display);letter-spacing:.14em;color:var(--ouro);text-align:center}
+.sala .qr{background:#fff;padding:10px;border-radius:12px;align-self:center;line-height:0}
+.sala .qr img,.sala .qr canvas{display:block;width:170px;height:170px}
+.sala .url{font-size:12px;color:var(--suave);word-break:break-all;text-align:center}
+.sala .status{font-size:13px;color:var(--suave);text-align:center}
+.sala .linha{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.sala .linha .btn{padding:9px 12px;font-size:13px}
+.sala .eu{font:800 20px/1.2 var(--display);text-align:center}
+.entrar{display:flex;gap:8px}
+.entrar input{text-transform:uppercase;letter-spacing:.1em;font-weight:800}
+.cel-n{color:var(--ouro);font-weight:800}
+.qr-grande{background:var(--creme);color:var(--tinta);border-radius:22px;padding:24px;text-align:center;max-width:100%;max-height:100%;overflow:auto}
+.qr-grande .codigo{font:800 64px/1 var(--display);letter-spacing:.14em;color:var(--pot);margin:10px 0}
+.qr-grande .qrbox{display:inline-block;background:#fff;padding:14px;border-radius:14px;line-height:0}
+.qr-grande .qrbox img,.qr-grande .qrbox canvas{width:min(60vh,70vw);height:min(60vh,70vw)}
+.qr-grande p{font-size:18px;margin:8px 0 0}
+.escolha-equipe{display:grid;gap:10px;padding:18px 20px 22px}
+.escolha-equipe button{display:flex;align-items:center;gap:12px;padding:14px;border-radius:14px;border:0;background:#fff;color:var(--tinta);font:800 20px/1.1 var(--display);text-align:left;box-shadow:0 3px 0 rgba(0,0,0,.12)}
+.escolha-equipe .bola{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:#fff;flex:none}
+.escolha-equipe .so-ver{background:transparent;box-shadow:none;border:2px dashed #b9c2d3;font-size:16px;justify-content:center}
+.aviso-cel{margin:12px 24px 0;padding:10px 14px;border-radius:12px;background:#fff3c4;color:#5b4300;font-weight:800;font-size:15px}
+body.celular #config,body.celular #bNovo,body.celular #bAmpliar,body.celular .ajuste{display:none!important}
+body.celular .veu .carta.ja{animation:none}
+body.celular .vez .btn.grande:disabled{opacity:.6}
+</style>
+<script>
+/* Multijogador pela internet (PeerJS / WebRTC):
+   - a MESA (computador do professor, no projetor) abre uma sala, roda o jogo e envia o estado;
+   - cada CELULAR entra pelo QR code (?sala=CODIGO), escolhe a equipe e joga o dado na vez dela.
+   O professor continua marcando Acertou/Errou na mesa. */
+(function(){
+  if (typeof Peer === "undefined") return;           // sem a biblioteca: o jogo funciona só neste aparelho
+  const PREFIXO = "trilhaenergia-ce-";
+  const ALFA = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const byId = id => document.getElementById(id);
+  const painel = document.querySelector(".painel");
+  const guarda = (k,v) => { try{ localStorage.setItem(k,v); }catch(e){} };
+  const le = k => { try{ return localStorage.getItem(k); }catch(e){ return null; } };
+  const limpa = t => String(t||"").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,6);
+  const gera = () => Array.from({length:4},()=>ALFA[Math.floor(Math.random()*ALFA.length)]).join("");
+  const linkSala = c => location.origin + location.pathname + "?sala=" + c;
+  function secao(html){ const s=document.createElement("section"); s.className="bloco sala"; s.innerHTML=html; return s; }
+  function qr(el, texto, tam){ el.innerHTML=""; try{ new QRCode(el,{text:texto,width:tam,height:tam,correctLevel:QRCode.CorrectLevel.M}); }catch(e){ el.textContent=texto; } }
+
+  const codURL = limpa(new URLSearchParams(location.search).get("sala"));
+  if (codURL.length >= 4) modoCelular(codURL); else modoMesa();
+
+  /* ======================= MESA (professor) ======================= */
+  function modoMesa(){
+    const entrar = secao(`<p class="titulo-bloco">É aluno? Entre na sala</p>
+      <div class="entrar"><input type="text" id="codEntrar" maxlength="6" placeholder="Código" aria-label="Código da sala"><button class="btn" id="bEntrar">Entrar</button></div>`);
+    const sala = secao(`<p class="titulo-bloco">Celulares</p>
+      <button class="btn" id="bSala">Abrir sala para celulares</button>
+      <div id="salaInfo" hidden>
+        <div class="codigo" id="salaCod"></div>
+        <div class="qr" id="salaQR"></div>
+        <div class="url" id="salaURL"></div>
+        <div class="status" id="salaStatus">Abrindo a sala…</div>
+        <div class="linha"><button class="btn sec" id="bQRgrande">QR code grande</button><button class="btn sec" id="bFechaSala">Fechar sala</button></div>
+      </div>`);
+    painel.insertBefore(sala, byId("config"));
+    painel.insertBefore(entrar, byId("config"));
+    byId("bEntrar").onclick = () => { const c=limpa(byId("codEntrar").value); if(c.length>=4) location.href = linkSala(c); };
+    byId("codEntrar").addEventListener("keydown", e => { if(e.key==="Enter") byId("bEntrar").click(); });
+
+    const conns = new Map();                  // conexão -> {eq}
+    let peer = null, codigo = null, tent = 0, ultimoDado = 1, ultimoRing = null, agendado = false;
+    const status = t => { byId("salaStatus").textContent = t; };
+    function contaStatus(){
+      const n = [...conns.keys()].filter(c=>c.open).length;
+      status(n ? `${n} celular${n>1?"es":""} conectado${n>1?"s":""}` : "Sala aberta. Aponte a câmera do celular para o QR code.");
+    }
+
+    function abrirSala(cod){
+      codigo = cod || gera();
+      guarda("trilha-sala", codigo); guarda("trilha-sala-aberta", "1");
+      byId("salaInfo").hidden=false; byId("bSala").hidden=true; entrar.hidden=true;
+      byId("salaCod").textContent = codigo;
+      byId("salaURL").textContent = linkSala(codigo);
+      qr(byId("salaQR"), linkSala(codigo), 170);
+      miniSala();
+      status("Abrindo a sala…");
+      peer = new Peer(PREFIXO + codigo.toLowerCase());
+      peer.on("open", () => { tent=0; contaStatus(); });
+      peer.on("connection", conn => {
+        conns.set(conn, {eq:null});
+        conn.on("open", () => { contaStatus(); try{ conn.send(foto()); }catch(e){} });
+        conn.on("data", d => recebe(conn, d));
+        conn.on("close", () => { conns.delete(conn); contaStatus(); desenhaPainel(); });
+        conn.on("error", () => {});
+      });
+      peer.on("error", err => {
+        if (err.type === "unavailable-id"){        // a mesma sala ainda está presa no servidor (ex.: página recarregada)
+          try{ peer.destroy(); }catch(e){}
+          if (++tent < 6){ status("Reabrindo a sala…"); setTimeout(()=>abrirSala(codigo), 3000); }
+          else { tent=0; abrirSala(gera()); }
+        } else if (err.type === "peer-unavailable"){ /* um celular saiu */ }
+        else { status("Sem conexão com o servidor. Tentando de novo…"); setTimeout(()=>{ try{ if(peer && peer.disconnected && !peer.destroyed) peer.reconnect(); }catch(e){} }, 3000); }
+      });
+      peer.on("disconnected", () => { setTimeout(()=>{ try{ if(peer && !peer.destroyed) peer.reconnect(); }catch(e){} }, 2000); });
+    }
+    function fecharSala(){
+      guarda("trilha-sala-aberta","0");
+      conns.forEach((_,c)=>{ try{ c.close(); }catch(e){} }); conns.clear();
+      try{ peer && peer.destroy(); }catch(e){} peer=null;
+      byId("salaInfo").hidden=true; byId("bSala").hidden=false; entrar.hidden=false;
+      const ms=byId("miniSala"); if(ms) ms.remove();
+      desenhaPainel();
+    }
+    function miniSala(){
+      let ms = byId("miniSala");
+      if(!ms){ ms=document.createElement("span"); ms.id="miniSala"; ms.className="mq"; ms.style.background="var(--painel2)"; byId("mini").prepend(ms); }
+      ms.textContent = "Sala " + codigo;
+    }
+    byId("bSala").onclick = () => abrirSala(le("trilha-sala") || null);
+    byId("bFechaSala").onclick = fecharSala;
+    byId("bQRgrande").onclick = () => {
+      const v=document.createElement("div"); v.className="veu"; v.id="qrVeu";
+      v.innerHTML = `<div class="qr-grande" role="dialog" aria-modal="true" aria-label="Entrar pelo celular">
+        <div style="font:800 26px/1.1 var(--display)">Entre pelo celular</div>
+        <div class="codigo">${codigo}</div><div class="qrbox" id="qrG"></div>
+        <p>Aponte a câmera para o QR code ou abra <b>${location.host}${location.pathname}</b> e digite o código.</p>
+        <p><button class="btn" id="qrOk">Fechar</button></p></div>`;
+      document.body.appendChild(v);
+      qr(byId("qrG"), linkSala(codigo), 520);
+      byId("qrOk").onclick = () => v.remove(); byId("qrOk").focus();
+    };
+
+    /* pedidos que chegam dos celulares (dados não confiáveis: só dois tipos aceitos) */
+    function recebe(conn, d){
+      const info = conns.get(conn); if(!info || !d || typeof d!=="object") return;
+      if (d.t === "equipe"){
+        const i = Number(d.i);
+        info.eq = (S && S.equipes && Number.isInteger(i) && i>=0 && i<S.equipes.length) ? i : null;
+        desenhaPainel();
+      } else if (d.t === "rolar"){
+        if (info.eq!==null && S && S.fase==="jogo" && info.eq===S.vez && !ocupado && byId("veu").hidden) jogar();
+      }
+    }
+
+    /* estado enviado aos celulares */
+    function foto(){
+      const v = byId("veu");
+      return { t:"estado",
+        S: S ? { fase:S.fase, vez:S.vez, equipes:S.equipes||[], log:(S.log||[]).slice(0,8) } : null,
+        dado: ultimoDado, rolando: byId("dado").classList.contains("rolando"), ocupado,
+        ring: ultimoRing, veu: v.hidden ? null : v.innerHTML };
+    }
+    function sync(){
+      if (agendado || !conns.size) return;
+      agendado = true;
+      setTimeout(() => { agendado=false; const f=foto(); conns.forEach((_,c)=>{ try{ if(c.open) c.send(f); }catch(e){} }); }, 40);
+    }
+    const o = { desenhaPeoes, desenhaPainel, desenhaDado, marca, toast };
+    window.desenhaPeoes = function(p){ o.desenhaPeoes(p); sync(); };
+    window.desenhaDado  = function(n){ ultimoDado=n; o.desenhaDado(n); sync(); };
+    window.marca        = function(k){ ultimoRing=k; o.marca(k); sync(); };
+    window.toast        = function(t,ms){ o.toast(t,ms); conns.forEach((_,c)=>{ try{ if(c.open) c.send({t:"toast",txt:String(t)}); }catch(e){} }); };
+    window.desenhaPainel = function(){
+      o.desenhaPainel();
+      if (S && S.equipes && conns.size){            // mostra quantos celulares cada equipe tem
+        const n = S.equipes.map(()=>0);
+        conns.forEach(v => { if(v.eq!==null && n[v.eq]!==undefined) n[v.eq]++; });
+        document.querySelectorAll("#lista .equipe .info").forEach((el,i) => {
+          if (n[i]){ const s=document.createElement("span"); s.className="cel-n"; s.textContent=` · ${n[i]} celular${n[i]>1?"es":""}`; el.appendChild(s); }
+        });
+      }
+      sync();
+    };
+    new MutationObserver(sync).observe(byId("veu"), {attributes:true, childList:true, subtree:true, characterData:true});
+    if (le("trilha-sala-aberta")==="1" && le("trilha-sala")) abrirSala(le("trilha-sala"));
+  }
+
+  /* ======================= CELULAR (equipe) ======================= */
+  function modoCelular(cod){
+    document.body.classList.add("celular");
+    const caixa = secao(`<p class="titulo-bloco">Sala ${cod}</p>
+      <div class="eu" id="celEu"></div>
+      <div class="status" id="celStatus">Conectando…</div>
+      <div class="linha"><button class="btn sec" id="bTroca" hidden>Trocar de equipe</button><a class="btn sec" href="${location.pathname}" style="text-decoration:none">Sair da sala</a></div>`);
+    painel.insertBefore(caixa, painel.children[1]);
+    const status = t => { byId("celStatus").textContent = t; };
+    const chave = "trilha-eq-" + cod;
+    let minha = le(chave)===null ? null : Number(le(chave));
+    let peer=null, conn=null, conectado=false, tentando=false, ult=null, vitFechada=false, eraMinha=false;
+
+    // o celular não guarda nem roda o jogo: só mostra o estado da mesa e pede para jogar o dado
+    window.salvar = function(){};
+    S = {fase:"config", equipes:[]}; ocupado = true;
+    document.querySelectorAll(".peao").forEach(p=>p.remove()); marca(null); desenhaPainel();
+    const pedeDado = () => { if (conn && conn.open) conn.send({t:"rolar"}); };
+    window.jogar = pedeDado; byId("jogar").onclick = pedeDado; byId("mjogar").onclick = pedeDado;
+    byId("bTroca").onclick = () => escolhe(null, true);
+
+    function escolhe(i, abrir){
+      minha = i; if(i===null) { try{ localStorage.removeItem(chave); }catch(e){} } else guarda(chave, String(i));
+      if (conn && conn.open) conn.send({t:"equipe", i: i===null ? -1 : i});
+      const v=byId("escolhaVeu"); if(v) v.remove();
+      if (abrir) mostraEscolha(); else aplica();
+    }
+    function mostraEscolha(){
+      if (byId("escolhaVeu") || !conectado || !S.equipes.length || minha!==null) return;
+      const v=document.createElement("div"); v.className="veu"; v.id="escolhaVeu";
+      v.innerHTML = `<div class="carta" style="--cor:var(--pot)" role="dialog" aria-modal="true" aria-label="Escolha sua equipe">
+        <header><span class="ic">${ICONES.raio}</span><h2>QUAL É A SUA EQUIPE?</h2></header>
+        <div class="escolha-equipe">${S.equipes.map((e,i)=>`<button data-eq="${i}"><span class="bola" style="background:${e.cor}">${i+1}</span>${esc(e.nome)}</button>`).join("")}
+        <button class="so-ver" data-eq="-1">Só assistir</button></div></div>`;
+      document.body.appendChild(v);
+      v.querySelectorAll("[data-eq]").forEach(b => b.onclick = () => escolhe(Number(b.dataset.eq)));
+    }
+
+    function conecta(){
+      status(`Conectando à sala ${cod}…`);
+      peer = new Peer();
+      peer.on("open", abreConn);
+      peer.on("error", e => {
+        conectado=false;
+        status(e.type==="peer-unavailable" ? `Sala ${cod} não encontrada. Confira o código ou peça ao professor para abrir a sala.` : "Problema de conexão. Tentando de novo…");
+        deNovo(3000);
+      });
+      peer.on("disconnected", () => { try{ if(!peer.destroyed) peer.reconnect(); }catch(e){} });
+    }
+    function abreConn(){
+      conn = peer.connect(PREFIXO + cod.toLowerCase(), {reliable:true});
+      conn.on("open", () => { conectado=true; status("Conectado à mesa do professor."); if(minha!==null) conn.send({t:"equipe", i:minha}); });
+      conn.on("data", recebe);
+      conn.on("close", () => { conectado=false; status("Conexão perdida. Reconectando…"); deNovo(2000); });
+      conn.on("error", () => {});
+    }
+    function deNovo(ms){
+      if (tentando) return; tentando = true;
+      setTimeout(() => {
+        tentando=false; if (conectado) return;
+        if (peer && !peer.destroyed && peer.open) abreConn();
+        else { try{ peer && peer.destroy(); }catch(e){} conecta(); }
+      }, ms);
+    }
+
+    function recebe(d){
+      if (!d || typeof d!=="object") return;
+      if (d.t==="toast"){ toast(String(d.txt||"")); if(/^Acertou/.test(d.txt)) SOM.certo(); else if(/^Errou/.test(d.txt)) SOM.errado(); return; }
+      if (d.t!=="estado") return;
+      ult = d; aplica();
+    }
+    function aplica(){
+      if (!ult) return;
+      const d = ult;
+      S = d.S || {fase:"config", equipes:[]};
+      if (!Array.isArray(S.equipes)) S.equipes = [];
+      if (minha!==null && minha>=S.equipes.length) minha = null;
+      ocupado = !!d.ocupado;
+      if (S.fase==="config" || !S.equipes.length){ document.querySelectorAll(".peao").forEach(p=>p.remove()); marca(null); }
+      else { desenhaPeoes(); if (d.ring!==null && d.ring!==undefined) marca(d.ring); }
+      desenhaDado(d.dado || 1);
+      ["dado","dado2"].forEach(id => byId(id).classList.toggle("rolando", !!d.rolando));
+      if (d.rolando) SOM.dado();
+      desenhaPainel();
+      const eq = (minha!==null && minha>=0) ? S.equipes[minha] : null;
+      const minhaVez = !!eq && S.fase==="jogo" && S.vez===minha;
+      const pode = conectado && minhaVez && !ocupado && !d.veu;
+      byId("jogar").disabled = !pode; byId("mjogar").disabled = !pode;
+      byId("jogar").textContent = pode ? "Jogar o dado" : "Aguarde";
+      if (S.fase==="jogo" && S.equipes[S.vez]) byId("quem").textContent = minhaVez ? "Sua vez!" : "Vez de " + S.equipes[S.vez].nome;
+      if (minhaVez && !eraMinha && navigator.vibrate) { try{ navigator.vibrate([120,60,120]); }catch(e){} }
+      eraMinha = minhaVez;
+      byId("celEu").textContent = eq ? "Você joga pela " + eq.nome : (minha===-1 ? "Você está assistindo" : "");
+      byId("celEu").style.color = eq ? eq.cor : "";
+      byId("bTroca").hidden = !(conectado && S.equipes.length);
+      if (S.fase==="config") status(conectado ? "Conectado. Aguardando o professor começar o jogo." : byId("celStatus").textContent);
+      else if (conectado) status("Conectado à mesa do professor.");
+      mostraCarta(d.veu, minhaVez);
+      mostraEscolha();
+    }
+    function mostraCarta(html, minhaVez){
+      const v = byId("veu");
+      if (!html){ v.hidden=true; v.innerHTML=""; vitFechada=false; return; }
+      const t = document.createElement("div"); t.innerHTML = html;
+      const vit = !!t.querySelector(".vitoria");
+      if (vit && vitFechada) return;
+      t.querySelectorAll(".acoes button, .acoes .espaco, .acoes .escolha, .acoes > span:not(.relogio)").forEach(b=>b.remove());
+      const carta = t.querySelector(".carta");
+      if (carta && !v.hidden) carta.classList.add("ja");
+      const ac = t.querySelector(".acoes");
+      const aviso = document.createElement("div"); aviso.className="aviso-cel";
+      if (vit) aviso.textContent = "Fim de jogo!";
+      else if (t.querySelector(".sorte-grande")) aviso.textContent = "O professor aplica esta carta na mesa.";
+      else aviso.textContent = minhaVez ? "Respondam em voz alta. O professor confirma na mesa." : "Acompanhe. A resposta aparece quando o professor mostrar.";
+      if (ac) ac.before(aviso); else if (carta) carta.appendChild(aviso);
+      if (vit && ac){ const b=document.createElement("button"); b.className="btn"; b.textContent="Ver o tabuleiro"; b.onclick=()=>{ vitFechada=true; v.hidden=true; }; ac.appendChild(b); }
+      v.innerHTML = t.innerHTML; v.hidden = false;
+      const b2 = v.querySelector(".acoes .btn"); if (b2) b2.onclick = () => { vitFechada=true; v.hidden=true; };
+    }
+    conecta();
+  }
+})();
+</script>
+
+
+</html>
