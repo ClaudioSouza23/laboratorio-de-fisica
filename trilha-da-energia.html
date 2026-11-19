@@ -131,6 +131,12 @@ input[type=text],select{width:100%;min-width:0;padding:9px 10px;border-radius:10
 .relogio.fim{color:#e0444f}
 .sorte-grande{display:grid;place-items:center;padding-top:6px}
 .sorte-grande svg{width:90px;height:90px}
+.codigo-form{display:flex;gap:10px;padding:6px 24px 0}
+.codigo-form input{flex:1;min-width:0;text-align:center;text-transform:uppercase;font:800 40px/1 var(--display);letter-spacing:.12em;
+  padding:10px 8px 4px;border-radius:14px;border:3px solid var(--cor);background:#fff;color:var(--tinta)}
+.codigo-form input::placeholder{color:#c3cad6}
+.codigo-form .btn{font:800 20px/1 var(--display);padding:0 22px}
+.erro-cod{margin:12px 24px 0;padding:10px 14px;border-radius:12px;background:#ffe1e4;color:#8a1626;font-weight:800;font-size:16px}
 .acao-sorte{margin:6px 24px 0;padding:14px;border-radius:14px;background:#fff;border:3px solid var(--cor);text-align:center;font:800 26px/1.2 var(--display);color:#6b4a00}
 .escolha{display:flex;flex-wrap:wrap;gap:8px}
 .toast{position:fixed;left:50%;bottom:max(24px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--creme);color:var(--tinta);
@@ -200,6 +206,11 @@ canvas.confete{position:fixed;inset:0;width:100%;height:100%;pointer-events:none
           <option value="60" selected>1 minuto (ENEM: 2 minutos)</option>
           <option value="90">1 min e 30 s (ENEM: 3 minutos)</option>
         </select></div>
+      <div class="campo"><label for="modoCartas">Cartas</label>
+        <select id="modoCartas">
+          <option value="0">Sorteadas na tela</option>
+          <option value="1">Cartas físicas na mesa (digitar o código)</option>
+        </select></div>
       <button class="btn grande" id="comecar">Começar o jogo</button>
     </section>
 
@@ -242,7 +253,7 @@ canvas.confete{position:fixed;inset:0;width:100%;height:100%;pointer-events:none
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
-const CARTAS = {"P": [{"c": "P1", "q": "Um chuveiro de <b>5500 W</b> está ligado em <b>220 V</b>. Qual é a corrente elétrica?", "r": "<span class=\"m\">i = P/U = 5500/220 = 25</span> A"}, {"c": "P2", "q": "Um ferro de passar de <b>1100 W</b> funciona em <b>220 V</b>. Qual é a corrente?", "r": "<span class=\"m\">i = P/U = 1100/220 = 5</span> A"}, {"c": "P3", "q": "Um resistor de <b>10 <span class=\"m\">Ω</span></b> é percorrido por uma corrente de <b>2 A</b>. Qual é a potência dissipada?", "r": "<span class=\"m\">P = R· i² = 10· 2² = 40</span> W"}, {"c": "P4", "q": "Um resistor de <b>20 <span class=\"m\">Ω</span></b> é ligado a uma tensão de <b>100 V</b>. Qual é a potência?", "r": "<span class=\"m\">P = U²/R = 10 000/20 = 500</span> W"}, {"c": "P5", "q": "Uma lâmpada de <b>60 W – 120 V</b> é ligada em <b>60 V</b> (metade da tensão). Qual a nova potência? (Considere <span class=\"m\">R</span> constante.)", "r": "<span class=\"m\">P = U²/R</span>: tensão pela metade <span class=\"m\">⇒</span> potência <span class=\"m\">÷ 4</span>. <span class=\"m\">P = 15</span> W"}, {"c": "P6", "q": "No chuveiro, a posição <b>INVERNO</b> tem resistência <b>maior</b> ou <b>menor</b> que a posição VERÃO? Justifique.", "r": "Menor. Com <span class=\"m\">U</span> fixa, <span class=\"m\">P = U²/R</span>: menor <span class=\"m\">R</span> <span class=\"m\">⇒</span> maior potência <span class=\"m\">⇒</span> água mais quente."}, {"c": "P7", "q": "Qual é a unidade de potência no SI? O que ela significa?", "r": "Watt (W). 1 W = 1 joule por segundo (1 J/s)."}, {"c": "P8", "q": "Um secador tem a etiqueta <b>1200 W – 120 V</b>. Qual é a resistência dele em funcionamento?", "r": "<span class=\"m\">R = U²/P = 14 400/1200 = 12 Ω</span>"}, {"c": "P9", "q": "Um aparelho de <b>2200 W</b> é vendido em versões de <b>110 V</b> e <b>220 V</b>. Em qual a corrente é maior? Quanto vale em cada?", "r": "<span class=\"m\">i = P/U</span>: 110 V <span class=\"m\">→</span> 20 A; 220 V <span class=\"m\">→</span> 10 A. Maior em 110 V (o dobro)."}, {"c": "P10", "q": "O que é o <b>efeito Joule</b>? Cite dois aparelhos que funcionam por ele.", "r": "Transformação de energia elétrica em térmica num resistor. Ex.: chuveiro, ferro, torradeira, secador."}, {"c": "P11", "q": "A etiqueta de um liquidificador diz <b>400 W – 127 V</b>. O que significam esses valores?", "r": "São os valores nominais: ligado em 127 V, ele funciona com potência de 400 W (400 J por segundo)."}, {"c": "P12", "q": "Dois resistores de <b>10 <span class=\"m\">Ω</span></b> em <b>série</b> estão ligados a <b>20 V</b>. Qual a corrente e a potência total?", "r": "<span class=\"m\">R<sub>eq</sub> = 20 Ω</span>; <span class=\"m\">i = 20/20 = 1</span> A; <span class=\"m\">P = U· i = 20</span> W."}], "C": [{"c": "C1", "q": "Um chuveiro de <b>5000 W</b> fica ligado <b>30 min</b> por dia. Qual é o consumo diário em kWh?", "r": "<span class=\"m\">E = P·Δ t = 5 kW· 0,5 h = 2,5</span> kWh"}, {"c": "C2", "q": "Um chuveiro consome <b>2,5 kWh</b> por dia. Quanto consome em <b>30 dias</b>?", "r": "<span class=\"m\">2,5· 30 = 75</span> kWh"}, {"c": "C3", "q": "O consumo do mês foi de <b>75 kWh</b> e a tarifa é <b>R$ 0,80 por kWh</b>. Quanto custa?", "r": "<span class=\"m\">75· 0,80 =</span> R$ 60,00"}, {"c": "C4", "q": "Uma lâmpada LED de <b>10 W</b> fica acesa por <b>10 h</b>. Qual o consumo em kWh?", "r": "<span class=\"m\">10 W· 10 h = 100</span> Wh <span class=\"m\">= 0,1</span> kWh"}, {"c": "C5", "q": "Quantos <b>joules</b> existem em <b>1 kWh</b>?", "r": "<span class=\"m\">1000 W· 3600 s = 3,6· 10⁶</span> J"}, {"c": "C6", "q": "No medidor, a leitura anterior era <b>4250 kWh</b> e a atual é <b>4400 kWh</b>. Qual foi o consumo do mês?", "r": "<span class=\"m\">4400 - 4250 = 150</span> kWh"}, {"c": "C7", "q": "O que significa a <b>bandeira tarifária vermelha</b> na conta de luz?", "r": "A geração está mais cara (ex.: mais usinas termelétricas por falta de chuva). Paga-se um valor extra por kWh."}, {"c": "C8", "q": "Trocou-se uma lâmpada de <b>60 W</b> por uma LED de <b>9 W</b>, usada <b>5 h/dia</b> por <b>30 dias</b>. Quanto se economiza?", "r": "<span class=\"m\">(60-9) W· 150 h = 7650</span> Wh <span class=\"m\">≈ 7,65</span> kWh"}, {"c": "C9", "q": "O que indica o <b>selo PROCEL classe A</b> em um eletrodoméstico?", "r": "É dos mais eficientes da categoria: gasta menos energia para fazer o mesmo serviço."}, {"c": "C10", "q": "Um ar-condicionado de <b>1500 W</b> funciona <b>4 h por dia</b> durante <b>30 dias</b>. Qual o consumo?", "r": "<span class=\"m\">1,5 kW· 4 h· 30 = 180</span> kWh"}, {"c": "C11", "q": "Um ferro de <b>1000 W</b> é usado <b>15 min</b> por vez, <b>8 vezes</b> no mês. Qual o consumo mensal?", "r": "<span class=\"m\">1 kW· 0,25 h· 8 = 2</span> kWh"}, {"c": "C12", "q": "O <b>kWh</b> é unidade de <b>potência</b> ou de <b>energia</b>? Explique.", "r": "De energia: é potência (kW) multiplicada por tempo (h)."}], "O": [{"c": "O1", "q": "Escreva a <b>1ª Lei de Ohm</b> e diga a unidade de cada grandeza.", "r": "<span class=\"m\">U = R· i</span>. <span class=\"m\">U</span> em volt (V), <span class=\"m\">R</span> em ohm (<span class=\"m\">Ω</span>), <span class=\"m\">i</span> em ampère (A)."}, {"c": "O2", "q": "Um resistor de <b>10 <span class=\"m\">Ω</span></b> é percorrido por uma corrente de <b>3 A</b>. Qual é a tensão nele?", "r": "<span class=\"m\">U = R· i = 10· 3 = 30</span> V"}, {"c": "O3", "q": "Um resistor ligado em <b>220 V</b> é percorrido por <b>2 A</b>. Qual é a resistência dele?", "r": "<span class=\"m\">R = U/i = 220/2 = 110 Ω</span>"}, {"c": "O4", "q": "Uma tensão de <b>12 V</b> é aplicada a um resistor de <b>4 <span class=\"m\">Ω</span></b>. Qual é a corrente?", "r": "<span class=\"m\">i = U/R = 12/4 = 3</span> A"}, {"c": "O5", "q": "Tabela de um resistor: <span class=\"m\">i</span> = 0, 1, 2, 3 A e <span class=\"m\">U</span> = 0, 12, 24, 36 V. Qual é a resistência? E a tensão para <b>5 A</b>?", "r": "<span class=\"m\">R = 12/1 = 12 Ω</span>. Para 5 A: <span class=\"m\">U = 12· 5 = 60</span> V."}, {"c": "O6", "q": "Num resistor de <b>10 <span class=\"m\">Ω</span></b>, a corrente <b>dobra</b> de 2 A para 4 A. O que acontece com a tensão?", "r": "Também dobra: de 20 V para 40 V (<span class=\"m\">U</span> e <span class=\"m\">i</span> são diretamente proporcionais)."}, {"c": "O7", "q": "Numa associação em <b>série</b>, que grandeza é <b>igual</b> em todos os resistores?", "r": "A corrente. (A tensão da fonte se divide entre eles.)"}, {"c": "O8", "q": "Numa associação em <b>paralelo</b>, que grandeza é <b>igual</b> em todos os resistores?", "r": "A tensão. (A corrente total se divide entre eles.)"}, {"c": "O9", "q": "Resistores de <b>6 <span class=\"m\">Ω</span></b> e <b>4 <span class=\"m\">Ω</span></b> ligados em <b>série</b>. Qual é a resistência equivalente?", "r": "<span class=\"m\">R<sub>eq</sub> = 6 + 4 = 10 Ω</span>"}, {"c": "O10", "q": "Dois resistores <b>iguais de 10 <span class=\"m\">Ω</span></b> ligados em <b>paralelo</b>. Qual é a resistência equivalente?", "r": "<span class=\"m\">R<sub>eq</sub> = 10/2 = 5 Ω</span> (dois iguais em paralelo: metade)."}, {"c": "O11", "q": "Em <b>série</b> (mesma corrente), qual dissipa mais potência: o resistor de <b>10 <span class=\"m\">Ω</span></b> ou o de <b>20 <span class=\"m\">Ω</span></b>?", "r": "O de 20 <span class=\"m\">Ω</span>: <span class=\"m\">P = R· i²</span>, maior <span class=\"m\">R</span> dissipa mais."}, {"c": "O12", "q": "Em <b>paralelo</b> (mesma tensão), qual dissipa mais potência: o resistor de <b>10 <span class=\"m\">Ω</span></b> ou o de <b>20 <span class=\"m\">Ω</span></b>?", "r": "O de 10 <span class=\"m\">Ω</span>: <span class=\"m\">P = U²/R</span>, menor <span class=\"m\">R</span> dissipa mais."}], "E": [{"c": "E1", "q": "Um chuveiro de <b>4400 W – 220 V</b> será instalado. Qual disjuntor usar: <b>15 A</b>, <b>25 A</b> ou <b>40 A</b>?", "r": "<span class=\"m\">i = 4400/220 = 20</span> A <span class=\"m\">⇒</span> 25 A. (15 A desarma; 40 A não protege bem a fiação.)"}, {"c": "E2", "q": "Família de <b>4 pessoas</b>, cada uma toma banho de <b>15 min</b> por dia num chuveiro de <b>6000 W</b>. Consumo em <b>30 dias</b>?", "r": "<span class=\"m\">6 kW· 0,25 h· 4· 30 = 180</span> kWh"}, {"c": "E3", "q": "Um chuveiro de <b>220 V</b> é ligado por engano em <b>110 V</b>. O que acontece com a potência? (Mesma <span class=\"m\">R</span>.)", "r": "<span class=\"m\">P = U²/R</span>: tensão pela metade <span class=\"m\">⇒</span> potência 4 vezes menor. A água esquenta muito pouco."}, {"c": "E4", "q": "Por que as lâmpadas de uma casa são ligadas em <b>paralelo</b>?", "r": "Cada uma recebe a tensão da rede e funciona de forma independente: se uma queima, as outras continuam."}, {"c": "E5", "q": "Uma TV em <b>stand-by</b> consome <b>5 W</b>, 24 h por dia. Quanto consome em <b>30 dias</b>?", "r": "<span class=\"m\">5 W· 720 h = 3600</span> Wh <span class=\"m\">= 3,6</span> kWh"}, {"c": "E6", "q": "Uma lâmpada de <b>60 W</b> é trocada por uma LED de <b>8 W</b> que ilumina igual. Qual a economia em porcentagem?", "r": "<span class=\"m\">(60-8)/60 = 52/60 ≈ 87%</span>"}, {"c": "E7", "q": "Por que ligar <b>muitos aparelhos num benjamim</b> pode <b>superaquecer</b> os fios?", "r": "Os aparelhos ficam em paralelo: a corrente total é a soma das correntes. Corrente alta aquece os fios (<span class=\"m\">P = R· i²</span>). Risco de incêndio!"}, {"c": "E8", "q": "O gráfico <span class=\"m\">U × i</span> de um resistor é uma reta pela origem que passa por <b>(2 A; 10 V)</b>. Qual a resistência? Ele é ôhmico?", "r": "<span class=\"m\">R = U/i = 10/2 = 5 Ω</span>. Sim: reta pela origem, <span class=\"m\">R</span> constante."}, {"c": "E9", "q": "Placas solares produzem <b>300 kWh/mês</b> e a casa consome <b>250 kWh</b>. O que acontece com a sobra?", "r": "Os 50 kWh vão para a rede e viram créditos para abater contas futuras."}, {"c": "E10", "q": "Lâmpadas de <b>100 W</b> e <b>60 W</b>, ambas para <b>220 V</b>. Qual tem <b>maior resistência</b>?", "r": "A de 60 W: <span class=\"m\">R = U²/P</span> (menor <span class=\"m\">P</span>, maior <span class=\"m\">R</span>). 60 W: <span class=\"m\">≈ 807 Ω</span>; 100 W: <span class=\"m\">484 Ω</span>."}, {"c": "E11", "q": "Ao mudar a chave do chuveiro de <b>morno</b> para <b>quente</b>, a corrente <b>aumenta</b> ou <b>diminui</b>?", "r": "Aumenta: <span class=\"m\">P = U· i</span> com <span class=\"m\">U</span> fixa; se <span class=\"m\">P</span> aumenta, <span class=\"m\">i</span> aumenta."}, {"c": "E12", "q": "Uma conta de luz deu <b>R$ 150,00</b> com tarifa de <b>R$ 0,75 por kWh</b>. Quanto foi consumido?", "r": "<span class=\"m\">150/0,75 = 200</span> kWh"}], "S": [{"c": "S1", "q": "Você trocou todas as lâmpadas de casa por <b>LED</b>!", "a": "Avance <b>3</b> casas."}, {"c": "S2", "q": "Esqueceu o <b>ar-condicionado ligado</b> com a janela aberta.", "a": "Volte <b>2</b> casas."}, {"c": "S3", "q": "<b>Bandeira vermelha!</b> A conta de todo mundo ficou mais cara.", "a": "<b>Todos</b> os jogadores voltam <b>1</b> casa."}, {"c": "S4", "q": "Sua família instalou <b>placas solares</b> no telhado.", "a": "Avance <b>2</b> casas."}, {"c": "S5", "q": "Fizeram um <b>“gato”</b> na rede elétrica. Além de perigoso, é crime!", "a": "Fique <b>uma rodada</b> sem jogar."}, {"c": "S6", "q": "Você tirou da tomada os aparelhos em <b>stand-by</b>.", "a": "Avance <b>1</b> casa."}, {"c": "S7", "q": "Tomou um banho de <b>40 minutos</b> no modo inverno.", "a": "Volte <b>3</b> casas."}, {"c": "S8", "q": "Comprou uma geladeira com <b>selo PROCEL A</b>.", "a": "Avance <b>2</b> casas."}, {"c": "S9", "q": "O <b>disjuntor desarmou</b>: chuveiro e micro-ondas ligados ao mesmo tempo.", "a": "Fique <b>uma rodada</b> sem jogar."}, {"c": "S10", "q": "Você ajudou um colega a entender a Lei de Ohm.", "a": "Escolha um jogador: <b>os dois</b> avançam <b>1</b> casa."}, {"c": "S11", "q": "Ligou vários aparelhos num único <b>benjamim (T)</b>.", "a": "Volte <b>2</b> casas."}, {"c": "S12", "q": "Fez a <b>leitura do medidor</b> certinho e conferiu a conta.", "a": "<b>Jogue o dado de novo.</b>"}, {"c": "S13", "q": "Apagou a luz ao sair do quarto.", "a": "Avance <b>1</b> casa."}, {"c": "S14", "q": "Deixou a <b>porta da geladeira</b> aberta enquanto decidia o lanche.", "a": "Volte <b>1</b> casa."}, {"c": "S15", "q": "Leu a <b>etiqueta</b> (potência e tensão) antes de ligar o aparelho novo.", "a": "Avance <b>1</b> casa."}]};
+const CARTAS = {"P": [{"c": "P26", "q": "Um chuveiro de <b>5500 W</b> está ligado em <b>220 V</b>. Qual é a corrente elétrica?", "r": "<span class=\"m\">i = P/U = 5500/220 = 25</span> A"}, {"c": "P51", "q": "Um ferro de passar de <b>1100 W</b> funciona em <b>220 V</b>. Qual é a corrente?", "r": "<span class=\"m\">i = P/U = 1100/220 = 5</span> A"}, {"c": "P75", "q": "Um resistor de <b>10 <span class=\"m\">Ω</span></b> é percorrido por uma corrente de <b>2 A</b>. Qual é a potência dissipada?", "r": "<span class=\"m\">P = R· i² = 10· 2² = 40</span> W"}, {"c": "P76", "q": "Um resistor de <b>20 <span class=\"m\">Ω</span></b> é ligado a uma tensão de <b>100 V</b>. Qual é a potência?", "r": "<span class=\"m\">P = U²/R = 10 000/20 = 500</span> W"}, {"c": "P93", "q": "Uma lâmpada de <b>60 W – 120 V</b> é ligada em <b>60 V</b> (metade da tensão). Qual a nova potência? (Considere <span class=\"m\">R</span> constante.)", "r": "<span class=\"m\">P = U²/R</span>: tensão pela metade <span class=\"m\">⇒</span> potência <span class=\"m\">÷ 4</span>. <span class=\"m\">P = 15</span> W"}, {"c": "P24", "q": "No chuveiro, a posição <b>INVERNO</b> tem resistência <b>maior</b> ou <b>menor</b> que a posição VERÃO? Justifique.", "r": "Menor. Com <span class=\"m\">U</span> fixa, <span class=\"m\">P = U²/R</span>: menor <span class=\"m\">R</span> <span class=\"m\">⇒</span> maior potência <span class=\"m\">⇒</span> água mais quente."}, {"c": "P39", "q": "Qual é a unidade de potência no SI? O que ela significa?", "r": "Watt (W). 1 W = 1 joule por segundo (1 J/s)."}, {"c": "P87", "q": "Um secador tem a etiqueta <b>1200 W – 120 V</b>. Qual é a resistência dele em funcionamento?", "r": "<span class=\"m\">R = U²/P = 14 400/1200 = 12 Ω</span>"}, {"c": "P90", "q": "Um aparelho de <b>2200 W</b> é vendido em versões de <b>110 V</b> e <b>220 V</b>. Em qual a corrente é maior? Quanto vale em cada?", "r": "<span class=\"m\">i = P/U</span>: 110 V <span class=\"m\">→</span> 20 A; 220 V <span class=\"m\">→</span> 10 A. Maior em 110 V (o dobro)."}, {"c": "P82", "q": "O que é o <b>efeito Joule</b>? Cite dois aparelhos que funcionam por ele.", "r": "Transformação de energia elétrica em térmica num resistor. Ex.: chuveiro, ferro, torradeira, secador."}, {"c": "P64", "q": "A etiqueta de um liquidificador diz <b>400 W – 127 V</b>. O que significam esses valores?", "r": "São os valores nominais: ligado em 127 V, ele funciona com potência de 400 W (400 J por segundo)."}, {"c": "P84", "q": "Dois resistores de <b>10 <span class=\"m\">Ω</span></b> em <b>série</b> estão ligados a <b>20 V</b>. Qual a corrente e a potência total?", "r": "<span class=\"m\">R<sub>eq</sub> = 20 Ω</span>; <span class=\"m\">i = 20/20 = 1</span> A; <span class=\"m\">P = U· i = 20</span> W."}], "C": [{"c": "C81", "q": "Um chuveiro de <b>5000 W</b> fica ligado <b>30 min</b> por dia. Qual é o consumo diário em kWh?", "r": "<span class=\"m\">E = P·Δ t = 5 kW· 0,5 h = 2,5</span> kWh"}, {"c": "C73", "q": "Um chuveiro consome <b>2,5 kWh</b> por dia. Quanto consome em <b>30 dias</b>?", "r": "<span class=\"m\">2,5· 30 = 75</span> kWh"}, {"c": "C86", "q": "O consumo do mês foi de <b>75 kWh</b> e a tarifa é <b>R$ 0,80 por kWh</b>. Quanto custa?", "r": "<span class=\"m\">75· 0,80 =</span> R$ 60,00"}, {"c": "C67", "q": "Uma lâmpada LED de <b>10 W</b> fica acesa por <b>10 h</b>. Qual o consumo em kWh?", "r": "<span class=\"m\">10 W· 10 h = 100</span> Wh <span class=\"m\">= 0,1</span> kWh"}, {"c": "C41", "q": "Quantos <b>joules</b> existem em <b>1 kWh</b>?", "r": "<span class=\"m\">1000 W· 3600 s = 3,6· 10⁶</span> J"}, {"c": "C11", "q": "No medidor, a leitura anterior era <b>4250 kWh</b> e a atual é <b>4400 kWh</b>. Qual foi o consumo do mês?", "r": "<span class=\"m\">4400 - 4250 = 150</span> kWh"}, {"c": "C89", "q": "O que significa a <b>bandeira tarifária vermelha</b> na conta de luz?", "r": "A geração está mais cara (ex.: mais usinas termelétricas por falta de chuva). Paga-se um valor extra por kWh."}, {"c": "C21", "q": "Trocou-se uma lâmpada de <b>60 W</b> por uma LED de <b>9 W</b>, usada <b>5 h/dia</b> por <b>30 dias</b>. Quanto se economiza?", "r": "<span class=\"m\">(60-9) W· 150 h = 7650</span> Wh <span class=\"m\">≈ 7,65</span> kWh"}, {"c": "C25", "q": "O que indica o <b>selo PROCEL classe A</b> em um eletrodoméstico?", "r": "É dos mais eficientes da categoria: gasta menos energia para fazer o mesmo serviço."}, {"c": "C47", "q": "Um ar-condicionado de <b>1500 W</b> funciona <b>4 h por dia</b> durante <b>30 dias</b>. Qual o consumo?", "r": "<span class=\"m\">1,5 kW· 4 h· 30 = 180</span> kWh"}, {"c": "C23", "q": "Um ferro de <b>1000 W</b> é usado <b>15 min</b> por vez, <b>8 vezes</b> no mês. Qual o consumo mensal?", "r": "<span class=\"m\">1 kW· 0,25 h· 8 = 2</span> kWh"}, {"c": "C68", "q": "O <b>kWh</b> é unidade de <b>potência</b> ou de <b>energia</b>? Explique.", "r": "De energia: é potência (kW) multiplicada por tempo (h)."}], "O": [{"c": "O12", "q": "Escreva a <b>1ª Lei de Ohm</b> e diga a unidade de cada grandeza.", "r": "<span class=\"m\">U = R· i</span>. <span class=\"m\">U</span> em volt (V), <span class=\"m\">R</span> em ohm (<span class=\"m\">Ω</span>), <span class=\"m\">i</span> em ampère (A)."}, {"c": "O98", "q": "Um resistor de <b>10 <span class=\"m\">Ω</span></b> é percorrido por uma corrente de <b>3 A</b>. Qual é a tensão nele?", "r": "<span class=\"m\">U = R· i = 10· 3 = 30</span> V"}, {"c": "O73", "q": "Um resistor ligado em <b>220 V</b> é percorrido por <b>2 A</b>. Qual é a resistência dele?", "r": "<span class=\"m\">R = U/i = 220/2 = 110 Ω</span>"}, {"c": "O97", "q": "Uma tensão de <b>12 V</b> é aplicada a um resistor de <b>4 <span class=\"m\">Ω</span></b>. Qual é a corrente?", "r": "<span class=\"m\">i = U/R = 12/4 = 3</span> A"}, {"c": "O51", "q": "Tabela de um resistor: <span class=\"m\">i</span> = 0, 1, 2, 3 A e <span class=\"m\">U</span> = 0, 12, 24, 36 V. Qual é a resistência? E a tensão para <b>5 A</b>?", "r": "<span class=\"m\">R = 12/1 = 12 Ω</span>. Para 5 A: <span class=\"m\">U = 12· 5 = 60</span> V."}, {"c": "O37", "q": "Num resistor de <b>10 <span class=\"m\">Ω</span></b>, a corrente <b>dobra</b> de 2 A para 4 A. O que acontece com a tensão?", "r": "Também dobra: de 20 V para 40 V (<span class=\"m\">U</span> e <span class=\"m\">i</span> são diretamente proporcionais)."}, {"c": "O61", "q": "Numa associação em <b>série</b>, que grandeza é <b>igual</b> em todos os resistores?", "r": "A corrente. (A tensão da fonte se divide entre eles.)"}, {"c": "O43", "q": "Numa associação em <b>paralelo</b>, que grandeza é <b>igual</b> em todos os resistores?", "r": "A tensão. (A corrente total se divide entre eles.)"}, {"c": "O55", "q": "Resistores de <b>6 <span class=\"m\">Ω</span></b> e <b>4 <span class=\"m\">Ω</span></b> ligados em <b>série</b>. Qual é a resistência equivalente?", "r": "<span class=\"m\">R<sub>eq</sub> = 6 + 4 = 10 Ω</span>"}, {"c": "O56", "q": "Dois resistores <b>iguais de 10 <span class=\"m\">Ω</span></b> ligados em <b>paralelo</b>. Qual é a resistência equivalente?", "r": "<span class=\"m\">R<sub>eq</sub> = 10/2 = 5 Ω</span> (dois iguais em paralelo: metade)."}, {"c": "O59", "q": "Em <b>série</b> (mesma corrente), qual dissipa mais potência: o resistor de <b>10 <span class=\"m\">Ω</span></b> ou o de <b>20 <span class=\"m\">Ω</span></b>?", "r": "O de 20 <span class=\"m\">Ω</span>: <span class=\"m\">P = R· i²</span>, maior <span class=\"m\">R</span> dissipa mais."}, {"c": "O76", "q": "Em <b>paralelo</b> (mesma tensão), qual dissipa mais potência: o resistor de <b>10 <span class=\"m\">Ω</span></b> ou o de <b>20 <span class=\"m\">Ω</span></b>?", "r": "O de 10 <span class=\"m\">Ω</span>: <span class=\"m\">P = U²/R</span>, menor <span class=\"m\">R</span> dissipa mais."}], "E": [{"c": "E92", "q": "Um chuveiro de <b>4400 W – 220 V</b> será instalado. Qual disjuntor usar: <b>15 A</b>, <b>25 A</b> ou <b>40 A</b>?", "r": "<span class=\"m\">i = 4400/220 = 20</span> A <span class=\"m\">⇒</span> 25 A. (15 A desarma; 40 A não protege bem a fiação.)"}, {"c": "E20", "q": "Família de <b>4 pessoas</b>, cada uma toma banho de <b>15 min</b> por dia num chuveiro de <b>6000 W</b>. Consumo em <b>30 dias</b>?", "r": "<span class=\"m\">6 kW· 0,25 h· 4· 30 = 180</span> kWh"}, {"c": "E54", "q": "Um chuveiro de <b>220 V</b> é ligado por engano em <b>110 V</b>. O que acontece com a potência? (Mesma <span class=\"m\">R</span>.)", "r": "<span class=\"m\">P = U²/R</span>: tensão pela metade <span class=\"m\">⇒</span> potência 4 vezes menor. A água esquenta muito pouco."}, {"c": "E22", "q": "Por que as lâmpadas de uma casa são ligadas em <b>paralelo</b>?", "r": "Cada uma recebe a tensão da rede e funciona de forma independente: se uma queima, as outras continuam."}, {"c": "E82", "q": "Uma TV em <b>stand-by</b> consome <b>5 W</b>, 24 h por dia. Quanto consome em <b>30 dias</b>?", "r": "<span class=\"m\">5 W· 720 h = 3600</span> Wh <span class=\"m\">= 3,6</span> kWh"}, {"c": "E79", "q": "Uma lâmpada de <b>60 W</b> é trocada por uma LED de <b>8 W</b> que ilumina igual. Qual a economia em porcentagem?", "r": "<span class=\"m\">(60-8)/60 = 52/60 ≈ 87%</span>"}, {"c": "E48", "q": "Por que ligar <b>muitos aparelhos num benjamim</b> pode <b>superaquecer</b> os fios?", "r": "Os aparelhos ficam em paralelo: a corrente total é a soma das correntes. Corrente alta aquece os fios (<span class=\"m\">P = R· i²</span>). Risco de incêndio!"}, {"c": "E47", "q": "O gráfico <span class=\"m\">U × i</span> de um resistor é uma reta pela origem que passa por <b>(2 A; 10 V)</b>. Qual a resistência? Ele é ôhmico?", "r": "<span class=\"m\">R = U/i = 10/2 = 5 Ω</span>. Sim: reta pela origem, <span class=\"m\">R</span> constante."}, {"c": "E69", "q": "Placas solares produzem <b>300 kWh/mês</b> e a casa consome <b>250 kWh</b>. O que acontece com a sobra?", "r": "Os 50 kWh vão para a rede e viram créditos para abater contas futuras."}, {"c": "E29", "q": "Lâmpadas de <b>100 W</b> e <b>60 W</b>, ambas para <b>220 V</b>. Qual tem <b>maior resistência</b>?", "r": "A de 60 W: <span class=\"m\">R = U²/P</span> (menor <span class=\"m\">P</span>, maior <span class=\"m\">R</span>). 60 W: <span class=\"m\">≈ 807 Ω</span>; 100 W: <span class=\"m\">484 Ω</span>."}, {"c": "E93", "q": "Ao mudar a chave do chuveiro de <b>morno</b> para <b>quente</b>, a corrente <b>aumenta</b> ou <b>diminui</b>?", "r": "Aumenta: <span class=\"m\">P = U· i</span> com <span class=\"m\">U</span> fixa; se <span class=\"m\">P</span> aumenta, <span class=\"m\">i</span> aumenta."}, {"c": "E84", "q": "Uma conta de luz deu <b>R$ 150,00</b> com tarifa de <b>R$ 0,75 por kWh</b>. Quanto foi consumido?", "r": "<span class=\"m\">150/0,75 = 200</span> kWh"}], "S": [{"c": "S50", "q": "Você trocou todas as lâmpadas de casa por <b>LED</b>!", "a": "Avance <b>3</b> casas."}, {"c": "S14", "q": "Esqueceu o <b>ar-condicionado ligado</b> com a janela aberta.", "a": "Volte <b>2</b> casas."}, {"c": "S58", "q": "<b>Bandeira vermelha!</b> A conta de todo mundo ficou mais cara.", "a": "<b>Todos</b> os jogadores voltam <b>1</b> casa."}, {"c": "S57", "q": "Sua família instalou <b>placas solares</b> no telhado.", "a": "Avance <b>2</b> casas."}, {"c": "S70", "q": "Fizeram um <b>“gato”</b> na rede elétrica. Além de perigoso, é crime!", "a": "Fique <b>uma rodada</b> sem jogar."}, {"c": "S65", "q": "Você tirou da tomada os aparelhos em <b>stand-by</b>.", "a": "Avance <b>1</b> casa."}, {"c": "S22", "q": "Tomou um banho de <b>40 minutos</b> no modo inverno.", "a": "Volte <b>3</b> casas."}, {"c": "S62", "q": "Comprou uma geladeira com <b>selo PROCEL A</b>.", "a": "Avance <b>2</b> casas."}, {"c": "S85", "q": "O <b>disjuntor desarmou</b>: chuveiro e micro-ondas ligados ao mesmo tempo.", "a": "Fique <b>uma rodada</b> sem jogar."}, {"c": "S81", "q": "Você ajudou um colega a entender a Lei de Ohm.", "a": "Escolha um jogador: <b>os dois</b> avançam <b>1</b> casa."}, {"c": "S74", "q": "Ligou vários aparelhos num único <b>benjamim (T)</b>.", "a": "Volte <b>2</b> casas."}, {"c": "S25", "q": "Fez a <b>leitura do medidor</b> certinho e conferiu a conta.", "a": "<b>Jogue o dado de novo.</b>"}, {"c": "S75", "q": "Apagou a luz ao sair do quarto.", "a": "Avance <b>1</b> casa."}, {"c": "S87", "q": "Deixou a <b>porta da geladeira</b> aberta enquanto decidia o lanche.", "a": "Volte <b>1</b> casa."}, {"c": "S73", "q": "Leu a <b>etiqueta</b> (potência e tensão) antes de ligar o aparelho novo.", "a": "Avance <b>1</b> casa."}]};
 
 const CORES = ["#2166ac","#1a8c4b","#e15f0a","#762a83","#d69600","#c81e3c"];
 const CAT = {
@@ -283,12 +294,15 @@ function embaralha(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.flo
 function salvar(){ try{ localStorage.setItem("trilha-energia-v1", JSON.stringify(S)); }catch(e){} }
 function carregar(){ try{ const t=localStorage.getItem("trilha-energia-v1"); return t?JSON.parse(t):null; }catch(e){ return null; } }
 
-function novoEstado(nomes, tempo){
+// código impresso na carta física -> {cat, i}; 0 no início vira a letra O
+const CODIGOS = {}; for(const k of "PCOES") CARTAS[k].forEach((c,i)=>{ CODIGOS[c.c]={cat:k,i}; });
+function normCod(t){ return String(t||"").toUpperCase().replace(/[^A-Z0-9]/g,"").replace(/^0/,"O").slice(0,4); }
+function novoEstado(nomes, tempo, fisicas){
   const baralhos = {}; for(const k of "PCOES") baralhos[k] = embaralha(CARTAS[k].map((_,i)=>i));
-  return {fase:"jogo", tempo, vez:0, baralhos,
+  return {fase:"jogo", tempo, fisicas:!!fisicas, usadas:[], vez:0, baralhos,
     equipes: nomes.map((n,i)=>({nome:n, cor:CORES[i], pos:0, pula:0})), log:["O jogo começou! Todos na Usina."]};
 }
-function tirar(cat){ const b=S.baralhos[cat]; const i=b.shift(); b.push(i); salvar(); return CARTAS[cat][i]; }
+function tirarIdx(cat){ const b=S.baralhos[cat]; const i=b.shift(); b.push(i); salvar(); return i; }
 
 /* ---------- som ---------- */
 let ac=null;
@@ -389,8 +403,9 @@ async function resolve(i, ant){
   if(t==="sobe"||t==="desce"){ toast(ESP[k].msg); registra(ESP[k].msg+"."); await sleep(600); await pula(i, ESP[k].d); if(t==="sobe") SOM.certo(); else SOM.errado(); return false; }
   if(t==="disj"){ e.pula=1; toast(ESP[k].msg); registra(`<b style="color:${e.cor}">${esc(e.nome)}</b>: disjuntor desarmou.`); SOM.errado(); return false; }
   if(t==="band"){ toast(ESP[k].msg); registra("Bandeira verde: joga de novo."); SOM.certo(); return true; }
-  if(t==="S") return sorte(i);
-  const acertou = await pergunta(i, t);
+  const idx = S.fisicas ? await pedeCodigo(i, t) : tirarIdx(t);
+  if(t==="S") return sorte(i, idx);
+  const acertou = await pergunta(i, t, idx);
   if(acertou){
     SOM.certo();
     if(t==="E"){ toast("Acertou o Desafio ENEM! +2 casas"); registra(`<b style="color:${e.cor}">${esc(e.nome)}</b> acertou o Desafio ENEM e avançou 2.`); await sleep(500); await anda(i, e.pos+2); if(e.pos===39) return vence(i); }
@@ -406,9 +421,34 @@ async function resolve(i, ant){
 function abre(html){ const v=$("veu"); v.innerHTML=html; v.hidden=false; return v; }
 function fecha(){ const v=$("veu"); v.hidden=true; v.innerHTML=""; }
 function cabecalho(cat, cod){ const c=CAT[cat]; return `<header><span class="ic">${ICONES[c.ic]}</span><h2>${c.nome}</h2>${cod?`<span class="cod">${cod}</span>`:""}</header>`; }
-function pergunta(i, cat){
+let pedidoN=0;
+function pedeCodigo(i, cat){
   return new Promise(resolver=>{
-    const e=S.equipes[i], c=tirar(cat), cor=CAT[cat].cor;
+    const e=S.equipes[i], ct=CAT[cat];
+    const v=abre(`<div class="carta pede-codigo" data-id="${++pedidoN}" style="--cor:${ct.cor}" role="dialog" aria-modal="true" aria-label="Código da carta">
+      ${cabecalho(cat)}
+      <div class="corpo"><span class="equipe-da-vez">Vez de ${esc(e.nome)}</span>Peguem uma carta <b>desta cor</b> da mesa e digitem o código impresso nela.</div>
+      <form class="codigo-form" id="fcod" autocomplete="off"><input id="icod" type="text" maxlength="5" placeholder="${cat} 47" autocapitalize="characters" spellcheck="false" enterkeyhint="go" aria-label="Código da carta"><button class="btn" type="submit">Ver carta</button></form>
+      <p class="erro-cod" id="ecod" role="alert" hidden></p>
+      <div class="acoes"><span class="espaco"></span><button class="btn sec" id="semCarta">Sortear na tela</button></div></div>`);
+    const erro = m => { const p=v.querySelector("#ecod"); p.textContent=m; p.hidden=false; SOM.errado(); };
+    window.usaCodigo = txt => {
+      const cod=normCod(txt), d=CODIGOS[cod];
+      if(cod.length<3) return erro("Digitem a letra e os dois números da carta.");
+      if(!d) return erro(`Não existe carta ${cod}. Confiram a letra e os números.`);
+      if(d.cat!==cat) return erro(`A carta ${cod} é de ${CAT[d.cat].nome}. Peguem uma carta de ${ct.nome}.`);
+      const rep = S.usadas.includes(cod); if(!rep) S.usadas.push(cod);
+      window.usaCodigo=null; fecha(); salvar(); if(rep) toast(`A carta ${cod} já tinha saído nesta partida.`, 2600); resolver(d.i);
+    };
+    v.querySelector("#fcod").onsubmit = ev => { ev.preventDefault(); usaCodigo(v.querySelector("#icod").value); };
+    v.querySelector("#icod").oninput = () => { v.querySelector("#ecod").hidden=true; };
+    v.querySelector("#semCarta").onclick = () => { window.usaCodigo=null; fecha(); resolver(tirarIdx(cat)); };
+    v.querySelector("#icod").focus();
+  });
+}
+function pergunta(i, cat, idx){
+  return new Promise(resolver=>{
+    const e=S.equipes[i], c=CARTAS[cat][idx], cor=CAT[cat].cor;
     const tempo = S.tempo ? (cat==="E" ? S.tempo*2 : S.tempo) : 0;
     const v=abre(`<div class="carta" style="--cor:${cor}" role="dialog" aria-modal="true" aria-label="${CAT[cat].nome}">
       ${cabecalho(cat,c.c)}
@@ -432,9 +472,9 @@ function pergunta(i, cat){
     v.querySelector("#ver").focus();
   });
 }
-function sorte(i){
+function sorte(i, idx){
   return new Promise(resolver=>{
-    const e=S.equipes[i], idx=S.baralhos.S[0], c=tirar("S"), ef=EFEITOS[idx];
+    const e=S.equipes[i], c=CARTAS.S[idx], ef=EFEITOS[idx];
     const outros = S.equipes.map((q,j)=>j).filter(j=>j!==i);
     const v=abre(`<div class="carta" style="--cor:var(--sorte)" role="dialog" aria-modal="true" aria-label="Sorte ou Revés">
       ${cabecalho("S",c.c)}
@@ -504,7 +544,7 @@ function previa(){ // peões esperando na Usina
 $("qtd").addEventListener("click",ev=>{ const b=ev.target.closest("[data-n]"); if(!b) return; qtd=+b.dataset.n; desenhaQtd(); previa(); });
 $("comecar").onclick=()=>{
   const nomes=Array.from({length:qtd},(_,i)=>($("nome"+i).value.trim()||"Equipe "+(i+1)));
-  S=novoEstado(nomes, +$("tempo").value); salvar();
+  S=novoEstado(nomes, +$("tempo").value, $("modoCartas").value==="1"); salvar();
   document.querySelectorAll(".peao").forEach(p=>p.remove());
   desenhaDado(1); desenhaPeoes(); marca(0); desenhaPainel(); toast("Boa sorte! "+nomes[0]+" começa.");
 };
@@ -524,7 +564,7 @@ $("bRegras").onclick=()=>{
   const v=abre(`<div class="carta" style="--cor:var(--pot)" role="dialog" aria-modal="true" aria-label="Regras"><header><span class="ic">${ICONES.raio}</span><h2>COMO JOGAR</h2></header>
    <div class="regras">
    <h3>Objetivo</h3>Levar a energia da <b>Usina</b> até a <b>Casa iluminada</b>. Vence a primeira equipe a chegar.
-   <h3>Na sua vez</h3><ul><li>Clique em <b>Jogar o dado</b>: o peão anda sozinho.</li><li>A cor da casa sorteia uma carta. O professor lê a pergunta; a equipe explica o raciocínio.</li>
+   <h3>Na sua vez</h3><ul><li>Clique em <b>Jogar o dado</b>: o peão anda sozinho.</li><li>A cor da casa sorteia uma carta. O professor lê a pergunta; a equipe explica o raciocínio.</li><li><b>Com cartas físicas:</b> a equipe pega uma carta da cor da casa e digita o código (no celular da equipe ou na mesa). A pergunta aparece na tela.</li>
    <li><b>Acertou:</b> fica na casa. <b>Errou:</b> volta para a casa de onde saiu.</li><li><b>Desafio ENEM:</b> quem acerta avança mais 2 casas.</li><li><b>Sorte ou Revés:</b> sem pergunta, cumpra a carta.</li></ul>
    <h3>Casas especiais</h3><ul><li><b>Atalho (linha de transmissão nova):</b> sobe pela seta verde.</li><li><b>Sobrecarga e curto-circuito:</b> desce pela seta vermelha.</li><li><b>Disjuntor:</b> uma rodada sem jogar. <b>Bandeira verde:</b> joga de novo.</li></ul>
    <h3>Para o professor</h3><ul><li><b>Ampliar tabuleiro</b> esconde o painel e deixa o tabuleiro do tamanho da tela; o dado fica num controle no canto. Use junto com <b>Tela cheia</b> no projetor.</li><li>Os botões <b>−</b> e <b>+</b> ao lado de cada equipe corrigem a posição do peão.</li><li>O jogo fica salvo neste navegador: se a página recarregar, continua de onde parou.</li><li>Sem calculadora, como no ENEM. Rascunho pode.</li></ul>
@@ -678,7 +718,7 @@ body.celular .vez .btn.grande:disabled{opacity:.6}
       byId("qrOk").onclick = () => v.remove(); byId("qrOk").focus();
     };
 
-    /* pedidos que chegam dos celulares (dados não confiáveis: só dois tipos aceitos) */
+    /* pedidos que chegam dos celulares (dados não confiáveis: só três tipos aceitos) */
     function recebe(conn, d){
       const info = conns.get(conn); if(!info || !d || typeof d!=="object") return;
       if (d.t === "equipe"){
@@ -687,6 +727,8 @@ body.celular .vez .btn.grande:disabled{opacity:.6}
         desenhaPainel();
       } else if (d.t === "rolar"){
         if (info.eq!==null && S && S.fase==="jogo" && info.eq===S.vez && !ocupado && byId("veu").hidden) jogar();
+      } else if (d.t === "codigo"){       // código da carta física digitado no celular da equipe da vez
+        if (info.eq!==null && S && info.eq===S.vez && typeof window.usaCodigo==="function") window.usaCodigo(String(d.cod||"").slice(0,8));
       }
     }
 
@@ -825,8 +867,11 @@ body.celular .vez .btn.grande:disabled{opacity:.6}
     }
     function mostraCarta(html, minhaVez){
       const v = byId("veu");
-      if (!html){ v.hidden=true; v.innerHTML=""; vitFechada=false; return; }
+      if (!html){ v.hidden=true; v.innerHTML=""; v.dataset.ped=""; vitFechada=false; return; }
       const t = document.createElement("div"); t.innerHTML = html;
+      const pc = t.querySelector(".pede-codigo");
+      if (pc) return pedeCodigoCel(v, t, pc, minhaVez);
+      v.dataset.ped = "";
       const vit = !!t.querySelector(".vitoria");
       if (vit && vitFechada) return;
       t.querySelectorAll(".acoes button, .acoes .espaco, .acoes .escolha, .acoes > span:not(.relogio)").forEach(b=>b.remove());
@@ -841,6 +886,32 @@ body.celular .vez .btn.grande:disabled{opacity:.6}
       if (vit && ac){ const b=document.createElement("button"); b.className="btn"; b.textContent="Ver o tabuleiro"; b.onclick=()=>{ vitFechada=true; v.hidden=true; }; ac.appendChild(b); }
       v.innerHTML = t.innerHTML; v.hidden = false;
       const b2 = v.querySelector(".acoes .btn"); if (b2) b2.onclick = () => { vitFechada=true; v.hidden=true; };
+    }
+    /* carta física: a equipe da vez digita o código aqui; as outras só aguardam */
+    function pedeCodigoCel(v, t, pc, minhaVez){
+      const id = pc.dataset.id + (minhaVez ? "v" : "o");
+      const erroMesa = t.querySelector("#ecod");
+      if (!v.hidden && v.dataset.ped === id){          // mesmo pedido: não apaga o que está sendo digitado
+        const e = v.querySelector("#ecod");
+        if (e && erroMesa){ e.textContent = erroMesa.textContent; e.hidden = erroMesa.hidden; }
+        return;
+      }
+      t.querySelectorAll(".acoes").forEach(a => a.remove());
+      if (!minhaVez){
+        t.querySelector("#fcod")?.remove();
+        const aviso = document.createElement("div"); aviso.className = "aviso-cel";
+        aviso.textContent = "A equipe da vez pega a carta e digita o código.";
+        pc.appendChild(aviso);
+      } else {
+        const sp = document.createElement("div"); sp.style.height = "20px"; pc.appendChild(sp);
+      }
+      v.innerHTML = t.innerHTML; v.hidden = false; v.dataset.ped = id;
+      if (minhaVez){
+        const f = v.querySelector("#fcod"), inp = v.querySelector("#icod");
+        f.onsubmit = ev => { ev.preventDefault(); if (conn && conn.open) conn.send({t:"codigo", cod: inp.value}); };
+        inp.oninput = () => { const e = v.querySelector("#ecod"); if (e) e.hidden = true; };
+        try{ inp.focus(); }catch(e){}
+      }
     }
     conecta();
   }
