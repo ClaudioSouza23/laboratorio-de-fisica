@@ -89,6 +89,22 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .equipe .nome{font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .equipe .info{font-size:12px;color:var(--suave)}
 .ajuste{display:flex;gap:4px}
+.numeros{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:8px 24px 4px}
+.numeros button{min-width:0;border:0;border-radius:18px;background:#fff;box-shadow:0 5px 0 #c9bfa5,0 0 0 3px var(--cor) inset;aspect-ratio:1.25;display:grid;place-items:center;padding:10px}
+.numeros button:disabled{opacity:.55;cursor:default}
+.numeros .dado{width:64px;height:64px;padding:10px;border-radius:14px;box-shadow:none;background:var(--creme)}
+.numeros .dado i{width:11px;height:11px}
+.nome-form{display:flex;gap:10px;padding:6px 24px 0}
+.nome-form input[type=text]{flex:1;min-width:0;font:800 24px/1.1 var(--display);padding:10px 12px;border-radius:12px;border:3px solid var(--cor);background:#fff;color:var(--tinta)}
+.ajuste .lapis{font-size:14px}
+@media (max-width:760px){
+  .numeros{gap:8px;padding:8px 14px 4px}
+  .numeros button{padding:6px;aspect-ratio:1}
+  .numeros .dado{width:100%;height:auto;aspect-ratio:1;padding:8px;gap:2px}
+  .numeros .dado i{width:9px;height:9px}
+  .nome-form,.codigo-form{padding-left:14px;padding-right:14px}
+  .codigo-form input[type=text]{font-size:32px}
+}
 .ajuste button{width:28px;height:28px;border-radius:8px;border:1px solid var(--linha);background:transparent;color:var(--suave);font-weight:800}
 .titulo-bloco{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:var(--suave);font-weight:800;margin:0 0 10px}
 .log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--suave);max-height:150px;overflow:auto}
@@ -132,7 +148,7 @@ input[type=text],select{width:100%;min-width:0;padding:9px 10px;border-radius:10
 .sorte-grande{display:grid;place-items:center;padding-top:6px}
 .sorte-grande svg{width:90px;height:90px}
 .codigo-form{display:flex;gap:10px;padding:6px 24px 0}
-.codigo-form input{flex:1;min-width:0;text-align:center;text-transform:uppercase;font:800 40px/1 var(--display);letter-spacing:.12em;
+.codigo-form input[type=text]{flex:1;min-width:0;text-align:center;text-transform:uppercase;font:800 40px/1 var(--display);letter-spacing:.12em;
   padding:10px 8px 4px;border-radius:14px;border:3px solid var(--cor);background:#fff;color:var(--tinta)}
 .codigo-form input::placeholder{color:#c3cad6}
 .codigo-form .btn{font:800 20px/1 var(--display);padding:0 22px}
@@ -210,6 +226,11 @@ canvas.confete{position:fixed;inset:0;width:100%;height:100%;pointer-events:none
         <select id="modoCartas">
           <option value="0">Sorteadas na tela</option>
           <option value="1">Cartas físicas na mesa (digitar o código)</option>
+        </select></div>
+      <div class="campo"><label for="modoDado">Dado</label>
+        <select id="modoDado">
+          <option value="0">Digital (sorteado na tela)</option>
+          <option value="1">Físico (a equipe joga e toca no número)</option>
         </select></div>
       <button class="btn grande" id="comecar">Começar o jogo</button>
     </section>
@@ -297,9 +318,9 @@ function carregar(){ try{ const t=localStorage.getItem("trilha-energia-v1"); ret
 // código impresso na carta física -> {cat, i}; 0 no início vira a letra O
 const CODIGOS = {}; for(const k of "PCOES") CARTAS[k].forEach((c,i)=>{ CODIGOS[c.c]={cat:k,i}; });
 function normCod(t){ return String(t||"").toUpperCase().replace(/[^A-Z0-9]/g,"").replace(/^0/,"O").slice(0,4); }
-function novoEstado(nomes, tempo, fisicas){
+function novoEstado(nomes, tempo, fisicas, dadoFisico){
   const baralhos = {}; for(const k of "PCOES") baralhos[k] = embaralha(CARTAS[k].map((_,i)=>i));
-  return {fase:"jogo", tempo, fisicas:!!fisicas, usadas:[], vez:0, baralhos,
+  return {fase:"jogo", tempo, fisicas:!!fisicas, dadoFisico:!!dadoFisico, usadas:[], vez:0, baralhos,
     equipes: nomes.map((n,i)=>({nome:n, cor:CORES[i], pos:0, pula:0})), log:["O jogo começou! Todos na Usina."]};
 }
 function tirarIdx(cat){ const b=S.baralhos[cat]; const i=b.shift(); b.push(i); salvar(); return i; }
@@ -359,9 +380,10 @@ function desenhaPainel(){
   $("lista").innerHTML = S.equipes.map((q,i)=>`<li class="equipe ${i===S.vez?"atual":""}">
      <span class="bola" style="background:${q.cor}">${i+1}</span>
      <span style="min-width:0"><span class="nome" style="display:block">${esc(q.nome)}</span><span class="info">${q.pos===0?"Na Usina":q.pos===39?"Chegou!":"Casa "+q.pos}${q.pula?" · perde a vez":""}</span></span>
-     <span class="ajuste"><button data-aj="${i}" data-d="-1" aria-label="Voltar ${esc(q.nome)} uma casa">−</button><button data-aj="${i}" data-d="1" aria-label="Avançar ${esc(q.nome)} uma casa">+</button></span></li>`).join("");
+     <span class="ajuste"><button class="lapis" data-nome="${i}" aria-label="Mudar o nome de ${esc(q.nome)}">✎</button><button data-aj="${i}" data-d="-1" aria-label="Voltar ${esc(q.nome)} uma casa">−</button><button data-aj="${i}" data-d="1" aria-label="Avançar ${esc(q.nome)} uma casa">+</button></span></li>`).join("");
   $("log").innerHTML = S.log.slice(0,12).map(t=>`<li>${t}</li>`).join("");
   $("jogar").disabled = ocupado || S.fase==="fim";
+  $("jogar").textContent = $("mjogar").textContent = S.dadoFisico ? "Informar o dado" : "Jogar o dado";
 }
 function esc(t){return String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function registra(t){ S.log.unshift(t); S.log=S.log.slice(0,30); salvar(); desenhaPainel(); }
@@ -379,9 +401,16 @@ async function pula(i, alvo){ const e=S.equipes[i]; e.pos=alvo; desenhaPeoes(i);
 async function jogar(){
   if(ocupado||S.fase!=="jogo") return; ocupado=true; desenhaPainel();
   const i=S.vez, e=S.equipes[i];
-  $("dado").classList.add("rolando"); $("dado2").classList.add("rolando"); let n=1;
-  for(let t=0;t<12;t++){ n=1+Math.floor(Math.random()*6); desenhaDado(n); SOM.dado(); await sleep(70); }
-  $("dado").classList.remove("rolando"); $("dado2").classList.remove("rolando");
+  let n=1;
+  if(S.dadoFisico){
+    n = await pedeNumero(i);
+    if(!n){ ocupado=false; desenhaPainel(); return; }
+    desenhaDado(n); SOM.dado(); await sleep(250);
+  } else {
+    $("dado").classList.add("rolando"); $("dado2").classList.add("rolando");
+    for(let t=0;t<12;t++){ n=1+Math.floor(Math.random()*6); desenhaDado(n); SOM.dado(); await sleep(70); }
+    $("dado").classList.remove("rolando"); $("dado2").classList.remove("rolando");
+  }
   const ant=e.pos; registra(`<b style="color:${e.cor}">${esc(e.nome)}</b> tirou ${n} no dado.`);
   await anda(i, ant+n);
   const denovo = await resolve(i, ant);
@@ -422,6 +451,38 @@ function abre(html){ const v=$("veu"); v.innerHTML=html; v.hidden=false; return 
 function fecha(){ const v=$("veu"); v.hidden=true; v.innerHTML=""; }
 function cabecalho(cat, cod){ const c=CAT[cat]; return `<header><span class="ic">${ICONES[c.ic]}</span><h2>${c.nome}</h2>${cod?`<span class="cod">${cod}</span>`:""}</header>`; }
 let pedidoN=0;
+// dado físico: a equipe joga o dado de verdade e toca no número que saiu (aqui ou no celular dela)
+function pedeNumero(i){
+  return new Promise(resolver=>{
+    const e=S.equipes[i];
+    const v=abre(`<div class="carta pede-dado" data-id="${++pedidoN}" style="--cor:${e.cor}" role="dialog" aria-modal="true" aria-label="Número do dado">
+      <header><span class="ic">${ICONES.raio}</span><h2>QUANTO SAIU NO DADO?</h2></header>
+      <div class="corpo" style="padding-bottom:4px"><span class="equipe-da-vez">Vez de ${esc(e.nome)}</span>Joguem o dado na mesa e toquem no número que saiu.</div>
+      <div class="numeros">${[1,2,3,4,5,6].map(n=>`<button data-num="${n}" aria-label="${n}"><span class="dado">${Array.from({length:9},(_,k)=>`<i class="${PIPS[n].includes(k)?"on":""}"></i>`).join("")}</span></button>`).join("")}</div>
+      <div class="acoes"><span class="espaco"></span><button class="btn sec" id="cancDado">Cancelar</button></div></div>`);
+    window.usaDado = n => { n=Number(n); if(!Number.isInteger(n)||n<1||n>6) return; window.usaDado=null; fecha(); resolver(n); };
+    v.querySelectorAll("[data-num]").forEach(b=>b.onclick=()=>usaDado(+b.dataset.num));
+    v.querySelector("#cancDado").onclick=()=>{ window.usaDado=null; fecha(); resolver(0); };
+  });
+}
+// trocar o nome de uma equipe (pela mesa ou a pedido do celular da equipe)
+function limpaNome(t){ return String(t||"").replace(/\s+/g," ").trim().slice(0,22); }
+function renomeia(i, nome){
+  const e=S.equipes[i], novo=limpaNome(nome); if(!e||!novo||novo===e.nome) return;
+  const ant=e.nome; e.nome=novo; registra(`<b style="color:${e.cor}">${esc(ant)}</b> agora se chama <b style="color:${e.cor}">${esc(novo)}</b>.`);
+  desenhaPeoes(); salvar(); desenhaPainel();
+}
+function editaNome(i){
+  const e=S.equipes[i];
+  const v=abre(`<div class="carta" style="--cor:${e.cor}" role="dialog" aria-modal="true" aria-label="Nome da equipe">
+    <header><span class="ic">${ICONES.raio}</span><h2>NOME DA EQUIPE ${i+1}</h2></header>
+    <form class="nome-form" id="fnome" autocomplete="off" style="padding-top:20px"><input id="inome" type="text" maxlength="22" value="${esc(e.nome)}" aria-label="Nome da equipe"></form>
+    <div class="acoes"><span class="espaco"></span><button class="btn sec" id="ncanc">Cancelar</button><button class="btn" id="nok">Salvar</button></div></div>`);
+  const ok=()=>{ const n=v.querySelector("#inome").value; fecha(); renomeia(i,n); };
+  v.querySelector("#fnome").onsubmit=ev=>{ev.preventDefault();ok();};
+  v.querySelector("#nok").onclick=ok; v.querySelector("#ncanc").onclick=fecha;
+  const inp=v.querySelector("#inome"); inp.focus(); inp.select();
+}
 function pedeCodigo(i, cat){
   return new Promise(resolver=>{
     const e=S.equipes[i], ct=CAT[cat];
@@ -544,7 +605,7 @@ function previa(){ // peões esperando na Usina
 $("qtd").addEventListener("click",ev=>{ const b=ev.target.closest("[data-n]"); if(!b) return; qtd=+b.dataset.n; desenhaQtd(); previa(); });
 $("comecar").onclick=()=>{
   const nomes=Array.from({length:qtd},(_,i)=>($("nome"+i).value.trim()||"Equipe "+(i+1)));
-  S=novoEstado(nomes, +$("tempo").value, $("modoCartas").value==="1"); salvar();
+  S=novoEstado(nomes, +$("tempo").value, $("modoCartas").value==="1", $("modoDado").value==="1"); salvar();
   document.querySelectorAll(".peao").forEach(p=>p.remove());
   desenhaDado(1); desenhaPeoes(); marca(0); desenhaPainel(); toast("Boa sorte! "+nomes[0]+" começa.");
 };
@@ -552,7 +613,8 @@ $("jogar").onclick=jogar;
 $("mjogar").onclick=jogar;
 $("bAmpliar").onclick=()=>amplia(true);
 $("mpainel").onclick=()=>amplia(false);
-$("lista").addEventListener("click",async ev=>{ const b=ev.target.closest("[data-aj]"); if(!b||ocupado) return;
+$("lista").addEventListener("click",async ev=>{ const bn=ev.target.closest("[data-nome]"); if(bn){ if(!ocupado&&$("veu").hidden) editaNome(+bn.dataset.nome); return; }
+  const b=ev.target.closest("[data-aj]"); if(!b||ocupado) return;
   const i=+b.dataset.aj, e=S.equipes[i]; e.pos=Math.max(0,Math.min(39,e.pos+(+b.dataset.d))); desenhaPeoes(i); marca(e.pos); salvar(); desenhaPainel(); });
 $("bNovo").onclick=()=>{
   const v=abre(`<div class="carta" style="--cor:var(--esp)" role="dialog" aria-modal="true" aria-label="Novo jogo"><header><span class="ic">${ICONES.interroga}</span><h2>COMEÇAR DE NOVO?</h2></header>
@@ -564,10 +626,10 @@ $("bRegras").onclick=()=>{
   const v=abre(`<div class="carta" style="--cor:var(--pot)" role="dialog" aria-modal="true" aria-label="Regras"><header><span class="ic">${ICONES.raio}</span><h2>COMO JOGAR</h2></header>
    <div class="regras">
    <h3>Objetivo</h3>Levar a energia da <b>Usina</b> até a <b>Casa iluminada</b>. Vence a primeira equipe a chegar.
-   <h3>Na sua vez</h3><ul><li>Clique em <b>Jogar o dado</b>: o peão anda sozinho.</li><li>A cor da casa sorteia uma carta. O professor lê a pergunta; a equipe explica o raciocínio.</li><li><b>Com cartas físicas:</b> a equipe pega uma carta da cor da casa e digita o código (no celular da equipe ou na mesa). A pergunta aparece na tela.</li>
+   <h3>Na sua vez</h3><ul><li>Clique em <b>Jogar o dado</b>: o peão anda sozinho.</li><li>A cor da casa sorteia uma carta. O professor lê a pergunta; a equipe explica o raciocínio.</li><li><b>Com dado físico:</b> a equipe joga o dado na mesa e toca no número que saiu (no celular dela ou na mesa).</li><li><b>Com cartas físicas:</b> a equipe pega uma carta da cor da casa e digita o código (no celular da equipe ou na mesa). A pergunta aparece na tela.</li>
    <li><b>Acertou:</b> fica na casa. <b>Errou:</b> volta para a casa de onde saiu.</li><li><b>Desafio ENEM:</b> quem acerta avança mais 2 casas.</li><li><b>Sorte ou Revés:</b> sem pergunta, cumpra a carta.</li></ul>
    <h3>Casas especiais</h3><ul><li><b>Atalho (linha de transmissão nova):</b> sobe pela seta verde.</li><li><b>Sobrecarga e curto-circuito:</b> desce pela seta vermelha.</li><li><b>Disjuntor:</b> uma rodada sem jogar. <b>Bandeira verde:</b> joga de novo.</li></ul>
-   <h3>Para o professor</h3><ul><li><b>Ampliar tabuleiro</b> esconde o painel e deixa o tabuleiro do tamanho da tela; o dado fica num controle no canto. Use junto com <b>Tela cheia</b> no projetor.</li><li>Os botões <b>−</b> e <b>+</b> ao lado de cada equipe corrigem a posição do peão.</li><li>O jogo fica salvo neste navegador: se a página recarregar, continua de onde parou.</li><li>Sem calculadora, como no ENEM. Rascunho pode.</li></ul>
+   <h3>Para o professor</h3><ul><li><b>Ampliar tabuleiro</b> esconde o painel e deixa o tabuleiro do tamanho da tela; o dado fica num controle no canto. Use junto com <b>Tela cheia</b> no projetor.</li><li>Os botões <b>−</b> e <b>+</b> ao lado de cada equipe corrigem a posição do peão; o <b>✎</b> muda o nome da equipe.</li><li>O jogo fica salvo neste navegador: se a página recarregar, continua de onde parou.</li><li>Sem calculadora, como no ENEM. Rascunho pode.</li></ul>
    </div><div class="acoes"><span class="espaco"></span><button class="btn" id="ok">Entendi</button></div></div>`);
   v.querySelector("#ok").onclick=fecha; v.querySelector("#ok").focus();
 };
@@ -718,7 +780,7 @@ body.celular .vez .btn.grande:disabled{opacity:.6}
       byId("qrOk").onclick = () => v.remove(); byId("qrOk").focus();
     };
 
-    /* pedidos que chegam dos celulares (dados não confiáveis: só três tipos aceitos) */
+    /* pedidos que chegam dos celulares (dados não confiáveis: só estes tipos são aceitos) */
     function recebe(conn, d){
       const info = conns.get(conn); if(!info || !d || typeof d!=="object") return;
       if (d.t === "equipe"){
@@ -727,6 +789,10 @@ body.celular .vez .btn.grande:disabled{opacity:.6}
         desenhaPainel();
       } else if (d.t === "rolar"){
         if (info.eq!==null && S && S.fase==="jogo" && info.eq===S.vez && !ocupado && byId("veu").hidden) jogar();
+      } else if (d.t === "dado"){         // número do dado físico, tocado no celular da equipe da vez
+        if (info.eq!==null && S && info.eq===S.vez && typeof window.usaDado==="function") window.usaDado(Number(d.n));
+      } else if (d.t === "nome"){         // a equipe muda o próprio nome
+        if (info.eq!==null && S && S.equipes && S.equipes[info.eq]) renomeia(info.eq, String(d.txt||"").slice(0,40));
       } else if (d.t === "codigo"){       // código da carta física digitado no celular da equipe da vez
         if (info.eq!==null && S && info.eq===S.vez && typeof window.usaCodigo==="function") window.usaCodigo(String(d.cod||"").slice(0,8));
       }
@@ -736,7 +802,7 @@ body.celular .vez .btn.grande:disabled{opacity:.6}
     function foto(){
       const v = byId("veu");
       return { t:"estado",
-        S: S ? { fase:S.fase, vez:S.vez, equipes:S.equipes||[], log:(S.log||[]).slice(0,8) } : null,
+        S: S ? { fase:S.fase, vez:S.vez, dadoFisico:!!S.dadoFisico, equipes:S.equipes||[], log:(S.log||[]).slice(0,8) } : null,
         dado: ultimoDado, rolando: byId("dado").classList.contains("rolando"), ocupado,
         ring: ultimoRing, veu: v.hidden ? null : v.innerHTML };
     }
@@ -771,7 +837,7 @@ body.celular .vez .btn.grande:disabled{opacity:.6}
     const caixa = secao(`<p class="titulo-bloco">Sala ${cod}</p>
       <div class="eu" id="celEu"></div>
       <div class="status" id="celStatus">Conectando…</div>
-      <div class="linha"><button class="btn sec" id="bTroca" hidden>Trocar de equipe</button><a class="btn sec" href="${location.pathname}" style="text-decoration:none">Sair da sala</a></div>`);
+      <div class="linha"><button class="btn sec" id="bNome" hidden>Mudar o nome</button><button class="btn sec" id="bTroca" hidden>Trocar de equipe</button><a class="btn sec" href="${location.pathname}" style="text-decoration:none">Sair da sala</a></div>`);
     painel.insertBefore(caixa, painel.children[1]);
     const status = t => { byId("celStatus").textContent = t; };
     const chave = "trilha-eq-" + cod;
@@ -785,6 +851,26 @@ body.celular .vez .btn.grande:disabled{opacity:.6}
     const pedeDado = () => { if (conn && conn.open) conn.send({t:"rolar"}); };
     window.jogar = pedeDado; byId("jogar").onclick = pedeDado; byId("mjogar").onclick = pedeDado;
     byId("bTroca").onclick = () => escolhe(null, true);
+    byId("bNome").onclick = () => pedeNome();
+
+    /* nome da equipe: oferecido logo depois de escolher a equipe e pelo botão "Mudar o nome" */
+    function pedeNome(){
+      const eq = (minha!==null && minha>=0) ? S.equipes[minha] : null;
+      if (!eq || byId("nomeVeu")) return;
+      const v=document.createElement("div"); v.className="veu"; v.id="nomeVeu";
+      v.innerHTML = `<div class="carta" style="--cor:${eq.cor}" role="dialog" aria-modal="true" aria-label="Nome da equipe">
+        <header><span class="ic">${ICONES.raio}</span><h2>NOME DA EQUIPE</h2></header>
+        <div class="corpo" style="padding-bottom:6px">Querem dar um nome para a equipe ${minha+1}?</div>
+        <form class="nome-form" id="fnomeCel" autocomplete="off"><input id="inomeCel" type="text" maxlength="22" value="${esc(eq.nome)}" aria-label="Nome da equipe"></form>
+        <div class="acoes"><span class="espaco"></span><button class="btn sec" id="nManter">Manter</button><button class="btn" id="nSalvar">Salvar nome</button></div></div>`;
+      document.body.appendChild(v);
+      const inp = v.querySelector("#inomeCel");
+      const salva = () => { const n = inp.value.replace(/\s+/g," ").trim(); if (n && conn && conn.open) conn.send({t:"nome", txt:n}); v.remove(); };
+      v.querySelector("#fnomeCel").onsubmit = ev => { ev.preventDefault(); salva(); };
+      v.querySelector("#nSalvar").onclick = salva;
+      v.querySelector("#nManter").onclick = () => v.remove();
+      try{ inp.focus(); inp.select(); }catch(e){}
+    }
 
     function escolhe(i, abrir){
       minha = i; if(i===null) { try{ localStorage.removeItem(chave); }catch(e){} } else guarda(chave, String(i));
@@ -800,7 +886,7 @@ body.celular .vez .btn.grande:disabled{opacity:.6}
         <div class="escolha-equipe">${S.equipes.map((e,i)=>`<button data-eq="${i}"><span class="bola" style="background:${e.cor}">${i+1}</span>${esc(e.nome)}</button>`).join("")}
         <button class="so-ver" data-eq="-1">Só assistir</button></div></div>`;
       document.body.appendChild(v);
-      v.querySelectorAll("[data-eq]").forEach(b => b.onclick = () => escolhe(Number(b.dataset.eq)));
+      v.querySelectorAll("[data-eq]").forEach(b => b.onclick = () => { const i=Number(b.dataset.eq); escolhe(i); if (i>=0) pedeNome(); });
     }
 
     function conecta(){
@@ -853,13 +939,15 @@ body.celular .vez .btn.grande:disabled{opacity:.6}
       const minhaVez = !!eq && S.fase==="jogo" && S.vez===minha;
       const pode = conectado && minhaVez && !ocupado && !d.veu;
       byId("jogar").disabled = !pode; byId("mjogar").disabled = !pode;
-      byId("jogar").textContent = pode ? "Jogar o dado" : "Aguarde";
+      byId("jogar").textContent = pode ? (S.dadoFisico ? "Informar o dado" : "Jogar o dado") : "Aguarde";
+      byId("mjogar").textContent = S.dadoFisico ? "Informar o dado" : "Jogar o dado";
       if (S.fase==="jogo" && S.equipes[S.vez]) byId("quem").textContent = minhaVez ? "Sua vez!" : "Vez de " + S.equipes[S.vez].nome;
       if (minhaVez && !eraMinha && navigator.vibrate) { try{ navigator.vibrate([120,60,120]); }catch(e){} }
       eraMinha = minhaVez;
-      byId("celEu").textContent = eq ? "Você joga pela " + eq.nome : (minha===-1 ? "Você está assistindo" : "");
+      byId("celEu").textContent = eq ? "Sua equipe: " + eq.nome : (minha===-1 ? "Você está assistindo" : "");
       byId("celEu").style.color = eq ? eq.cor : "";
       byId("bTroca").hidden = !(conectado && S.equipes.length);
+      byId("bNome").hidden = !(conectado && eq);
       if (S.fase==="config") status(conectado ? "Conectado. Aguardando o professor começar o jogo." : byId("celStatus").textContent);
       else if (conectado) status("Conectado à mesa do professor.");
       mostraCarta(d.veu, minhaVez);
@@ -871,6 +959,8 @@ body.celular .vez .btn.grande:disabled{opacity:.6}
       const t = document.createElement("div"); t.innerHTML = html;
       const pc = t.querySelector(".pede-codigo");
       if (pc) return pedeCodigoCel(v, t, pc, minhaVez);
+      const pd = t.querySelector(".pede-dado");
+      if (pd) return pedeDadoCel(v, t, pd, minhaVez);
       v.dataset.ped = "";
       const vit = !!t.querySelector(".vitoria");
       if (vit && vitFechada) return;
@@ -886,6 +976,22 @@ body.celular .vez .btn.grande:disabled{opacity:.6}
       if (vit && ac){ const b=document.createElement("button"); b.className="btn"; b.textContent="Ver o tabuleiro"; b.onclick=()=>{ vitFechada=true; v.hidden=true; }; ac.appendChild(b); }
       v.innerHTML = t.innerHTML; v.hidden = false;
       const b2 = v.querySelector(".acoes .btn"); if (b2) b2.onclick = () => { vitFechada=true; v.hidden=true; };
+    }
+    /* dado físico: a equipe da vez toca no número que saiu; as outras só aguardam */
+    function pedeDadoCel(v, t, pd, minhaVez){
+      const id = "d" + pd.dataset.id + (minhaVez ? "v" : "o");
+      if (!v.hidden && v.dataset.ped === id) return;
+      t.querySelectorAll(".acoes").forEach(a => a.remove());
+      const aviso = document.createElement("div"); aviso.className = "aviso-cel";
+      aviso.textContent = minhaVez ? "Toquem no número que saiu no dado." : "A equipe da vez joga o dado e toca no número.";
+      pd.querySelector(".numeros").before(aviso);
+      if (!minhaVez) pd.querySelectorAll("[data-num]").forEach(b => b.disabled = true);
+      const sp = document.createElement("div"); sp.style.height = "20px"; pd.appendChild(sp);
+      v.innerHTML = t.innerHTML; v.hidden = false; v.dataset.ped = id;
+      if (minhaVez) v.querySelectorAll("[data-num]").forEach(b => b.onclick = () => {
+        if (conn && conn.open) conn.send({t:"dado", n:Number(b.dataset.num)});
+        v.querySelectorAll("[data-num]").forEach(x => x.disabled = true);
+      });
     }
     /* carta física: a equipe da vez digita o código aqui; as outras só aguardam */
     function pedeCodigoCel(v, t, pc, minhaVez){
