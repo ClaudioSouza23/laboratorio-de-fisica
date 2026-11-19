@@ -97,6 +97,19 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .nome-form{display:flex;gap:10px;padding:6px 24px 0}
 .nome-form input[type=text]{flex:1;min-width:0;font:800 24px/1.1 var(--display);padding:10px 12px;border-radius:12px;border:3px solid var(--cor);background:#fff;color:var(--tinta)}
 .ajuste .lapis{font-size:14px}
+.desafio .letra{display:inline-block;min-width:1.4em;text-align:center;background:var(--esp);color:#fff;border-radius:10px;padding:0 .2em;font-family:var(--display)}
+.regra-voto{margin:12px 24px 0;padding:12px 14px;border-radius:14px;background:#fdeef0;border:2px dashed var(--esp);font-size:16px;line-height:1.4}
+.votacao .vprog{display:block;margin-top:6px;font:800 22px/1 var(--display);color:var(--esp)}
+.resultado-voto .barra{height:22px;border-radius:11px;background:#f1c6cc;overflow:hidden}
+.resultado-voto .barra span{display:block;height:100%;background:#2fb565;border-radius:11px;transition:width .6s}
+.resultado-voto .pct{margin-top:8px;font:800 26px/1.1 var(--display)}
+.resultado-voto .pct small{font:700 14px var(--corpo);color:#5b6478}
+.resultado-voto .veredito{margin-top:6px;font:800 20px/1.2 var(--display)}
+.resultado-voto.ok .veredito{color:#1b7a41}
+.resultado-voto.nao .veredito{color:#b3202e}
+.voto-cel{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 24px 0}
+.voto-cel .btn{font:800 20px/1 var(--display);padding:16px 8px}
+.voto-ok{margin:14px 24px 0;padding:12px 14px;border-radius:12px;background:#e3f6ea;color:#1b5e36;font-weight:800;text-align:center}
 @media (max-width:760px){
   .numeros{gap:8px;padding:8px 14px 4px}
   .numeros button{padding:6px;aspect-ratio:1}
@@ -227,6 +240,11 @@ canvas.confete{position:fixed;inset:0;width:100%;height:100%;pointer-events:none
           <option value="0">Sorteadas na tela</option>
           <option value="1">Cartas físicas na mesa (digitar o código)</option>
         </select></div>
+      <div class="campo"><label for="modoErro">Quando a equipe erra</label>
+        <select id="modoErro">
+          <option value="1">Desafio de resgate (a turma vota)</option>
+          <option value="0">Volta direto para a casa de onde saiu</option>
+        </select></div>
       <div class="campo"><label for="modoDado">Dado</label>
         <select id="modoDado">
           <option value="0">Digital (sorteado na tela)</option>
@@ -318,9 +336,9 @@ function carregar(){ try{ const t=localStorage.getItem("trilha-energia-v1"); ret
 // código impresso na carta física -> {cat, i}; 0 no início vira a letra O
 const CODIGOS = {}; for(const k of "PCOES") CARTAS[k].forEach((c,i)=>{ CODIGOS[c.c]={cat:k,i}; });
 function normCod(t){ return String(t||"").toUpperCase().replace(/[^A-Z0-9]/g,"").replace(/^0/,"O").slice(0,4); }
-function novoEstado(nomes, tempo, fisicas, dadoFisico){
+function novoEstado(nomes, tempo, fisicas, dadoFisico, resgate){
   const baralhos = {}; for(const k of "PCOES") baralhos[k] = embaralha(CARTAS[k].map((_,i)=>i));
-  return {fase:"jogo", tempo, fisicas:!!fisicas, dadoFisico:!!dadoFisico, usadas:[], vez:0, baralhos,
+  return {fase:"jogo", tempo, fisicas:!!fisicas, dadoFisico:!!dadoFisico, resgate:!!resgate, usadas:[], vez:0, baralhos,
     equipes: nomes.map((n,i)=>({nome:n, cor:CORES[i], pos:0, pula:0})), log:["O jogo começou! Todos na Usina."]};
 }
 function tirarIdx(cat){ const b=S.baralhos[cat]; const i=b.shift(); b.push(i); salvar(); return i; }
@@ -440,7 +458,9 @@ async function resolve(i, ant){
     if(t==="E"){ toast("Acertou o Desafio ENEM! +2 casas"); registra(`<b style="color:${e.cor}">${esc(e.nome)}</b> acertou o Desafio ENEM e avançou 2.`); await sleep(500); await anda(i, e.pos+2); if(e.pos===39) return vence(i); }
     else { toast("Acertou! Fica na casa."); registra(`<b style="color:${e.cor}">${esc(e.nome)}</b> acertou.`); }
   } else {
-    SOM.errado(); toast("Errou! Volta para a casa de onde saiu."); registra(`<b style="color:${e.cor}">${esc(e.nome)}</b> errou e voltou para a casa ${ant}.`);
+    SOM.errado();
+    if(S.resgate && await desafio(i)) return false;
+    toast("Errou! Volta para a casa de onde saiu."); registra(`<b style="color:${e.cor}">${esc(e.nome)}</b> errou e voltou para a casa ${ant}.`);
     await sleep(500); await anda(i, ant);
   }
   return false;
@@ -463,6 +483,96 @@ function pedeNumero(i){
     window.usaDado = n => { n=Number(n); if(!Number.isInteger(n)||n<1||n>6) return; window.usaDado=null; fecha(); resolver(n); };
     v.querySelectorAll("[data-num]").forEach(b=>b.onclick=()=>usaDado(+b.dataset.num));
     v.querySelector("#cancDado").onclick=()=>{ window.usaDado=null; fecha(); resolver(0); };
+  });
+}
+/* ---------- desafio de resgate: quem erra pode cumprir um desafio; os outros grupos votam (anônimo) ---------- */
+const DESAFIOS = [
+  {t:"Dancem uma coreografia inventada na hora, com a equipe toda!", s:20},
+  {t:"Cantem o refrão de uma música que tenha a palavra “{p}”.", s:40, p:["luz","sol","amor","coração","noite","céu","lua"]},
+  {t:"Digam 4 nomes de animais que começam com a letra {L}.", s:30, L:"ABCGJLMPST"},
+  {t:"Digam 3 frutas que começam com a letra {L}.", s:30, L:"ABCGJLMP"},
+  {t:"Digam 3 aparelhos elétricos que começam com a letra {L}.", s:30, L:"ACFLMT"},
+  {t:"Digam 3 cidades do Ceará que começam com a letra {L}.", s:30, L:"ABCIJMP"},
+  {t:"Encontrem a palavra “{p}” em um livro ou caderno.", s:60, p:["energia","corrente","tempo","água","luz","casa","força"]},
+  {t:"Digam 4 palavras que rimam com “{p}”.", s:30, p:["tensão","corrente","energia","calor","luz"]},
+  {t:"Imitem um animal sem falar nada. A turma tem que adivinhar qual é!", s:30},
+  {t:"Façam uma propaganda bem animada pedindo para a escola economizar energia.", s:30},
+  {t:"Falem 3 vezes seguidas, sem errar: “{p}”", s:30, p:["O rato roeu a roupa do rei de Roma.","Três pratos de trigo para três tigres tristes.","O peito do pé de Pedro é preto."]},
+  {t:"Virem estátuas! Ninguém da equipe pode rir enquanto a turma tenta fazer vocês rirem.", s:20},
+  {t:"Expliquem a resposta certa da pergunta como se fossem narradores de futebol!", s:40},
+  {t:"Desenhem no quadro um aparelho elétrico. A turma tem que adivinhar qual é.", s:40}
+];
+const sorteia = a => a[Math.floor(Math.random()*a.length)];
+function sorteiaDesafio(){
+  let k; do{ k=Math.floor(Math.random()*DESAFIOS.length); }while(DESAFIOS.length>1 && k===S.ultDesafio);
+  S.ultDesafio=k; const d=DESAFIOS[k];
+  return {txt: d.t.replace("{p}", d.p?sorteia(d.p):"").replace("{L}", d.L?`<b class="letra">${sorteia([...d.L])}</b>`:""), s:d.s};
+}
+let votacao=null;   // {id, sim, nao, quem:Set}: só contagens; ninguém vê quem votou o quê
+window.registraVoto = (chave, id, v) => {
+  if(!votacao || votacao.fechada || votacao.id!==id || votacao.quem.has(chave)) return;
+  votacao.quem.add(chave); if(v) votacao.sim++; else votacao.nao++; votacao.atualiza();
+};
+function desafio(i){
+  return new Promise(resolver=>{
+    const e=S.equipes[i], d=sorteiaDesafio(), id=++pedidoN, nome=`<b style="color:${e.cor}">${esc(e.nome)}</b>`;
+    let timer=null;
+    const v=abre(`<div class="carta desafio" data-id="${id}" style="--cor:var(--esp)" role="dialog" aria-modal="true" aria-label="Desafio de resgate">
+      <header><span class="ic">${ICONES.interroga.replace("#d69600","#c81e3c")}</span><h2>DESAFIO DE RESGATE</h2></header>
+      <div class="corpo"><span class="equipe-da-vez">${esc(e.nome)} errou, mas pode ficar na casa!</span>${d.txt}</div>
+      <div class="regra-voto" id="dzona">Depois do desafio, os outros grupos votam se valeu. Com <b>mais de 50%</b> de aprovação, a equipe fica na casa.</div>
+      <div class="acoes" id="dacoes">
+        <span class="relogio" id="rel"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" stroke-opacity=".2" stroke-width="5"/><circle id="arco" cx="20" cy="20" r="16" fill="none" stroke="currentColor" stroke-width="5" stroke-dasharray="100.5" stroke-dashoffset="0" stroke-linecap="round"/></svg><span id="seg">${d.s}s</span></span>
+        <button class="btn sec" id="dcomeca">Começar o tempo</button>
+        <span class="espaco"></span>
+        <button class="btn nao" id="ddesiste">Não vão fazer</button>
+        <button class="btn" id="dvota">Abrir votação</button>
+      </div></div>`);
+    const zona=v.querySelector("#dzona"), acoes=v.querySelector("#dacoes");
+    const fim = (ok, pct) => {
+      clearInterval(timer); votacao=null; fecha();
+      if(ok) registra(`${nome} cumpriu o desafio de resgate${pct!=null?` (${pct}% de aprovação)`:""} e ficou na casa.`);
+      resolver(ok);
+    };
+    const porMao = msg => {   // ninguém conectado (ou ninguém votou): a turma decide levantando a mão
+      votacao=null;
+      zona.innerHTML = msg + ` A turma decide: <b>levantem a mão</b> se o desafio valeu.`;
+      acoes.innerHTML = `<span class="espaco"></span><button class="btn nao" id="dnao">Não valeu</button><button class="btn ok" id="dsim">Valeu!</button>`;
+      acoes.querySelector("#dsim").onclick=()=>mostraResultado(1,0,true); acoes.querySelector("#dnao").onclick=()=>mostraResultado(0,1,true);
+    };
+    v.querySelector("#dcomeca").onclick = () => {
+      if(timer) return; let rest=d.s; v.querySelector("#dcomeca").hidden=true;
+      timer=setInterval(()=>{ rest--; const s=v.querySelector("#seg"); if(!s){clearInterval(timer);return;}
+        s.textContent=Math.max(rest,0); v.querySelector("#arco").setAttribute("stroke-dashoffset",(100.5*(1-rest/d.s)).toFixed(1));
+        if(rest<=0){ clearInterval(timer); v.querySelector("#rel").classList.add("fim"); s.textContent="Tempo!"; SOM.tempo(); } },1000);
+    };
+    v.querySelector("#ddesiste").onclick = () => fim(false);
+    v.querySelector("#dvota").onclick = () => {
+      clearInterval(timer);
+      const n = window.eleitores ? window.eleitores() : 0;
+      if(!n) return porMao("");
+      votacao = {id, sim:0, nao:0, quem:new Set(), atualiza(){
+        const t=this.sim+this.nao, p=zona.querySelector("#vprog"); if(p) p.textContent=`${t} de ${n} voto${n>1?"s":""}`;
+        if(t>=n) encerra();
+      }};
+      zona.innerHTML = `<div class="votacao" data-id="${id}"><b>Votação anônima:</b> os outros grupos votam no celular se o desafio valeu.<span class="vprog" id="vprog">0 de ${n} voto${n>1?"s":""}</span></div>`;
+      acoes.innerHTML = `<span class="espaco"></span><button class="btn" id="dencerra">Encerrar votação</button>`;
+      acoes.querySelector("#dencerra").onclick=encerra;
+    };
+    function encerra(){
+      if(!votacao||votacao.fechada) return; votacao.fechada=true;
+      if(votacao.sim+votacao.nao===0) return porMao("Ninguém votou.");
+      mostraResultado(votacao.sim, votacao.nao, false);
+    }
+    function mostraResultado(sim, nao, mao){
+      const tot=sim+nao, pct=Math.round(100*sim/tot), ok=sim/tot>0.5;
+      zona.innerHTML = `<div class="resultado-voto ${ok?"ok":"nao"}">
+        ${mao?"":`<div class="barra"><span style="width:${pct}%"></span></div><div class="pct">${pct}% de aprovação <small>(${sim} valeu · ${nao} não valeu)</small></div>`}
+        <div class="veredito">${ok?"Valeu! A equipe fica na casa.":"Não foi dessa vez: a equipe volta."}</div></div>`;
+      (ok?SOM.certo:SOM.errado)();
+      acoes.innerHTML = `<span class="espaco"></span><button class="btn" id="dcont">Continuar</button>`;
+      acoes.querySelector("#dcont").onclick=()=>fim(ok, mao?null:pct);
+    }
   });
 }
 // trocar o nome de uma equipe (pela mesa ou a pedido do celular da equipe)
@@ -605,7 +715,7 @@ function previa(){ // peões esperando na Usina
 $("qtd").addEventListener("click",ev=>{ const b=ev.target.closest("[data-n]"); if(!b) return; qtd=+b.dataset.n; desenhaQtd(); previa(); });
 $("comecar").onclick=()=>{
   const nomes=Array.from({length:qtd},(_,i)=>($("nome"+i).value.trim()||"Equipe "+(i+1)));
-  S=novoEstado(nomes, +$("tempo").value, $("modoCartas").value==="1", $("modoDado").value==="1"); salvar();
+  S=novoEstado(nomes, +$("tempo").value, $("modoCartas").value==="1", $("modoDado").value==="1", $("modoErro").value==="1"); salvar();
   document.querySelectorAll(".peao").forEach(p=>p.remove());
   desenhaDado(1); desenhaPeoes(); marca(0); desenhaPainel(); toast("Boa sorte! "+nomes[0]+" começa.");
 };
@@ -627,7 +737,7 @@ $("bRegras").onclick=()=>{
    <div class="regras">
    <h3>Objetivo</h3>Levar a energia da <b>Usina</b> até a <b>Casa iluminada</b>. Vence a primeira equipe a chegar.
    <h3>Na sua vez</h3><ul><li>Clique em <b>Jogar o dado</b>: o peão anda sozinho.</li><li>A cor da casa sorteia uma carta. O professor lê a pergunta; a equipe explica o raciocínio.</li><li><b>Com dado físico:</b> a equipe joga o dado na mesa e toca no número que saiu (no celular dela ou na mesa).</li><li><b>Com cartas físicas:</b> a equipe pega uma carta da cor da casa e digita o código (no celular da equipe ou na mesa). A pergunta aparece na tela.</li>
-   <li><b>Acertou:</b> fica na casa. <b>Errou:</b> volta para a casa de onde saiu.</li><li><b>Desafio ENEM:</b> quem acerta avança mais 2 casas.</li><li><b>Sorte ou Revés:</b> sem pergunta, cumpra a carta.</li></ul>
+   <li><b>Acertou:</b> fica na casa. <b>Errou:</b> volta para a casa de onde saiu.</li><li><b>Desafio ENEM:</b> quem acerta avança mais 2 casas.</li><li><b>Desafio de resgate:</b> quem erra pode cumprir um desafio (dançar, cantar, dizer nomes com uma letra…). Os outros grupos votam no celular, sem ninguém saber quem votou. Com mais de 50% de aprovação, a equipe fica na casa.</li><li><b>Sorte ou Revés:</b> sem pergunta, cumpra a carta.</li></ul>
    <h3>Casas especiais</h3><ul><li><b>Atalho (linha de transmissão nova):</b> sobe pela seta verde.</li><li><b>Sobrecarga e curto-circuito:</b> desce pela seta vermelha.</li><li><b>Disjuntor:</b> uma rodada sem jogar. <b>Bandeira verde:</b> joga de novo.</li></ul>
    <h3>Para o professor</h3><ul><li><b>Ampliar tabuleiro</b> esconde o painel e deixa o tabuleiro do tamanho da tela; o dado fica num controle no canto. Use junto com <b>Tela cheia</b> no projetor.</li><li>Os botões <b>−</b> e <b>+</b> ao lado de cada equipe corrigem a posição do peão; o <b>✎</b> muda o nome da equipe.</li><li>O jogo fica salvo neste navegador: se a página recarregar, continua de onde parou.</li><li>Sem calculadora, como no ENEM. Rascunho pode.</li></ul>
    </div><div class="acoes"><span class="espaco"></span><button class="btn" id="ok">Entendi</button></div></div>`);
@@ -793,6 +903,8 @@ body.celular .vez .btn.grande:disabled{opacity:.6}
         if (info.eq!==null && S && info.eq===S.vez && typeof window.usaDado==="function") window.usaDado(Number(d.n));
       } else if (d.t === "nome"){         // a equipe muda o próprio nome
         if (info.eq!==null && S && S.equipes && S.equipes[info.eq]) renomeia(info.eq, String(d.txt||"").slice(0,40));
+      } else if (d.t === "voto"){         // voto anônimo no desafio de resgate (quem está no desafio não vota)
+        if (S && info.eq!==S.vez && typeof window.registraVoto==="function") window.registraVoto(conn, Number(d.id), !!d.v);
       } else if (d.t === "codigo"){       // código da carta física digitado no celular da equipe da vez
         if (info.eq!==null && S && info.eq===S.vez && typeof window.usaCodigo==="function") window.usaCodigo(String(d.cod||"").slice(0,8));
       }
@@ -827,6 +939,8 @@ body.celular .vez .btn.grande:disabled{opacity:.6}
       }
       sync();
     };
+    // quantos aparelhos podem votar: todos os conectados, menos os da equipe que está no desafio
+    window.eleitores = () => { let n=0; conns.forEach((v,c) => { if (c.open && (!S || v.eq!==S.vez)) n++; }); return n; };
     new MutationObserver(sync).observe(byId("veu"), {attributes:true, childList:true, subtree:true, characterData:true});
     if (le("trilha-sala-aberta")==="1" && le("trilha-sala")) abrirSala(le("trilha-sala"));
   }
@@ -959,6 +1073,8 @@ body.celular .vez .btn.grande:disabled{opacity:.6}
       const t = document.createElement("div"); t.innerHTML = html;
       const pc = t.querySelector(".pede-codigo");
       if (pc) return pedeCodigoCel(v, t, pc, minhaVez);
+      const vt = t.querySelector(".votacao");
+      if (vt) return pedeVotoCel(v, t, vt, minhaVez);
       const pd = t.querySelector(".pede-dado");
       if (pd) return pedeDadoCel(v, t, pd, minhaVez);
       v.dataset.ped = "";
@@ -971,11 +1087,41 @@ body.celular .vez .btn.grande:disabled{opacity:.6}
       const aviso = document.createElement("div"); aviso.className="aviso-cel";
       if (vit) aviso.textContent = "Fim de jogo!";
       else if (t.querySelector(".sorte-grande")) aviso.textContent = "O professor aplica esta carta na mesa.";
+      else if (t.querySelector(".resultado-voto")) aviso.textContent = "Resultado da votação.";
+      else if (t.querySelector(".desafio")) aviso.textContent = minhaVez ? "Cumpram o desafio! Depois os outros grupos votam se valeu." : "Assistam ao desafio. Depois vocês votam aqui se valeu.";
       else aviso.textContent = minhaVez ? "Respondam em voz alta. O professor confirma na mesa." : "Acompanhe. A resposta aparece quando o professor mostrar.";
       if (ac) ac.before(aviso); else if (carta) carta.appendChild(aviso);
       if (vit && ac){ const b=document.createElement("button"); b.className="btn"; b.textContent="Ver o tabuleiro"; b.onclick=()=>{ vitFechada=true; v.hidden=true; }; ac.appendChild(b); }
       v.innerHTML = t.innerHTML; v.hidden = false;
       const b2 = v.querySelector(".acoes .btn"); if (b2) b2.onclick = () => { vitFechada=true; v.hidden=true; };
+    }
+    /* votação anônima do desafio: os outros grupos votam; a equipe do desafio só acompanha */
+    const votei = new Set();
+    function pedeVotoCel(v, t, vt, minhaVez){
+      const vid = Number(vt.dataset.id), id = "v" + vid + (minhaVez ? "v" : "o") + (votei.has(vid) ? "x" : "");
+      const prog = t.querySelector("#vprog");
+      if (!v.hidden && v.dataset.ped === id){ const p = v.querySelector("#vprog"); if (p && prog) p.textContent = prog.textContent; return; }
+      t.querySelectorAll(".acoes").forEach(a => a.remove());
+      const carta = t.querySelector(".carta");
+      if (minhaVez || minha === null){
+        const a = document.createElement("div"); a.className = "aviso-cel";
+        a.textContent = minhaVez ? "Os outros grupos estão votando se o desafio valeu." : "Escolha sua equipe para votar.";
+        carta.appendChild(a);
+      } else if (votei.has(vid)){
+        const a = document.createElement("div"); a.className = "voto-ok"; a.textContent = "Voto enviado! Ninguém sabe o que você votou.";
+        carta.appendChild(a);
+      } else {
+        const b = document.createElement("div"); b.className = "voto-cel";
+        b.innerHTML = `<button class="btn nao" data-voto="0">Não valeu</button><button class="btn ok" data-voto="1">Valeu!</button>`;
+        carta.appendChild(b);
+      }
+      const sp = document.createElement("div"); sp.style.height = "20px"; carta.appendChild(sp);
+      v.innerHTML = t.innerHTML; v.hidden = false; v.dataset.ped = id;
+      v.querySelectorAll("[data-voto]").forEach(b => b.onclick = () => {
+        if (!(conn && conn.open)) return;
+        conn.send({t:"voto", id:vid, v: b.dataset.voto === "1"}); votei.add(vid);
+        v.dataset.ped = ""; aplica();
+      });
     }
     /* dado físico: a equipe da vez toca no número que saiu; as outras só aguardam */
     function pedeDadoCel(v, t, pd, minhaVez){
