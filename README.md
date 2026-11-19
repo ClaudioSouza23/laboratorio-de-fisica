@@ -31,6 +31,7 @@ Cada tema é uma trilha: resumo → simulações → questões de revisão.
 - **Simulação: duas lâmpadas** (`lampadas.html`): as mesmas lâmpadas em paralelo (mesma tensão) e em série (mesma corrente).
 - **Questões de revisão** (`questoes.html`): 17 questões com correção na hora e resolução comentada.
 - **Jogo em grupo: Trilha da Energia** (`trilha-da-energia.html`, imagem em `img/trilha-da-energia.jpg`): jogo de tabuleiro para a sala (3º ano: potência, consumo, 1ª Lei de Ohm e questões no estilo ENEM). O computador do professor no projetor é a mesa e abre uma sala com QR code; cada equipe entra pelo celular, escolhe a equipe e joga o dado na sua vez. A conexão entre os aparelhos usa PeerJS (WebRTC), sem conta. Também funciona num aparelho só, sem abrir sala.
+- **Leitor de cartas da Trilha da Energia** (`trilha-da-energia-cartas.html`): para jogar com o tabuleiro e as cartas impressos. Cada carta impressa traz só a categoria e um código (ex.: P 47); a equipe digita o código no celular e a página mostra a pergunta, o cronômetro e a resposta. Tem dado virtual e avisa quando uma carta já saiu na partida.
 
 Magnetismo, outros temas de Mecânica, Termologia, Óptica, Ondulatória e Física Moderna: material em preparação.
 

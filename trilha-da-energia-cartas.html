@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Trilha da Energia · Cartas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@400;700;800&display=swap">
+<style>
+/* Leitor de cartas: tabuleiro e cartas impressas na mesa, celular só revela a pergunta do código digitado. */
+:root{
+  --mesa:#0f2140; --painel:#18305a; --painel2:#21407a; --linha:#2f5290;
+  --texto:#f3f6fc; --suave:#a9bbdc; --ouro:#f5be28; --creme:#fffaf0; --tinta:#1b2a44;
+  --pot:#2166ac; --con:#1a8c4b; --ohm:#e15f0a; --enem:#762a83; --sorte:#d69600;
+  --display:"Baloo 2","Trebuchet MS",system-ui,sans-serif;
+  --corpo:"Nunito","Segoe UI",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;min-height:100vh;background:var(--mesa);color:var(--texto);font-family:var(--corpo);font-size:16px;
+  background-image:radial-gradient(circle at 20% 0%,#1d3a6b 0,transparent 55%),radial-gradient(circle at 100% 100%,#14305e 0,transparent 50%);}
+button,input{font:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--ouro);outline-offset:2px}
+main{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:14px;
+  padding:max(14px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(20px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.topo{display:flex;align-items:center;gap:10px}
+.topo h1{font:800 26px/1 var(--display);margin:0}
+.topo h1 span{color:var(--ouro)}
+.topo p{margin:2px 0 0;color:var(--suave);font-size:13px}
+.topo a{color:var(--ouro)}
+.bloco{background:var(--painel);border:1px solid var(--linha);border-radius:18px;padding:16px}
+.btn{border:0;border-radius:14px;padding:12px 18px;font-weight:800;color:var(--tinta);background:var(--ouro);
+  box-shadow:0 5px 0 #b98a0e;transition:transform .08s}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 #b98a0e}
+.btn.sec{background:var(--painel2);color:var(--texto);box-shadow:0 4px 0 #0c1a33}
+.btn.peq{padding:8px 12px;font-size:13px}
+
+/* ---------- digitar o código ---------- */
+label.tit{display:block;font:800 15px/1.2 var(--display);letter-spacing:.06em;text-transform:uppercase;color:var(--suave);margin-bottom:10px}
+.entrada{display:flex;gap:10px}
+.entrada input{flex:1;min-width:0;text-align:center;text-transform:uppercase;font:800 40px/1 var(--display);letter-spacing:.12em;
+  padding:10px 8px 4px;border-radius:14px;border:2px solid var(--linha);background:var(--mesa);color:#fff}
+.entrada input::placeholder{color:#3f5f96;letter-spacing:.08em}
+.entrada .btn{font:800 20px/1 var(--display);padding:0 20px}
+.letras{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.letras button{flex:1;min-width:52px;border:0;border-radius:12px;padding:8px 4px 6px;color:#fff;font:800 22px/1 var(--display)}
+.letras small{display:block;font:700 10px/1.2 var(--corpo);opacity:.85;margin-top:2px}
+.erro{margin:12px 0 0;padding:10px 12px;border-radius:12px;background:#4a1c2b;color:#ffd0d6;font-weight:700}
+.usadas{display:flex;align-items:center;gap:10px;margin-top:12px;color:var(--suave);font-size:13px}
+.usadas span{flex:1}
+
+/* ---------- carta ---------- */
+.carta{--cor:var(--pot);background:var(--creme);color:var(--tinta);border-radius:22px;overflow:hidden;
+  border:4px solid var(--cor);box-shadow:0 24px 60px rgba(0,0,0,.55);animation:vira .45s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes vira{from{transform:rotateY(80deg) scale(.85);opacity:0}}
+.carta header{background:var(--cor);color:#fff;display:flex;align-items:center;gap:12px;padding:12px 16px}
+.carta header .ic{width:42px;height:42px;border-radius:50%;background:#fff;display:grid;place-items:center;flex:none}
+.carta header .ic svg{width:28px;height:28px}
+.carta header h2{margin:0;font:800 20px/1.05 var(--display);letter-spacing:.04em;flex:1}
+.carta header .cod{font:800 18px/1 var(--display);background:rgba(255,255,255,.22);padding:6px 10px 3px;border-radius:9px}
+.carta .corpo{padding:20px 20px 6px;font-size:21px;line-height:1.42;text-wrap:pretty}
+.carta .aviso{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.1em;font-weight:800;color:var(--cor);margin-bottom:8px}
+.m{font-family:"Cambria Math","Times New Roman",serif;font-style:italic}
+.m sub{font-size:.7em}
+.resposta{margin:14px 20px 0;padding:14px 16px;border-radius:14px;background:color-mix(in srgb,var(--cor) 12%,white);
+  border:2px dashed var(--cor);font-size:19px;line-height:1.4}
+.resposta b:first-child{color:var(--cor)}
+.acao{margin:16px 20px 0;padding:16px;border-radius:14px;background:#fff;border:3px solid var(--cor);text-align:center;
+  font:700 22px/1.3 var(--display);color:#5a4100}
+.acoes{display:flex;flex-wrap:wrap;gap:10px;padding:18px 20px 20px;align-items:center}
+.acoes .espaco{flex:1}
+.relogio{display:flex;align-items:center;gap:8px;font:800 24px/1 var(--display);color:var(--cor);font-variant-numeric:tabular-nums;
+  background:none;border:0;padding:0}
+.relogio svg{width:42px;height:42px;transform:rotate(-90deg)}
+.relogio.fim{color:#d0303c;animation:treme .4s 3}
+@keyframes treme{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+
+/* ---------- dado ---------- */
+.dadolinha{display:flex;align-items:center;gap:16px}
+.dadolinha p{margin:0;color:var(--suave);font-size:14px;flex:1}
+.dado{width:84px;height:84px;border-radius:18px;background:var(--creme);display:grid;grid-template-columns:repeat(3,1fr);
+  padding:13px;gap:3px;box-shadow:0 6px 0 #c9bfa5,0 10px 20px rgba(0,0,0,.35);border:0;flex:none}
+.dado i{border-radius:50%;background:var(--tinta);opacity:0;align-self:center;justify-self:center;width:14px;height:14px}
+.dado i.on{opacity:1}
+.dado.rolando{animation:rola .35s linear infinite}
+@keyframes rola{25%{transform:rotate(14deg) translateY(-6px)}75%{transform:rotate(-14deg) translateY(-3px)}}
+@media (prefers-reduced-motion:reduce){.carta,.dado.rolando,.relogio.fim{animation:none}}
+</style>
+</head>
+<body>
+<main>
+  <div class="topo">
+    <svg width="44" height="44" viewBox="-1 -1 2 2" aria-hidden="true"><circle r=".95" fill="#f5be28"/><path fill="#0f2140" d="M.14-.6-.32.06h.29L-.16.6.34-.1H.05Z"/></svg>
+    <div><h1>Trilha da <span>Energia</span></h1>
+    <p>Leitor de cartas · <a href="trilha-da-energia.html">jogo no projetor</a> · <a href="index.html#eletrodinamica">Laboratório</a></p></div>
+  </div>
+
+  <section class="bloco" id="painelCod">
+    <label class="tit" for="cod">Código da carta</label>
+    <form class="entrada" id="form" autocomplete="off">
+      <input id="cod" type="text" maxlength="4" placeholder="P 47" autocapitalize="characters" spellcheck="false" enterkeyhint="go" aria-describedby="dica">
+      <button class="btn" type="submit">Ver</button>
+    </form>
+    <div class="letras" id="letras" aria-label="Escolher a letra da categoria"></div>
+    <p class="erro" id="erro" role="alert" hidden></p>
+    <div class="usadas"><span id="dica">Toque na letra da cor da carta e digite os dois números.</span><button class="btn sec peq" id="zerar" hidden>Nova partida</button></div>
+  </section>
+
+  <div id="area"></div>
+
+  <section class="bloco dadolinha">
+    <button class="dado" id="dado" aria-label="Jogar o dado"></button>
+    <p id="dadoTxt">Sem dado na mesa? Toque no dado para jogar.</p>
+  </section>
+</main>
+
+<script>
+const CARTAS = {"P26": {"k": "P", "q": "Um chuveiro de <b>5500 W</b> está ligado em <b>220 V</b>. Qual é a corrente elétrica?", "r": "<span class=\"m\">i = P/U = 5500/220 = 25</span> A"}, "P51": {"k": "P", "q": "Um ferro de passar de <b>1100 W</b> funciona em <b>220 V</b>. Qual é a corrente?", "r": "<span class=\"m\">i = P/U = 1100/220 = 5</span> A"}, "P75": {"k": "P", "q": "Um resistor de <b>10 <span class=\"m\">Ω</span></b> é percorrido por uma corrente de <b>2 A</b>. Qual é a potência dissipada?", "r": "<span class=\"m\">P = R· i² = 10· 2² = 40</span> W"}, "P76": {"k": "P", "q": "Um resistor de <b>20 <span class=\"m\">Ω</span></b> é ligado a uma tensão de <b>100 V</b>. Qual é a potência?", "r": "<span class=\"m\">P = U²/R = 10 000/20 = 500</span> W"}, "P93": {"k": "P", "q": "Uma lâmpada de <b>60 W – 120 V</b> é ligada em <b>60 V</b> (metade da tensão). Qual a nova potência? (Considere <span class=\"m\">R</span> constante.)", "r": "<span class=\"m\">P = U²/R</span>: tensão pela metade <span class=\"m\">⇒</span> potência <span class=\"m\">÷ 4</span>. <span class=\"m\">P = 15</span> W"}, "P24": {"k": "P", "q": "No chuveiro, a posição <b>INVERNO</b> tem resistência <b>maior</b> ou <b>menor</b> que a posição VERÃO? Justifique.", "r": "Menor. Com <span class=\"m\">U</span> fixa, <span class=\"m\">P = U²/R</span>: menor <span class=\"m\">R</span> <span class=\"m\">⇒</span> maior potência <span class=\"m\">⇒</span> água mais quente."}, "P39": {"k": "P", "q": "Qual é a unidade de potência no SI? O que ela significa?", "r": "Watt (W). 1 W = 1 joule por segundo (1 J/s)."}, "P87": {"k": "P", "q": "Um secador tem a etiqueta <b>1200 W – 120 V</b>. Qual é a resistência dele em funcionamento?", "r": "<span class=\"m\">R = U²/P = 14 400/1200 = 12 Ω</span>"}, "P90": {"k": "P", "q": "Um aparelho de <b>2200 W</b> é vendido em versões de <b>110 V</b> e <b>220 V</b>. Em qual a corrente é maior? Quanto vale em cada?", "r": "<span class=\"m\">i = P/U</span>: 110 V <span class=\"m\">→</span> 20 A; 220 V <span class=\"m\">→</span> 10 A. Maior em 110 V (o dobro)."}, "P82": {"k": "P", "q": "O que é o <b>efeito Joule</b>? Cite dois aparelhos que funcionam por ele.", "r": "Transformação de energia elétrica em térmica num resistor. Ex.: chuveiro, ferro, torradeira, secador."}, "P64": {"k": "P", "q": "A etiqueta de um liquidificador diz <b>400 W – 127 V</b>. O que significam esses valores?", "r": "São os valores nominais: ligado em 127 V, ele funciona com potência de 400 W (400 J por segundo)."}, "P84": {"k": "P", "q": "Dois resistores de <b>10 <span class=\"m\">Ω</span></b> em <b>série</b> estão ligados a <b>20 V</b>. Qual a corrente e a potência total?", "r": "<span class=\"m\">R<sub>eq</sub> = 20 Ω</span>; <span class=\"m\">i = 20/20 = 1</span> A; <span class=\"m\">P = U· i = 20</span> W."}, "C81": {"k": "C", "q": "Um chuveiro de <b>5000 W</b> fica ligado <b>30 min</b> por dia. Qual é o consumo diário em kWh?", "r": "<span class=\"m\">E = P·Δ t = 5 kW· 0,5 h = 2,5</span> kWh"}, "C73": {"k": "C", "q": "Um chuveiro consome <b>2,5 kWh</b> por dia. Quanto consome em <b>30 dias</b>?", "r": "<span class=\"m\">2,5· 30 = 75</span> kWh"}, "C86": {"k": "C", "q": "O consumo do mês foi de <b>75 kWh</b> e a tarifa é <b>R$ 0,80 por kWh</b>. Quanto custa?", "r": "<span class=\"m\">75· 0,80 =</span> R$ 60,00"}, "C67": {"k": "C", "q": "Uma lâmpada LED de <b>10 W</b> fica acesa por <b>10 h</b>. Qual o consumo em kWh?", "r": "<span class=\"m\">10 W· 10 h = 100</span> Wh <span class=\"m\">= 0,1</span> kWh"}, "C41": {"k": "C", "q": "Quantos <b>joules</b> existem em <b>1 kWh</b>?", "r": "<span class=\"m\">1000 W· 3600 s = 3,6· 10⁶</span> J"}, "C11": {"k": "C", "q": "No medidor, a leitura anterior era <b>4250 kWh</b> e a atual é <b>4400 kWh</b>. Qual foi o consumo do mês?", "r": "<span class=\"m\">4400 - 4250 = 150</span> kWh"}, "C89": {"k": "C", "q": "O que significa a <b>bandeira tarifária vermelha</b> na conta de luz?", "r": "A geração está mais cara (ex.: mais usinas termelétricas por falta de chuva). Paga-se um valor extra por kWh."}, "C21": {"k": "C", "q": "Trocou-se uma lâmpada de <b>60 W</b> por uma LED de <b>9 W</b>, usada <b>5 h/dia</b> por <b>30 dias</b>. Quanto se economiza?", "r": "<span class=\"m\">(60-9) W· 150 h = 7650</span> Wh <span class=\"m\">≈ 7,65</span> kWh"}, "C25": {"k": "C", "q": "O que indica o <b>selo PROCEL classe A</b> em um eletrodoméstico?", "r": "É dos mais eficientes da categoria: gasta menos energia para fazer o mesmo serviço."}, "C47": {"k": "C", "q": "Um ar-condicionado de <b>1500 W</b> funciona <b>4 h por dia</b> durante <b>30 dias</b>. Qual o consumo?", "r": "<span class=\"m\">1,5 kW· 4 h· 30 = 180</span> kWh"}, "C23": {"k": "C", "q": "Um ferro de <b>1000 W</b> é usado <b>15 min</b> por vez, <b>8 vezes</b> no mês. Qual o consumo mensal?", "r": "<span class=\"m\">1 kW· 0,25 h· 8 = 2</span> kWh"}, "C68": {"k": "C", "q": "O <b>kWh</b> é unidade de <b>potência</b> ou de <b>energia</b>? Explique.", "r": "De energia: é potência (kW) multiplicada por tempo (h)."}, "O12": {"k": "O", "q": "Escreva a <b>1ª Lei de Ohm</b> e diga a unidade de cada grandeza.", "r": "<span class=\"m\">U = R· i</span>. <span class=\"m\">U</span> em volt (V), <span class=\"m\">R</span> em ohm (<span class=\"m\">Ω</span>), <span class=\"m\">i</span> em ampère (A)."}, "O98": {"k": "O", "q": "Um resistor de <b>10 <span class=\"m\">Ω</span></b> é percorrido por uma corrente de <b>3 A</b>. Qual é a tensão nele?", "r": "<span class=\"m\">U = R· i = 10· 3 = 30</span> V"}, "O73": {"k": "O", "q": "Um resistor ligado em <b>220 V</b> é percorrido por <b>2 A</b>. Qual é a resistência dele?", "r": "<span class=\"m\">R = U/i = 220/2 = 110 Ω</span>"}, "O97": {"k": "O", "q": "Uma tensão de <b>12 V</b> é aplicada a um resistor de <b>4 <span class=\"m\">Ω</span></b>. Qual é a corrente?", "r": "<span class=\"m\">i = U/R = 12/4 = 3</span> A"}, "O51": {"k": "O", "q": "Tabela de um resistor: <span class=\"m\">i</span> = 0, 1, 2, 3 A e <span class=\"m\">U</span> = 0, 12, 24, 36 V. Qual é a resistência? E a tensão para <b>5 A</b>?", "r": "<span class=\"m\">R = 12/1 = 12 Ω</span>. Para 5 A: <span class=\"m\">U = 12· 5 = 60</span> V."}, "O37": {"k": "O", "q": "Num resistor de <b>10 <span class=\"m\">Ω</span></b>, a corrente <b>dobra</b> de 2 A para 4 A. O que acontece com a tensão?", "r": "Também dobra: de 20 V para 40 V (<span class=\"m\">U</span> e <span class=\"m\">i</span> são diretamente proporcionais)."}, "O61": {"k": "O", "q": "Numa associação em <b>série</b>, que grandeza é <b>igual</b> em todos os resistores?", "r": "A corrente. (A tensão da fonte se divide entre eles.)"}, "O43": {"k": "O", "q": "Numa associação em <b>paralelo</b>, que grandeza é <b>igual</b> em todos os resistores?", "r": "A tensão. (A corrente total se divide entre eles.)"}, "O55": {"k": "O", "q": "Resistores de <b>6 <span class=\"m\">Ω</span></b> e <b>4 <span class=\"m\">Ω</span></b> ligados em <b>série</b>. Qual é a resistência equivalente?", "r": "<span class=\"m\">R<sub>eq</sub> = 6 + 4 = 10 Ω</span>"}, "O56": {"k": "O", "q": "Dois resistores <b>iguais de 10 <span class=\"m\">Ω</span></b> ligados em <b>paralelo</b>. Qual é a resistência equivalente?", "r": "<span class=\"m\">R<sub>eq</sub> = 10/2 = 5 Ω</span> (dois iguais em paralelo: metade)."}, "O59": {"k": "O", "q": "Em <b>série</b> (mesma corrente), qual dissipa mais potência: o resistor de <b>10 <span class=\"m\">Ω</span></b> ou o de <b>20 <span class=\"m\">Ω</span></b>?", "r": "O de 20 <span class=\"m\">Ω</span>: <span class=\"m\">P = R· i²</span>, maior <span class=\"m\">R</span> dissipa mais."}, "O76": {"k": "O", "q": "Em <b>paralelo</b> (mesma tensão), qual dissipa mais potência: o resistor de <b>10 <span class=\"m\">Ω</span></b> ou o de <b>20 <span class=\"m\">Ω</span></b>?", "r": "O de 10 <span class=\"m\">Ω</span>: <span class=\"m\">P = U²/R</span>, menor <span class=\"m\">R</span> dissipa mais."}, "E92": {"k": "E", "q": "Um chuveiro de <b>4400 W – 220 V</b> será instalado. Qual disjuntor usar: <b>15 A</b>, <b>25 A</b> ou <b>40 A</b>?", "r": "<span class=\"m\">i = 4400/220 = 20</span> A <span class=\"m\">⇒</span> 25 A. (15 A desarma; 40 A não protege bem a fiação.)"}, "E20": {"k": "E", "q": "Família de <b>4 pessoas</b>, cada uma toma banho de <b>15 min</b> por dia num chuveiro de <b>6000 W</b>. Consumo em <b>30 dias</b>?", "r": "<span class=\"m\">6 kW· 0,25 h· 4· 30 = 180</span> kWh"}, "E54": {"k": "E", "q": "Um chuveiro de <b>220 V</b> é ligado por engano em <b>110 V</b>. O que acontece com a potência? (Mesma <span class=\"m\">R</span>.)", "r": "<span class=\"m\">P = U²/R</span>: tensão pela metade <span class=\"m\">⇒</span> potência 4 vezes menor. A água esquenta muito pouco."}, "E22": {"k": "E", "q": "Por que as lâmpadas de uma casa são ligadas em <b>paralelo</b>?", "r": "Cada uma recebe a tensão da rede e funciona de forma independente: se uma queima, as outras continuam."}, "E82": {"k": "E", "q": "Uma TV em <b>stand-by</b> consome <b>5 W</b>, 24 h por dia. Quanto consome em <b>30 dias</b>?", "r": "<span class=\"m\">5 W· 720 h = 3600</span> Wh <span class=\"m\">= 3,6</span> kWh"}, "E79": {"k": "E", "q": "Uma lâmpada de <b>60 W</b> é trocada por uma LED de <b>8 W</b> que ilumina igual. Qual a economia em porcentagem?", "r": "<span class=\"m\">(60-8)/60 = 52/60 ≈ 87%</span>"}, "E48": {"k": "E", "q": "Por que ligar <b>muitos aparelhos num benjamim</b> pode <b>superaquecer</b> os fios?", "r": "Os aparelhos ficam em paralelo: a corrente total é a soma das correntes. Corrente alta aquece os fios (<span class=\"m\">P = R· i²</span>). Risco de incêndio!"}, "E47": {"k": "E", "q": "O gráfico <span class=\"m\">U × i</span> de um resistor é uma reta pela origem que passa por <b>(2 A; 10 V)</b>. Qual a resistência? Ele é ôhmico?", "r": "<span class=\"m\">R = U/i = 10/2 = 5 Ω</span>. Sim: reta pela origem, <span class=\"m\">R</span> constante."}, "E69": {"k": "E", "q": "Placas solares produzem <b>300 kWh/mês</b> e a casa consome <b>250 kWh</b>. O que acontece com a sobra?", "r": "Os 50 kWh vão para a rede e viram créditos para abater contas futuras."}, "E29": {"k": "E", "q": "Lâmpadas de <b>100 W</b> e <b>60 W</b>, ambas para <b>220 V</b>. Qual tem <b>maior resistência</b>?", "r": "A de 60 W: <span class=\"m\">R = U²/P</span> (menor <span class=\"m\">P</span>, maior <span class=\"m\">R</span>). 60 W: <span class=\"m\">≈ 807 Ω</span>; 100 W: <span class=\"m\">484 Ω</span>."}, "E93": {"k": "E", "q": "Ao mudar a chave do chuveiro de <b>morno</b> para <b>quente</b>, a corrente <b>aumenta</b> ou <b>diminui</b>?", "r": "Aumenta: <span class=\"m\">P = U· i</span> com <span class=\"m\">U</span> fixa; se <span class=\"m\">P</span> aumenta, <span class=\"m\">i</span> aumenta."}, "E84": {"k": "E", "q": "Uma conta de luz deu <b>R$ 150,00</b> com tarifa de <b>R$ 0,75 por kWh</b>. Quanto foi consumido?", "r": "<span class=\"m\">150/0,75 = 200</span> kWh"}, "S50": {"k": "S", "q": "Você trocou todas as lâmpadas de casa por <b>LED</b>!", "a": "Avance <b>3</b> casas."}, "S14": {"k": "S", "q": "Esqueceu o <b>ar-condicionado ligado</b> com a janela aberta.", "a": "Volte <b>2</b> casas."}, "S58": {"k": "S", "q": "<b>Bandeira vermelha!</b> A conta de todo mundo ficou mais cara.", "a": "<b>Todos</b> os jogadores voltam <b>1</b> casa."}, "S57": {"k": "S", "q": "Sua família instalou <b>placas solares</b> no telhado.", "a": "Avance <b>2</b> casas."}, "S70": {"k": "S", "q": "Fizeram um <b>“gato”</b> na rede elétrica. Além de perigoso, é crime!", "a": "Fique <b>uma rodada</b> sem jogar."}, "S65": {"k": "S", "q": "Você tirou da tomada os aparelhos em <b>stand-by</b>.", "a": "Avance <b>1</b> casa."}, "S22": {"k": "S", "q": "Tomou um banho de <b>40 minutos</b> no modo inverno.", "a": "Volte <b>3</b> casas."}, "S62": {"k": "S", "q": "Comprou uma geladeira com <b>selo PROCEL A</b>.", "a": "Avance <b>2</b> casas."}, "S85": {"k": "S", "q": "O <b>disjuntor desarmou</b>: chuveiro e micro-ondas ligados ao mesmo tempo.", "a": "Fique <b>uma rodada</b> sem jogar."}, "S81": {"k": "S", "q": "Você ajudou um colega a entender a Lei de Ohm.", "a": "Escolha um jogador: <b>os dois</b> avançam <b>1</b> casa."}, "S74": {"k": "S", "q": "Ligou vários aparelhos num único <b>benjamim (T)</b>.", "a": "Volte <b>2</b> casas."}, "S25": {"k": "S", "q": "Fez a <b>leitura do medidor</b> certinho e conferiu a conta.", "a": "<b>Jogue o dado de novo.</b>"}, "S75": {"k": "S", "q": "Apagou a luz ao sair do quarto.", "a": "Avance <b>1</b> casa."}, "S87": {"k": "S", "q": "Deixou a <b>porta da geladeira</b> aberta enquanto decidia o lanche.", "a": "Volte <b>1</b> casa."}, "S73": {"k": "S", "q": "Leu a <b>etiqueta</b> (potência e tensão) antes de ligar o aparelho novo.", "a": "Avance <b>1</b> casa."}};
+const CAT = {
+  P:{nome:"POTÊNCIA ELÉTRICA",curto:"Potência",cor:"#2166ac",ic:"raio",tempo:60},
+  C:{nome:"CONSUMO E CONTA DE LUZ",curto:"Consumo",cor:"#1a8c4b",ic:"medidor",tempo:60},
+  O:{nome:"1ª LEI DE OHM",curto:"Ohm",cor:"#e15f0a",ic:"resistor",tempo:60},
+  E:{nome:"DESAFIO ENEM",curto:"ENEM",cor:"#762a83",ic:"estrela",tempo:120},
+  S:{nome:"SORTE OU REVÉS",curto:"Sorte",cor:"#d69600",ic:"interroga",tempo:0}
+};
+const ICONES = {
+  raio:'<svg viewBox="-1 -1 2 2"><path fill="#2166ac" d="M.14-.6-.32.06h.29L-.16.6.34-.1H.05Z"/></svg>',
+  medidor:'<svg viewBox="-1 -1 2 2" fill="none" stroke="#1a8c4b" stroke-width=".1"><rect x="-.55" y="-.55" width="1.1" height="1.1" rx=".12"/><path d="M-.34.12A.34.34 0 0 1 .34.12"/><path d="M0 .12.2-.12" stroke-linecap="round"/><path d="M-.3.38h.6" stroke-width=".12"/></svg>',
+  resistor:'<svg viewBox="-1 -1 2 2" fill="none" stroke="#e15f0a" stroke-width=".13" stroke-linejoin="round" stroke-linecap="round"><path d="M-.7 0h.25l.09-.26.17.52.17-.52.17.52.17-.52.09.26h.25"/></svg>',
+  estrela:'<svg viewBox="-1 -1 2 2"><path fill="#762a83" d="M0-.7.2-.24.68-.2.32.11.43.6 0 .34-.43.6-.32.11-.68-.2-.2-.24Z"/></svg>',
+  interroga:'<svg viewBox="-1 -1 2 2"><circle r=".72" fill="#d69600"/><text y=".33" text-anchor="middle" font-family="Baloo 2,Arial" font-weight="800" font-size="1" fill="#fff">?</text></svg>'
+};
+const $ = id => document.getElementById(id);
+const CHAVE = "trilha-energia-lidas-v1";
+let lidas = [];
+try{ lidas = JSON.parse(localStorage.getItem(CHAVE)) || []; }catch(e){ lidas = []; }
+function guarda(){ try{ localStorage.setItem(CHAVE, JSON.stringify(lidas)); }catch(e){} }
+function contaLidas(){
+  $("zerar").hidden = !lidas.length;
+  $("dica").textContent = lidas.length
+    ? `${lidas.length} carta${lidas.length>1?"s":""} já lida${lidas.length>1?"s":""} nesta partida.`
+    : "Toque na letra da cor da carta e digite os dois números.";
+}
+
+// letra O e algarismo 0 se confundem: como nenhum código começa por 0, 0 no início vira O
+function normaliza(t){ t = t.toUpperCase().replace(/[^A-Z0-9]/g,""); return t.replace(/^0/,"O"); }
+
+$("letras").innerHTML = Object.entries(CAT).map(([k,c]) =>
+  `<button type="button" data-k="${k}" style="background:${c.cor}">${k}<small>${c.curto}</small></button>`).join("");
+$("letras").onclick = ev => {
+  const b = ev.target.closest("button"); if(!b) return;
+  const inp = $("cod"); inp.value = b.dataset.k + normaliza(inp.value).replace(/^[A-Z]/,""); inp.focus();
+};
+$("cod").addEventListener("input", () => { $("erro").hidden = true; });
+
+let timer = null;
+function limpa(){ clearInterval(timer); timer = null; $("area").innerHTML = ""; }
+
+$("form").onsubmit = ev => {
+  ev.preventDefault();
+  const cod = normaliza($("cod").value), c = CARTAS[cod];
+  if(!c){
+    limpa();
+    $("erro").textContent = cod.length < 3
+      ? "Digite a letra e os dois números que estão na carta (exemplo: P47)."
+      : `Não existe carta ${cod}. Confira a letra (P, C, O, E ou S) e os números.`;
+    $("erro").hidden = false; return;
+  }
+  $("cod").value = cod;
+  mostra(cod, c);
+};
+
+function mostra(cod, c){
+  limpa();
+  const cat = CAT[c.k], repetida = lidas.includes(cod);
+  if(!repetida){ lidas.push(cod); guarda(); }
+  contaLidas();
+  const area = $("area");
+  area.innerHTML = `<article class="carta" style="--cor:${cat.cor}" aria-live="polite">
+    <header><span class="ic">${ICONES[cat.ic]}</span><h2>${cat.nome}</h2><span class="cod">${cod}</span></header>
+    <div class="corpo">${repetida?'<span class="aviso">Esta carta já saiu nesta partida</span>':''}${c.q}</div>
+    ${c.k==="S"
+      ? `<div class="acao">${c.a}</div>
+         <div class="acoes"><span class="espaco"></span><button class="btn" id="outra">Próxima carta</button></div>`
+      : `<div class="resposta" id="resp" hidden><b>Resposta:</b> ${c.r}</div>
+         <div class="acoes">
+           <button class="relogio" id="rel" type="button" aria-label="Iniciar cronômetro de ${cat.tempo} segundos"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" stroke-opacity=".2" stroke-width="5"/><circle id="arco" cx="20" cy="20" r="16" fill="none" stroke="currentColor" stroke-width="5" stroke-dasharray="100.5" stroke-dashoffset="0" stroke-linecap="round"/></svg><span id="seg">${cat.tempo}s ▶</span></button>
+           <span class="espaco"></span>
+           <button class="btn sec" id="ver">Mostrar resposta</button>
+           <button class="btn" id="outra">Próxima carta</button>
+         </div>`}
+  </article>`;
+  if(c.k !== "S"){
+    $("ver").onclick = () => { clearInterval(timer); $("resp").hidden = false; $("ver").hidden = true; };
+    $("rel").onclick = () => {
+      if(timer) return;
+      let rest = cat.tempo; $("seg").textContent = rest;
+      timer = setInterval(() => {
+        rest--; $("seg").textContent = Math.max(rest,0);
+        $("arco").setAttribute("stroke-dashoffset", (100.5*(1-rest/cat.tempo)).toFixed(1));
+        if(rest <= 0){ clearInterval(timer); $("rel").classList.add("fim"); $("seg").textContent = "Tempo!";
+          if(navigator.vibrate) navigator.vibrate([200,100,200]); }
+      }, 1000);
+    };
+  }
+  $("outra").onclick = () => { limpa(); $("cod").value = ""; $("cod").focus(); window.scrollTo({top:0,behavior:"smooth"}); };
+  $("cod").blur();
+  area.scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+$("zerar").onclick = () => {
+  if(!confirm("Começar uma nova partida? A lista de cartas já lidas será apagada.")) return;
+  lidas = []; guarda(); contaLidas(); limpa();
+};
+contaLidas();
+
+// dado
+const PIPS = {1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+const dado = $("dado");
+function desenha(n){ dado.innerHTML = Array.from({length:9},(_,i)=>`<i class="${PIPS[n].includes(i)?"on":""}"></i>`).join(""); }
+desenha(5);
+let rolando = false;
+dado.onclick = async () => {
+  if(rolando) return; rolando = true; dado.classList.add("rolando"); $("dadoTxt").textContent = "Rolando…";
+  let n = 1;
+  for(let t=0; t<12; t++){ n = 1 + Math.floor(Math.random()*6); desenha(n); await new Promise(r=>setTimeout(r,70)); }
+  dado.classList.remove("rolando"); rolando = false;
+  dado.setAttribute("aria-label", "Dado: " + n + ". Toque para jogar de novo");
+  $("dadoTxt").innerHTML = `Saiu <b style="color:var(--ouro);font-size:22px">${n}</b>. Ande ${n} casa${n>1?"s":""} no tabuleiro.`;
+};
+
+// link direto: trilha-da-energia-cartas.html#P47 já abre a carta
+if(location.hash.length > 2){ $("cod").value = normaliza(location.hash.slice(1)); $("form").requestSubmit(); }
+</script>
+</body>
+</html>
