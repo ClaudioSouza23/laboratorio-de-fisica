@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%232f6f9f'/%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Elevador e Tração</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: roteiro no topo; poço do elevador 3D + painel; medidores; tabela da 2ª lei com a linha atual; gráficos v(t) e T(t). */
+:root {
+  --bg: #eef1f4; --surface: #ffffff; --ink: #16202b; --muted: #576575; --line: #d3dae2; --soft: #f6f8fa;
+  --accent: #2f6f9f; --on-accent: #ffffff; --cool: #2a73c0; --ok: #1f8a4c; --bad: #b8322a;
+  --cP: #c8372d; --cN: #1f8a4c; --cA: #b8650a; --cF: #7a3fb5;
+  --stage: #0e151d; --stage-ink: #dce6ef;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", Consolas, ui-monospace, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #0b1016; --surface: #141c25; --ink: #e5ecf2; --muted: #93a2b2; --line: #263240; --soft: #1a2430;
+  --accent: #6eaee0; --on-accent: #0b1016; --cool: #5ea2ea; --ok: #4cc27f; --bad: #ff6b60;
+  --cP: #ff6b5e; --cN: #4cc27f; --cA: #f0a030; --cF: #c48ae6; color-scheme: dark } }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.5; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-block: 20px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 20px; }
+.back { font-weight: 700; color: var(--muted); text-decoration: none; font-size: 14px; }
+.back:hover { color: var(--ink); }
+header { display: grid; gap: 6px; }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { font-family: var(--f-display); font-weight: 800; font-size: clamp(28px, 4vw, 44px); line-height: 1.05; margin: 0; text-wrap: balance; }
+.lede { color: var(--muted); max-width: 72ch; margin: 0; }
+h2 { font-family: var(--f-display); font-weight: 600; font-size: 20px; margin: 0; text-wrap: balance; }
+.small { font-size: 13px; color: var(--muted); margin: 0; }
+
+.guide { background: var(--surface); border: 2px solid var(--accent); border-radius: 14px; padding: 18px; display: grid; gap: 14px; }
+.guide-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.steps { display: flex; flex-wrap: wrap; gap: 6px; }
+.steps button { font: inherit; font-family: var(--f-mono); font-weight: 700; width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid var(--line); background: var(--soft); color: var(--muted); cursor: pointer; }
+.steps button[aria-current="step"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.steps button.done { color: var(--accent); border-color: var(--accent); }
+.guide-body { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 18px; }
+@media (max-width: 800px) { .guide-body { grid-template-columns: minmax(0, 1fr); } }
+.guide h3 { font-family: var(--f-display); font-weight: 800; font-size: clamp(20px, 2.6vw, 26px); margin: 0 0 6px; line-height: 1.15; }
+.guide p { margin: 0; max-width: 65ch; }
+.ask { background: var(--soft); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; align-content: start; }
+.ask .k { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+.ask .q { font-weight: 700; font-size: 17px; }
+.ask .a { border-left: 3px solid var(--ok); padding-left: 10px; }
+.nav { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.btn { font: inherit; font-weight: 700; border: 1px solid var(--ink); background: transparent; color: var(--ink); border-radius: 10px; padding: 8px 14px; cursor: pointer; text-decoration: none; display: inline-block; }
+.btn:hover:not(:disabled) { background: var(--ink); color: var(--bg); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn.primary:hover:not(:disabled) { filter: brightness(1.1); background: var(--accent); color: var(--on-accent); }
+.btn.sm { padding: 6px 10px; font-size: 14px; }
+.btn:disabled { opacity: .4; cursor: default; }
+button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid var(--cool); outline-offset: 2px; }
+
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 20px; align-items: start; }
+@media (max-width: 900px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.stage { position: relative; background: var(--stage); border-radius: 14px; overflow: hidden; aspect-ratio: 16 / 10; max-width: 100%; min-height: 320px; }
+.stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.badge { position: absolute; top: 14px; left: 14px; font-family: var(--f-mono); font-weight: 700; font-size: clamp(13px, 1.8vw, 18px);
+  color: #fff; padding: 6px 12px; border-radius: 8px; background: #2a5d8f; }
+.badge.rest { background: #4b5a6a; }
+.hint { position: absolute; top: 18px; right: 14px; font-size: 12px; color: var(--stage-ink); opacity: .65; }
+@media (max-width: 700px) { .hint { display: none; } }
+.legend { position: absolute; left: 14px; bottom: 12px; right: 14px; display: flex; flex-wrap: wrap; gap: 4px 14px;
+  font-size: 13px; color: var(--stage-ink); opacity: .9; pointer-events: none; }
+.legend i { display: inline-block; width: 12px; height: 4px; border-radius: 2px; margin-right: 6px; vertical-align: 3px; }
+.lab3d { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); pointer-events: none; white-space: nowrap;
+  font-size: 13px; font-weight: 700; color: #fff; background: rgba(14, 21, 29, .78); padding: 1px 6px; border-radius: 5px; font-family: var(--f-mono); }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 14px; }
+.ctl { display: grid; gap: 6px; }
+.ctl > label, .ctl > .lab { font-weight: 700; font-size: 14px; display: flex; justify-content: space-between; gap: 8px; }
+.ctl .val { font-family: var(--f-mono); color: var(--accent); }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+.row { display: flex; flex-wrap: wrap; gap: 6px; }
+.play { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 3px; }
+.seg button { font: inherit; font-weight: 700; font-size: 13px; border: 0; border-radius: 7px; padding: 6px 4px; background: transparent; color: var(--muted); cursor: pointer; line-height: 1.2; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.checks { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 14px; }
+.checks label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+.checks i { width: 12px; height: 4px; border-radius: 2px; flex: none; }
+.ctl > .lab .btn.sm { font-size: 12px; padding: 2px 8px; font-weight: 700; }
+
+.readouts { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 760px) { .readouts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.ro { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; gap: 2px; min-width: 0; }
+.ro .k { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.ro .v { font-family: var(--f-mono); font-weight: 700; font-size: clamp(19px, 2.4vw, 28px); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ro .u { font-size: .55em; color: var(--muted); margin-left: 3px; }
+.ro .tag { font-size: 12px; font-weight: 700; color: var(--muted); }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.calc { display: grid; gap: 8px; }
+.calc .ln { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 10px; align-items: baseline; }
+@media (max-width: 560px) { .calc .ln { grid-template-columns: minmax(0, 1fr); gap: 0; } }
+.calc .ln b { font-size: 14px; }
+.calc .ln span { font-family: var(--f-mono); font-size: 15px; min-width: 0; overflow-wrap: anywhere; }
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 900px) { .two { grid-template-columns: minmax(0, 1fr); } }
+.two.dcl { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
+@media (max-width: 900px) { .two.dcl { grid-template-columns: minmax(0, 1fr); } }
+.fbd svg { width: 100%; max-width: 340px; height: auto; display: block; margin: 0 auto; }
+.fbd svg text { font-family: var(--f-mono); }
+.graphbox { overflow-x: auto; position: relative; }
+.graphbox svg { width: 100%; min-width: 320px; height: auto; display: block; }
+.graphbox svg text { font-family: var(--f-mono); }
+.glegend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); }
+.glegend i { display: inline-block; width: 14px; height: 4px; border-radius: 2px; margin-right: 6px; vertical-align: 3px; }
+.tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--bg); font-family: var(--f-mono); font-size: 12px;
+  padding: 4px 8px; border-radius: 6px; white-space: nowrap; transform: translate(-50%, -130%); }
+.tbl { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 15px; font-variant-numeric: tabular-nums; }
+th, td { padding: 7px 10px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; font-family: var(--f-mono); }
+thead th { font-family: var(--f-body); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.note { border-left: 4px solid var(--cool); background: var(--soft); border-radius: 0 10px 10px 0; padding: 10px 14px; margin: 0; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+.floors { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+.floors button { font: inherit; font-family: var(--f-mono); font-weight: 700; font-size: 14px; padding: 7px 0; border-radius: 8px; border: 1px solid var(--line); background: var(--soft); color: var(--ink); cursor: pointer; }
+.floors button[aria-current="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.floors button:disabled { opacity: .45; cursor: default; }
+.badge.up { background: #1f7a45; } .badge.down { background: #a33a2c; } .badge.rest { background: #4b5a6a; }
+.vbadge { position: absolute; top: 56px; left: 14px; font-family: var(--f-mono); font-size: 13px; color: var(--stage-ink); background: rgba(14,21,29,.7); padding: 3px 8px; border-radius: 6px; }
+.sit { width: 100%; border-collapse: collapse; font-size: 15px; }
+.sit th, .sit td { text-align: left; white-space: normal; font-family: var(--f-body); padding: 8px 10px; }
+.sit td.eq { font-family: var(--f-mono); white-space: nowrap; }
+.sit tbody tr { transition: background .2s; }
+.sit tbody tr.on { background: color-mix(in srgb, var(--accent) 18%, transparent); }
+.sit tbody tr.on td:first-child { box-shadow: inset 4px 0 0 var(--accent); }
+.verdict { font-family: var(--f-display); font-weight: 800; font-size: clamp(20px, 2.6vw, 26px); }
+.verdict.maior { color: var(--ok); } .verdict.menor { color: var(--bad); } .verdict.igual { color: var(--accent); }
+.bars { display: grid; gap: 8px; }
+.bar { display: grid; grid-template-columns: 26px minmax(0, 1fr) 96px; gap: 8px; align-items: center; font-family: var(--f-mono); font-size: 14px; }
+.bar .tr { height: 18px; background: var(--soft); border-radius: 9px; overflow: hidden; }
+.bar .tr span { display: block; height: 100%; border-radius: 9px; }
+.bar .n { text-align: right; font-variant-numeric: tabular-nums; }
+@media (max-width: 560px) { .sit td.eq { white-space: normal; } .sit th, .sit td { padding: 6px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html#dinamica">&larr; Laboratório de Física</a>
+  <header>
+    <span class="eyebrow">Dinâmica · Passo 5 da trilha</span>
+    <h1>Elevador: a tração é maior ou menor que o peso?</h1>
+    <p class="lede">Escolha um andar e acompanhe a viagem. O cabo puxa a cabine para cima (T) e o peso puxa para baixo (P). Veja em cada trecho quem ganha e por quê, pela 2ª lei de Newton.</p>
+  </header>
+
+  <section class="guide" aria-label="Roteiro da aula">
+    <div class="guide-top">
+      <h2>Roteiro da aula</h2>
+      <div class="steps" id="steps"></div>
+    </div>
+    <div class="guide-body">
+      <div><h3 id="gTitle"></h3><p id="gText"></p></div>
+      <div class="ask">
+        <span class="k">Pergunte à turma</span>
+        <span class="q" id="gQ"></span>
+        <span class="a" id="gA" hidden></span>
+        <div class="nav">
+          <button class="btn" id="gReveal">Ver resposta</button>
+          <button class="btn" id="gPrev">Voltar</button>
+          <button class="btn primary" id="gNext">Próximo passo</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="main">
+    <div class="stage" id="stage">
+      <div class="badge rest" id="badge">Parado</div>
+      <div class="vbadge" id="vbadge"></div>
+      <div class="hint">Arraste para girar · role para aproximar</div>
+      <div class="lab3d" id="lT"></div><div class="lab3d" id="lP"></div><div class="lab3d" id="lR"></div><div class="lab3d" id="lA"></div><div class="lab3d" id="lB"></div>
+      <div class="legend">
+        <span><i style="background:#5ea2ea"></i>tração do cabo T</span><span><i style="background:#ff5a4a"></i>peso P</span>
+        <span><i style="background:#ffffff"></i>resultante</span><span><i style="background:#3fd07f"></i>aceleração</span>
+      </div>
+    </div>
+    <aside class="panel" aria-label="Controles">
+      <div class="ctl">
+        <span class="lab">Ir para o andar</span>
+        <div class="floors" id="floors"></div>
+      </div>
+      <div class="play">
+        <button class="btn primary" id="pause" disabled>Pausar</button>
+        <button class="btn" id="rst">Voltar ao térreo</button>
+      </div>
+      <div class="ctl">
+        <label for="m">Massa da cabine com a carga m <span class="val" id="mVal"></span></label>
+        <input type="range" id="m" min="300" max="1500" step="50" value="800">
+      </div>
+      <div class="ctl">
+        <label for="ac">Aceleração na partida e na freada <span class="val" id="acVal"></span></label>
+        <input type="range" id="ac" min="0.5" max="3" step="0.1" value="1.5">
+      </div>
+      <div class="ctl">
+        <label for="mp">Passageiro na balança <span class="val" id="mpVal"></span></label>
+        <input type="range" id="mp" min="30" max="120" step="1" value="60">
+      </div>
+      <div class="checks">
+        <label><input type="checkbox" id="slow"> Câmera lenta</label>
+        <label><input type="checkbox" id="labels" checked> Rótulos</label>
+      </div>
+      <p class="small">g = 10 m/s². Velocidade máxima da cabine: 2,5 m/s. Cada andar tem 3 m.</p>
+    </aside>
+  </section>
+
+  <section class="readouts">
+    <div class="ro"><span class="k">Velocidade</span><span class="v" id="rV"></span><span class="tag" id="rVt"></span></div>
+    <div class="ro"><span class="k">Aceleração</span><span class="v" id="rA"></span><span class="tag" id="rAt"></span></div>
+    <div class="ro"><span class="k">Peso P</span><span class="v" id="rP"></span><span class="tag">P = m · g</span></div>
+    <div class="ro"><span class="k">Tração T</span><span class="v" id="rT"></span><span class="tag" id="rTt"></span></div>
+    <div class="ro"><span class="k">Balança marca</span><span class="v" id="rB"></span><span class="tag" id="rBt"></span></div>
+  </section>
+
+  <section class="two">
+    <div class="card">
+      <h2>Pela 2ª lei de Newton</h2>
+      <div class="tbl"><table class="sit">
+        <thead><tr><th>Situação</th><th>Equação</th><th>Tração</th></tr></thead>
+        <tbody>
+          <tr id="row0"><td>Parado ou velocidade constante</td><td class="eq">T − P = 0</td><td class="eq">T = P</td></tr>
+          <tr id="row1"><td>Subindo e acelerando (ou descendo e freando)</td><td class="eq">T − P = m · a</td><td class="eq">T = m(g + a) <b>maior</b> que P</td></tr>
+          <tr id="row2"><td>Descendo e acelerando (ou subindo e freando)</td><td class="eq">P − T = m · a</td><td class="eq">T = m(g − a) <b>menor</b> que P</td></tr>
+        </tbody>
+      </table></div>
+      <div class="calc" id="calc"></div>
+      <span class="verdict" id="verdict"></span>
+      <div class="bars">
+        <div class="bar"><b style="color:#5ea2ea">T</b><div class="tr"><span id="bT" style="background:#5ea2ea"></span></div><span class="n" id="nT"></span></div>
+        <div class="bar"><b style="color:var(--cP)">P</b><div class="tr"><span id="bP" style="background:var(--cP)"></span></div><span class="n" id="nP"></span></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Gráficos da viagem</h2>
+      <div class="graphbox"><svg id="gV" viewBox="0 0 600 190" role="img" aria-label="Velocidade em função do tempo"></svg></div>
+      <div class="graphbox"><svg id="gT" viewBox="0 0 600 190" role="img" aria-label="Tração em função do tempo"></svg></div>
+      <div class="glegend"><span><i style="background:var(--ok)"></i>velocidade v</span><span><i style="background:#5ea2ea"></i>tração T</span><span><i style="background:var(--cP)"></i>peso P (tracejado)</span></div>
+      <p class="note">Repare: a tração só fica diferente do peso nos trechos em que a velocidade <b>muda</b> (a reta do gráfico de v está inclinada).</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Próximos passos</h2>
+    <div class="nav">
+      <a class="btn primary" href="questoes-dinamica.html">Passo 6: questões de revisão</a>
+      <a class="btn" href="plano-inclinado.html">Voltar ao plano inclinado</a>
+      <a class="btn" href="dinamica.html#parte1">Rever as leis de Newton</a>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(() => {
+const G = 10, ANDAR = 3, NAND = 10, VMAX = 2.5, CW = 2.0, CH = 2.4, CD = 2.0, TOPO = NAND * ANDAR + 1.2;
+const state = { m: 800, A: 1.5, mp: 60, y: 0, v: 0, a: 0, alvo: 0, viajando: false, pausado: false, slow: false, labels: true,
+  t: 0, hist: [], pausaEm: null, pausaT: 0, faseAnt: 'parado' };
+const $ = id => document.getElementById(id);
+const fmt = (x, d = 1) => (Math.abs(x) < 5e-4 ? 0 : x).toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
+const nomeAndar = k => k === 0 ? 'Térreo' : k + 'º';
+
+/* ---------- física ---------- */
+function fase() {
+  const v = state.v, a = state.a;
+  if (Math.abs(v) < 1e-6 && Math.abs(a) < 1e-9) return 'parado';
+  if (Math.abs(a) < 1e-9) return v > 0 ? 'sobeConst' : 'desceConst';
+  if (v >= 0) return a > 0 ? 'sobeAcel' : 'sobeFreia';
+  return a < 0 ? 'desceAcel' : 'desceFreia';
+}
+const FASES = {
+  parado: 'Parado', sobeConst: 'Subindo com velocidade constante', desceConst: 'Descendo com velocidade constante',
+  sobeAcel: 'Subindo e acelerando', sobeFreia: 'Subindo e freando', desceAcel: 'Descendo e acelerando', desceFreia: 'Descendo e freando'
+};
+function passo(h) {
+  const yAlvo = state.alvo * ANDAR, dir = Math.sign(yAlvo - state.y) || Math.sign(state.v) || 1;
+  const resta = (yAlvo - state.y) * dir, sp = state.v * dir, frear = sp * sp / (2 * state.A);
+  if (sp > 1e-9 && resta <= frear + 1e-6) state.a = -dir * state.A;
+  else if (sp < VMAX - 1e-9) state.a = dir * state.A;
+  else { state.a = 0; state.v = dir * VMAX; }
+  const vNovo = state.v + state.a * h;
+  if (state.a * dir < 0 && vNovo * dir <= 0) { chegou(); return; }
+  state.v = dir * Math.min(VMAX, vNovo * dir);
+  state.y += state.v * h;
+  if (resta < 0.002 && sp < 0.05) chegou();
+}
+function chegou() {
+  state.y = state.alvo * ANDAR; state.v = 0; state.a = 0; state.viajando = false; state.pausado = false;
+  registraPonto(); atualizaPainel();
+}
+function viaja(k) {
+  if (state.viajando || k === Math.round(state.y / ANDAR) && Math.abs(state.v) < 1e-6) return;
+  state.alvo = k; state.viajando = true; state.pausado = false; state.t = 0; state.hist = [];
+  registraPonto(); atualizaPainel();
+}
+function registraPonto() { state.hist.push({ t: state.t, v: state.v, a: state.a }); }
+
+/* ---------- 3D ---------- */
+const stage = $('stage');
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+stage.prepend(renderer.domElement);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(42, 1.6, 0.1, 200);
+camera.position.set(3.0, 3.4, 12.5);
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 1.4, 0);
+controls.enableDamping = true; controls.minDistance = 5; controls.maxDistance = 30; controls.enablePan = false;
+scene.add(new THREE.HemisphereLight(0xcfe3ff, 0x1a1410, 0.65));
+const key = new THREE.DirectionalLight(0xffffff, 0.75); key.position.set(6, 30, 10); scene.add(key);
+const V = (x, y, z = 0) => new THREE.Vector3(x, y, z);
+
+// poço: chão, parede do fundo, trilhos e marcas de andar
+const chao = new THREE.Mesh(new THREE.PlaneGeometry(14, 10), new THREE.MeshStandardMaterial({ color: 0x18222d, roughness: 0.95 }));
+chao.rotation.x = -Math.PI / 2; chao.position.y = -0.02; scene.add(chao);
+const parede = new THREE.Mesh(new THREE.PlaneGeometry(CW + 2.4, TOPO + 2), new THREE.MeshStandardMaterial({ color: 0x223140, roughness: 0.9 }));
+parede.position.set(0, (TOPO + 2) / 2 - 0.5, -CD / 2 - 0.4); scene.add(parede);
+const trilhoMat = new THREE.MeshStandardMaterial({ color: 0x7f8c99, metalness: 0.5, roughness: 0.4 });
+for (const x of [-CW / 2 - 0.25, CW / 2 + 0.25]) {
+  const tr = new THREE.Mesh(new THREE.BoxGeometry(0.12, TOPO + 1, 0.16), trilhoMat); tr.position.set(x, (TOPO + 1) / 2 - 0.5, 0); scene.add(tr);
+}
+function rotulo(txt) {
+  const c = document.createElement('canvas'); c.width = 256; c.height = 96; const x = c.getContext('2d');
+  x.fillStyle = '#dce6ef'; x.font = 'bold 54px Segoe UI, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(txt, 128, 50);
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false })); s.scale.set(1.6, 0.6, 1); return s;
+}
+const lajeMat = new THREE.LineBasicMaterial({ color: 0x5f7387 });
+for (let k = 0; k < NAND; k++) {
+  const y = k * ANDAR;
+  const pts = [V(-CW / 2 - 1.1, y, -CD / 2 - 0.35), V(CW / 2 + 1.1, y, -CD / 2 - 0.35)];
+  scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lajeMat));
+  const r = rotulo(nomeAndar(k)); r.position.set(-CW / 2 - 1.3, y + 1.1, -CD / 2 - 0.3); scene.add(r);
+}
+// casa de máquinas e polia no topo
+const maq = new THREE.Mesh(new THREE.BoxGeometry(CW + 2.6, 0.5, CD + 1), new THREE.MeshStandardMaterial({ color: 0x3a4a5a, roughness: 0.8 }));
+maq.position.set(0, TOPO + 0.25, 0); scene.add(maq);
+const polia = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.25, 28), new THREE.MeshStandardMaterial({ color: 0xb0bcc8, metalness: 0.6, roughness: 0.35 }));
+polia.rotation.x = Math.PI / 2; polia.position.set(0, TOPO - 0.45, 0); scene.add(polia);
+const cabo = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xcfd8e2 })); scene.add(cabo);
+
+// cabine (frente de vidro) com passageiro sobre a balança
+const cabine = new THREE.Group(); scene.add(cabine);
+const paredeCab = new THREE.MeshStandardMaterial({ color: 0xc9d4de, roughness: 0.5, metalness: 0.15, side: THREE.DoubleSide });
+const vidro = new THREE.MeshStandardMaterial({ color: 0x9fc6e8, transparent: true, opacity: 0.16, roughness: 0.1, depthWrite: false, side: THREE.DoubleSide });
+const caixa = (w, h, d, mat, x, y, z) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); b.position.set(x, y, z); cabine.add(b); return b; };
+caixa(CW, 0.12, CD, paredeCab, 0, 0.06, 0); caixa(CW, 0.12, CD, paredeCab, 0, CH - 0.06, 0);
+caixa(CW, CH, 0.06, paredeCab, 0, CH / 2, -CD / 2 + 0.03);
+caixa(0.06, CH, CD, vidro, -CW / 2 + 0.03, CH / 2, 0); caixa(0.06, CH, CD, vidro, CW / 2 - 0.03, CH / 2, 0);
+caixa(CW, CH, 0.04, vidro, 0, CH / 2, CD / 2 - 0.02);
+const aresta = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(CW, CH, CD)), new THREE.LineBasicMaterial({ color: 0xe8eef4 }));
+aresta.position.y = CH / 2; cabine.add(aresta);
+caixa(0.7, 0.1, 0.55, new THREE.MeshStandardMaterial({ color: 0x2c3946 }), 0.35, 0.17, 0.1);
+const corpo = new THREE.MeshStandardMaterial({ color: 0xe0a35a, roughness: 0.7 });
+const tronco = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.22, 1.0, 16), new THREE.MeshStandardMaterial({ color: 0x3f7cc0, roughness: 0.7 }));
+tronco.position.set(0.35, 0.95, 0.1); cabine.add(tronco);
+const pernas = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.15, 0.55, 16), new THREE.MeshStandardMaterial({ color: 0x2b3440 })); pernas.position.set(0.35, 0.5, 0.1); cabine.add(pernas);
+const cabeca = new THREE.Mesh(new THREE.SphereGeometry(0.18, 20, 16), corpo); cabeca.position.set(0.35, 1.62, 0.1); cabine.add(cabeca);
+const bal = V(0.35, 0.22, 0.38);
+
+const UP = V(0, 1, 0), DOWN = V(0, -1, 0);
+function makeArrow(color, thin) {
+  const mat = new THREE.MeshBasicMaterial({ color, depthTest: false, transparent: true, opacity: thin ? 0.85 : 1 });
+  const g = new THREE.Group(), rs = thin ? 0.035 : 0.06, rh = thin ? 0.12 : 0.17;
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(rs, rs, 1, 10), mat), head = new THREE.Mesh(new THREE.ConeGeometry(rh, 0.38, 14), mat);
+  shaft.renderOrder = head.renderOrder = 5; g.add(shaft, head); scene.add(g); g.userData.tip = new THREE.Vector3();
+  g.userData.set = (o, dir, len) => {
+    g.visible = len > 0.04; g.position.copy(o); g.quaternion.setFromUnitVectors(UP, dir);
+    const h = Math.min(0.38, len * 0.6); head.scale.setScalar(h / 0.38); head.position.y = len - h / 2;
+    shaft.scale.y = Math.max(len - h, 0.001); shaft.position.y = Math.max(len - h, 0.001) / 2;
+    g.userData.tip.copy(dir).multiplyScalar(len).add(o);
+  };
+  return g;
+}
+const aT = makeArrow(0x5ea2ea), aP = makeArrow(0xff5a4a), aR = makeArrow(0xffffff), aA = makeArrow(0x3fd07f, true);
+const tmp = new THREE.Vector3();
+function place(id, pos, html, show, dx = 0, dy = 0) {
+  const el = $(id); if (!state.labels || !show) { el.hidden = true; return; }
+  el.hidden = false; el.innerHTML = html; const p = tmp.copy(pos).project(camera);
+  el.style.left = ((p.x + 1) / 2 * stage.clientWidth + dx).toFixed(1) + 'px';
+  el.style.top = ((1 - p.y) / 2 * stage.clientHeight + dy).toFixed(1) + 'px';
+}
+function update3D() {
+  const y = state.y; cabine.position.y = y;
+  cabo.geometry.dispose(); cabo.geometry = new THREE.BufferGeometry().setFromPoints([V(0, TOPO - 0.45, 0), V(0, y + CH, 0)]);
+  const P = state.m * G, T = state.m * (G + state.a), R = T - P, k = 2.6 / P;
+  aT.userData.set(V(-0.35, y + CH, 0.2), UP, T * k);
+  aP.userData.set(V(-0.35, y + CH / 2, 0.2), DOWN, P * k);
+  aR.userData.set(V(-CW / 2 - 0.75, y + CH / 2, 0.4), R >= 0 ? UP : DOWN, Math.abs(R) * k);
+  aA.userData.set(V(CW / 2 + 0.9, y + CH / 2, 0.4), state.a >= 0 ? UP : DOWN, Math.abs(state.a) * 0.8);
+  place('lT', aT.userData.tip, `T = ${fmt(T, 0)} N`, true, 0, -14);
+  place('lP', aP.userData.tip, `P = ${fmt(P, 0)} N`, true, 0, 14);
+  place('lR', aR.userData.tip, `F<sub>R</sub> = ${fmt(Math.abs(R), 0)} N`, Math.abs(R) > 1, -58, R >= 0 ? -10 : 10);
+  place('lA', aA.userData.tip, `a = ${fmt(Math.abs(state.a))} m/s²`, Math.abs(state.a) > 1e-6, 58, state.a >= 0 ? -10 : 10);
+  place('lB', bal.clone().add(V(0, y, 0)), `${fmt(state.mp * (G + state.a) / G)} kg`, true, 0, 16);
+}
+function resize() { const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+new ResizeObserver(resize).observe(stage); resize();
+
+/* ---------- painel ---------- */
+function atualizaPainel() {
+  const P = state.m * G, T = state.m * (G + state.a), f = fase(), a = state.a;
+  const b = $('badge'); b.textContent = FASES[f]; b.className = 'badge ' + (state.v > 1e-6 ? 'up' : state.v < -1e-6 ? 'down' : 'rest');
+  $('vbadge').textContent = `${nomeAndar(Math.round(state.y / ANDAR))} · altura ${fmt(state.y)} m`;
+  $('rV').innerHTML = `${fmt(Math.abs(state.v), 2)}<span class="u">m/s</span>`;
+  $('rVt').textContent = state.v > 1e-6 ? 'para cima' : state.v < -1e-6 ? 'para baixo' : 'parada';
+  $('rA').innerHTML = `${fmt(Math.abs(a))}<span class="u">m/s²</span>`;
+  $('rAt').textContent = a > 1e-9 ? 'para cima' : a < -1e-9 ? 'para baixo' : 'nula';
+  $('rP').innerHTML = `${fmt(P, 0)}<span class="u">N</span>`;
+  $('rT').innerHTML = `${fmt(T, 0)}<span class="u">N</span>`;
+  $('rTt').textContent = a > 1e-9 ? 'maior que P' : a < -1e-9 ? 'menor que P' : 'igual a P';
+  $('rB').innerHTML = `${fmt(state.mp * (G + a) / G)}<span class="u">kg</span>`;
+  $('rBt').textContent = a > 1e-9 ? 'sente-se mais pesado' : a < -1e-9 ? 'sente-se mais leve' : `massa real: ${state.mp} kg`;
+  const row = a > 1e-9 ? 1 : a < -1e-9 ? 2 : 0;
+  for (let i = 0; i < 3; i++) $('row' + i).classList.toggle('on', i === row);
+  const A = fmt(Math.abs(a)), m = fmt(state.m, 0);
+  let linhas;
+  if (row === 0) linhas = [['Aceleração', 'a = 0 (parado ou velocidade constante)'], ['2ª lei', 'T − P = 0'], ['Tração', `T = P = ${m} · 10 = ${fmt(T, 0)} N`]];
+  else if (row === 1) linhas = [['Aceleração', `${A} m/s² para cima`], ['2ª lei', 'T − P = m · a'], ['Tração', `T = m(g + a) = ${m} · (10 + ${A}) = ${fmt(T, 0)} N`]];
+  else linhas = [['Aceleração', `${A} m/s² para baixo`], ['2ª lei', 'P − T = m · a'], ['Tração', `T = m(g − a) = ${m} · (10 − ${A}) = ${fmt(T, 0)} N`]];
+  $('calc').innerHTML = linhas.map(([k, v]) => `<div class="ln"><b>${k}</b><span>${v}</span></div>`).join('');
+  const vd = $('verdict');
+  vd.textContent = row === 0 ? 'T = P: o cabo equilibra o peso.' : row === 1 ? 'T > P: o cabo puxa mais que o peso.' : 'T < P: o peso ganha do cabo.';
+  vd.className = 'verdict ' + (row === 0 ? 'igual' : row === 1 ? 'maior' : 'menor');
+  const esc = state.m * (G + 3);
+  $('bT').style.width = (100 * T / esc).toFixed(1) + '%'; $('bP').style.width = (100 * P / esc).toFixed(1) + '%';
+  $('nT').textContent = fmt(T, 0) + ' N'; $('nP').textContent = fmt(P, 0) + ' N';
+  const atual = Math.round(state.y / ANDAR);
+  document.querySelectorAll('#floors button').forEach(bt => {
+    bt.disabled = state.viajando; bt.setAttribute('aria-current', String(!state.viajando && +bt.dataset.k === atual));
+  });
+  $('pause').disabled = !state.viajando; $('pause').textContent = state.pausado ? 'Continuar' : 'Pausar';
+  $('rst').disabled = state.viajando && !state.pausado;
+  desenhaGraficos();
+}
+
+/* ---------- gráficos ---------- */
+const GW = 600, GH = 190, GL = 58, GR = 14, GT = 26, GB = 30;
+function grafico(svg, serie, ymin, ymax, ticks, unid, cor, ref) {
+  const tmax = Math.max(12, Math.ceil(state.hist.length ? state.hist[state.hist.length - 1].t : 0));
+  const X = t => GL + (GW - GL - GR) * t / tmax, Y = v => GT + (GH - GT - GB) * (1 - (v - ymin) / (ymax - ymin));
+  let o = '';
+  for (const tk of ticks) o += `<line x1="${GL}" x2="${GW - GR}" y1="${Y(tk).toFixed(1)}" y2="${Y(tk).toFixed(1)}" stroke="var(--line)"/><text x="${GL - 6}" y="${(Y(tk) + 4).toFixed(1)}" text-anchor="end" font-size="11" fill="var(--muted)">${fmt(tk, Number.isInteger(tk) ? 0 : 1)}</text>`;
+  const passoT = tmax > 30 ? 10 : tmax > 15 ? 5 : 2;
+  for (let t = 0; t <= tmax + 1e-9; t += passoT) if (X(t) < GW - GR - 36) o += `<text x="${X(t).toFixed(1)}" y="${GH - 10}" text-anchor="middle" font-size="11" fill="var(--muted)">${t}</text>`;
+  o += `<text x="${GW - GR}" y="${GH - 10}" text-anchor="end" font-size="11" fill="var(--muted)">t (s)</text>`;
+  o += `<text x="6" y="13" font-size="11" fill="var(--muted)">${unid}</text>`;
+  if (ref != null) o += `<line x1="${GL}" x2="${GW - GR}" y1="${Y(ref).toFixed(1)}" y2="${Y(ref).toFixed(1)}" stroke="var(--cP)" stroke-width="2" stroke-dasharray="6 5"/>`;
+  if (state.hist.length > 1) o += `<polyline fill="none" stroke="${cor}" stroke-width="2.5" stroke-linejoin="round" points="${state.hist.map(p => X(p.t).toFixed(1) + ',' + Y(serie(p)).toFixed(1)).join(' ')}"/>`;
+  else o += `<text x="${(GL + GW) / 2}" y="${GH / 2}" text-anchor="middle" font-size="13" fill="var(--muted)">Escolha um andar para começar a viagem</text>`;
+  svg.innerHTML = o;
+}
+function desenhaGraficos() {
+  grafico($('gV'), p => p.v, -3, 3, [-2.5, 0, 2.5], 'v (m/s)', 'var(--ok)', null);
+  const P = state.m * G, d = state.m * 3.5;
+  grafico($('gT'), p => state.m * (G + p.a), P - d, P + d, [Math.round(P - state.m * 3), P, Math.round(P + state.m * 3)], 'T (N)', '#5ea2ea', P);
+}
+
+/* ---------- roteiro ---------- */
+const STEPS = [
+  { t: 'Cabine parada', x: 'Com a cabine parada no térreo, as duas forças sobre ela são a tração do cabo (para cima) e o peso (para baixo).',
+    q: 'Parada, a tração é maior, menor ou igual ao peso?', a: 'Igual. Parada, a aceleração é zero, então a resultante é zero: T − P = 0, logo T = P.',
+    go: () => { reinicia(); } },
+  { t: 'A partida para cima', x: 'Vamos subir até o 9º andar. A simulação pausa logo na partida, quando a cabine ganha velocidade.',
+    q: 'Na partida, subindo, o cabo puxa mais ou menos que o peso?', a: 'Mais. A aceleração aponta para cima, então a resultante também: T − P = m · a, logo T = m(g + a), maior que P. O passageiro se sente mais pesado.',
+    go: () => sobe('sobeAcel') },
+  { t: 'Subindo com velocidade constante', x: 'Continue a viagem. Agora a cabine sobe sem mudar a velocidade.',
+    q: 'A cabine está subindo. Então T é maior que P?', a: 'Não! Velocidade constante quer dizer aceleração zero (1ª lei de Newton). A resultante é zero e T = P, mesmo subindo.',
+    go: () => sobe('sobeConst') },
+  { t: 'Chegando ao andar: freando', x: 'Perto do 9º andar a cabine freia. Ela ainda sobe, mas cada vez mais devagar.',
+    q: 'Subindo e freando: T fica maior ou menor que P?', a: 'Menor. Para frear quem sobe, a aceleração aponta para baixo: P − T = m · a, logo T = m(g − a). O passageiro se sente mais leve.',
+    go: () => sobe('sobeFreia') },
+  { t: 'A viagem de volta', x: 'Agora a cabine desce do 9º andar ao térreo. A simulação pausa na partida; depois continue e observe a freada.',
+    q: 'Descendo e acelerando, T é maior ou menor que P? E descendo e freando?', a: 'Na partida descendo, a aceleração aponta para baixo: T < P. Na freada, descendo, a aceleração aponta para cima: T > P.',
+    go: () => desce('desceAcel') },
+  { t: 'A regra geral', x: 'Compare os gráficos: a tração só muda quando a velocidade muda. Use a tabela ao lado para resumir os seis casos.',
+    q: 'O que decide se T é maior ou menor que P: o sentido da velocidade ou o da aceleração?', a: 'O da aceleração. Aceleração para cima: T > P. Para baixo: T < P. Nula (parado ou velocidade constante): T = P.',
+    go: () => {} }
+];
+let gi = 0; const feitos = new Set();
+function sobe(pausa) {
+  const subindo = state.viajando && state.alvo === 9;
+  if (!subindo) { reinicia(); viaja(9); }
+  state.pausaEm = pausa; state.pausado = false; atualizaPainel();
+}
+function desce(pausa) {
+  if (!(state.viajando && state.alvo === 0)) { state.viajando = false; state.y = 27; state.v = 0; state.a = 0; viaja(0); }
+  state.pausaEm = pausa; state.pausado = false; atualizaPainel();
+}
+function guia(i) {
+  gi = Math.max(0, Math.min(STEPS.length - 1, i)); feitos.add(gi); const s = STEPS[gi];
+  $('gTitle').textContent = `${gi + 1}. ${s.t}`; $('gText').textContent = s.x; $('gQ').textContent = s.q;
+  $('gA').textContent = s.a; $('gA').hidden = true; $('gReveal').hidden = false;
+  $('gPrev').disabled = gi === 0; $('gNext').disabled = gi === STEPS.length - 1;
+  $('steps').innerHTML = STEPS.map((_, k) => `<button data-s="${k}" class="${feitos.has(k) && k !== gi ? 'done' : ''}" ${k === gi ? 'aria-current="step"' : ''} aria-label="Passo ${k + 1}">${k + 1}</button>`).join('');
+  s.go();
+}
+$('steps').addEventListener('click', e => { const b = e.target.closest('[data-s]'); if (b) guia(+b.dataset.s); });
+$('gReveal').onclick = () => { $('gA').hidden = false; $('gReveal').hidden = true; };
+$('gPrev').onclick = () => guia(gi - 1); $('gNext').onclick = () => guia(gi + 1);
+
+/* ---------- controles ---------- */
+$('floors').innerHTML = Array.from({ length: NAND }, (_, k) => NAND - 1 - k).map(k => `<button data-k="${k}">${k === 0 ? 'T' : k}</button>`).join('');
+$('floors').addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (b) { state.pausaEm = null; viaja(+b.dataset.k); } });
+$('pause').onclick = () => { if (!state.viajando) return; state.pausado = !state.pausado; state.pausaEm = null; atualizaPainel(); };
+function reinicia() { state.viajando = false; state.pausado = false; state.pausaEm = null; state.y = 0; state.v = 0; state.a = 0; state.alvo = 0; state.t = 0; state.hist = []; atualizaPainel(); }
+$('rst').onclick = reinicia;
+function sliders() {
+  state.m = +$('m').value; state.A = +$('ac').value; state.mp = +$('mp').value;
+  $('mVal').textContent = `${state.m} kg`; $('acVal').textContent = `${fmt(state.A)} m/s²`; $('mpVal').textContent = `${state.mp} kg`;
+  if (state.a) state.a = Math.sign(state.a) * state.A;
+  atualizaPainel();
+}
+['m', 'ac', 'mp'].forEach(id => $(id).addEventListener('input', sliders));
+$('slow').onchange = e => { state.slow = e.target.checked; };
+$('labels').onchange = e => { state.labels = e.target.checked; };
+
+/* ---------- laço ---------- */
+let ult = performance.now(), acum = 0;
+function frame(agora) {
+  const dt = Math.min(0.05, (agora - ult) / 1000); ult = agora;
+  if (state.viajando && !state.pausado) {
+    const h = dt * (state.slow ? 0.3 : 1), n = 12;
+    for (let i = 0; i < n && state.viajando; i++) { passo(h / n); state.t += h / n; }
+    acum += h; if (acum > 0.05 || !state.viajando) { acum = 0; registraPonto(); }
+    const f = fase();
+    if (state.pausaEm && f === state.pausaEm) { state.pausaT += h; if (state.pausaT > 0.45) { state.pausado = true; state.pausaEm = null; state.pausaT = 0; } }
+    else state.pausaT = 0;
+    atualizaPainel();
+  }
+  const alvoY = state.y + 1.4, dy = (alvoY - controls.target.y) * Math.min(1, dt * 5);
+  controls.target.y += dy; camera.position.y += dy;
+  controls.update(); update3D(); renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+sliders(); guia(0); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

@@ -7,13 +7,14 @@ Site: https://claudiosouza23.github.io/laboratorio-de-fisica/
 ## Mecânica
 
 ### Dinâmica
-Trilha em cinco passos, intercalando teoria e prática:
+Trilha em seis passos, intercalando teoria e prática:
 
 1. **Resumo, Parte 1** (`dinamica.html#parte1`): força, resultante, inércia e leis de Newton, tipos de força.
 2. **Simulação: forças no plano horizontal** (`forcas.html`): inércia, 2ª lei, atrito estático e cinético, força inclinada, ação e reação.
 3. **Resumo, Parte 2** (`dinamica.html#parte2`): decomposição de forças, força inclinada no plano horizontal, plano inclinado e método de resolução.
 4. **Simulação: plano inclinado com atrito** (`plano-inclinado.html`): decomposição do peso, descida, subida e experimento do ângulo crítico.
-5. **Questões de revisão** (`questoes-dinamica.html`): 26 questões com correção na hora e resolução comentada.
+5. **Simulação: elevador** (`elevador.html`): tração e peso na partida, com velocidade constante e na freada, subindo e descendo; balança com passageiro e gráficos v(t) e T(t).
+6. **Questões de revisão** (`questoes-dinamica.html`): 26 questões com correção na hora e resolução comentada.
 
 ## Eletricidade e Magnetismo
 
